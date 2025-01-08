@@ -13,19 +13,16 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
- 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // 1. Registra l'utente su Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, {
         displayName: name
       });
 
-      // 2. Crea la sessione di checkout Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -39,7 +36,6 @@ export default function RegisterForm() {
 
       const { sessionId } = await response.json();
       
-      // 3. Reindirizza a Stripe Checkout
       const stripe = await stripePromise;
       const { error } = await stripe!.redirectToCheckout({ sessionId });
 
