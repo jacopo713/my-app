@@ -37,10 +37,14 @@ export default function RegisterForm() {
       const { sessionId } = await response.json();
       
       const stripe = await stripePromise;
-      const { error } = await stripe!.redirectToCheckout({ sessionId });
+      if (!stripe) {
+        throw new Error('Stripe failed to initialize');
+      }
+      
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
 
-      if (error) {
-        setError(error.message);
+      if (stripeError) {
+        setError(stripeError.message || 'An error occurred with the payment process');
       }
     } catch (err) {
       console.error('Registration error:', err);
