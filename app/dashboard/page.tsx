@@ -19,7 +19,9 @@ export default function DashboardPage() {
               <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
                 <h2 className="text-lg font-medium text-gray-900">Dashboard Content</h2>
                 <p className="mt-1 text-gray-600">
-                  This is a protected page. You can only see this if you're authenticated.
+                  <Link href="/register" className="text-blue-600 hover:text-blue-800">
+                    Register here
+                  </Link>
                 </p>
               </div>
             </div>

@@ -18,6 +18,7 @@ export default function LoginForm() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard'); // Redirect after successful login
     } catch (err) {
+      console.error(err);
       setError('Failed to login. Please check your credentials.');
     }
   };

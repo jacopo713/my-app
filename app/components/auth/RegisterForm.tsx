@@ -21,6 +21,7 @@ export default function RegisterForm() {
       });
       router.push('/dashboard');
     } catch (err) {
+      console.error(err);
       setError('Failed to create account. Please try again.');
     }
   };
