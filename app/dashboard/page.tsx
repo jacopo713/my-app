@@ -1,6 +1,6 @@
 // app/dashboard/page.tsx
 'use client';
-
+import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 
