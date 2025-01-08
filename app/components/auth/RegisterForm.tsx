@@ -13,7 +13,7 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
