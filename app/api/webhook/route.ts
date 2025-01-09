@@ -1,4 +1,3 @@
-// app/api/webhook/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
 import { db } from '@/app/lib/firebase';
@@ -103,7 +102,63 @@ export async function POST(req: Request) {
         break;
       }
 
-      // ... altri case rimangono uguali
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as unknown as WebhookSubscription;
+        console.log('Subscription deleted for user:', subscription.metadata?.userId);
+        
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+          subscriptionStatus: 'inactive',
+          updatedAt: new Date().toISOString(),
+          paymentCompleted: false,
+          subscriptionDeletedAt: new Date().toISOString()
+        }, { merge: true });
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as unknown as WebhookSubscription;
+        console.log('Subscription updated for user:', subscription.metadata?.userId);
+        
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        const updateData = {
+          subscriptionStatus: subscription.status,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (subscription.status === 'active') {
+          updateData.paymentCompleted = true;
+          updateData.lastPaymentSuccess = new Date().toISOString();
+        } else if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+          updateData.paymentCompleted = false;
+          updateData.lastPaymentFailure = new Date().toISOString();
+        }
+
+        console.log('Updating subscription with data:', updateData);
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), updateData, { merge: true });
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as unknown as WebhookSubscription;
+        
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+          trialEndWarning: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        break;
+      }
     }
 
     return NextResponse.json({ received: true });
