@@ -49,7 +49,7 @@ export default function HomePage() {
         >
           <h2 className="text-2xl font-bold mb-4">Tabella di Schulte</h2>
           <p className="text-gray-600 text-lg">
-            Migliora la tua velocità di lettura e la percezione visiva periferica. Un esercizio classico per potenziare l'attenzione e la concentrazione.
+            Migliora la tua velocità di lettura e la percezione visiva periferica. Un esercizio classico per potenziare l&apos;attenzione e la concentrazione.
           </p>
         </Link>
       </div>
@@ -59,7 +59,7 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold text-blue-600 mb-8 text-center">Perché Allenare la Mente?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
-            <h3 className="text-xl font-semibold mb-4">Migliora l'Attenzione</h3>
+            <h3 className="text-xl font-semibold mb-4">Migliora l&apos;Attenzione</h3>
             <p className="text-gray-600 text-lg">
               Aumenta la tua capacità di concentrazione e la velocità di elaborazione visiva.
             </p>
@@ -84,19 +84,19 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold text-blue-600 mb-8 text-center">Turing™ - La Collaborazione tra Umano e IA</h2>
         <div className="space-y-8">
           <p className="text-gray-600 text-lg text-center">
-            Turing™ è una startup innovativa che mira a migliorare le capacità cognitive umane e dell'intelligenza artificiale attraverso una collaborazione sinergica e non invasiva.
+            Turing™ è una startup innovativa che mira a migliorare le capacità cognitive umane e dell&apos;intelligenza artificiale attraverso una collaborazione sinergica e non invasiva.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
               <h3 className="text-xl font-semibold mb-4">La Nostra Missione</h3>
               <p className="text-gray-600 text-lg">
-                Sviluppare strumenti e piattaforme che facilitino l'interazione tra esseri umani e IA, migliorando sia le capacità cognitive umane che le prestazioni dell'IA.
+                Sviluppare strumenti e piattaforme che facilitino l&apos;interazione tra esseri umani e IA, migliorando sia le capacità cognitive umane che le prestazioni dell&apos;IA.
               </p>
             </div>
             <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
               <h3 className="text-xl font-semibold mb-4">I Nostri Obiettivi</h3>
               <p className="text-gray-600 text-lg">
-                Creare un ecosistema in cui l'IA e gli esseri umani possano collaborare in modo naturale, migliorando la creatività, la risoluzione dei problemi e l'efficienza.
+                Creare un ecosistema in cui l&apos;IA e gli esseri umani possano collaborare in modo naturale, migliorando la creatività, la risoluzione dei problemi e l&apos;efficienza.
               </p>
             </div>
           </div>
