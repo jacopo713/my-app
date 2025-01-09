@@ -18,31 +18,29 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
     try {
-      // 1. Creiamo l'utente in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // 2. Aggiorniamo il profilo con il nome
+      
       await updateProfile(userCredential.user, {
-        displayName: name,
+        displayName: name
       });
 
-      // 3. Creiamo il documento utente in Firestore con stato "payment_required"
+      // Ottieni il token ID
+      const idToken = await userCredential.user.getIdToken();
+
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email,
         displayName: name,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
 
-      // 4. Creiamo la sessione di checkout Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
           email,
@@ -51,33 +49,25 @@ export default function RegisterForm() {
       });
 
       const data = await response.json();
-      console.log('Checkout session response:', data); // Debug: verifica la risposta
-
-      if (!data.sessionId) {
-        throw new Error('Failed to create checkout session: sessionId is missing');
+      if (data.error) {
+        throw new Error(data.error);
       }
 
+      const { sessionId } = data;
+      
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
       }
-
-      // 5. Reindirizziamo l'utente a Stripe per il pagamento
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
+      
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
 
       if (stripeError) {
         setError(stripeError.message || 'An error occurred with the payment process');
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Registration error:', err);
-
-      if (err instanceof Error && 'code' in err && err.code === 'auth/email-already-in-use') {
-        setError('Email already in use. Please use a different email.');
-      } else {
-        setError('Failed to create account. Please try again.');
-      }
+      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -131,9 +121,7 @@ export default function RegisterForm() {
 
           <button
             type="submit"
-            className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={loading}
           >
             {loading ? 'Processing...' : 'Register and Subscribe'}
