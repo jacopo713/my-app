@@ -1,129 +1,60 @@
-// app/api/webhook/route.ts
+// app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
 import { db } from '@/app/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import Stripe from 'stripe';
-
-type WebhookSession = Stripe.Checkout.Session & {
-  customer: string;
-  subscription: string;
-  customer_details?: {
-    email: string;
-  };
-  metadata: {
-    userId: string;
-  };
-};
-
-type WebhookSubscription = Stripe.Subscription & {
-  metadata: {
-    userId: string;
-  };
-  status: string;
-};
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.text();
-    const signature = req.headers.get('stripe-signature') || '';
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const { email, userId } = await req.json();
 
-    if (!signature || !webhookSecret) {
-      return NextResponse.json(
-        { error: 'Missing signature or webhook secret' },
-        { status: 400 }
-      );
+    // 1. Controlla se l'utente esiste già in Firestore
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let customerId;
+
+    if (userDocSnap.exists()) {
+      // 2. Se l'utente esiste, recupera il customerId (se presente)
+      const userData = userDocSnap.data();
+      customerId = userData.customerId;
     }
 
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    );
+    // 3. Se non esiste un customerId, crea un nuovo cliente Stripe
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: email,
+        metadata: {
+          userId: userId,
+        },
+      });
+      customerId = customer.id;
 
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as unknown as WebhookSession;
-        
-        if (!session.metadata?.userId) {
-          throw new Error('Missing userId in session metadata');
-        }
-
-        await setDoc(doc(db, 'users', session.metadata.userId), {
-          subscriptionStatus: 'active',
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-          email: session.customer_details?.email,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        break;
-      }
-
-      case 'checkout.session.expired': {
-        const session = event.data.object as unknown as WebhookSession;
-        
-        if (!session.metadata?.userId) {
-          throw new Error('Missing userId in session metadata');
-        }
-
-        await setDoc(doc(db, 'users', session.metadata.userId), {
-          subscriptionStatus: 'payment_required',
-          lastCheckoutExpired: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as unknown as WebhookSubscription;
-        
-        if (!subscription.metadata?.userId) {
-          throw new Error('Missing userId in subscription metadata');
-        }
-
-        await setDoc(doc(db, 'users', subscription.metadata.userId), {
-          subscriptionStatus: 'inactive',
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        break;
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as unknown as WebhookSubscription;
-        
-        if (!subscription.metadata?.userId) {
-          throw new Error('Missing userId in subscription metadata');
-        }
-
-        await setDoc(doc(db, 'users', subscription.metadata.userId), {
-          subscriptionStatus: subscription.status,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        break;
-      }
-    }
-
-    return NextResponse.json({ received: true });
-  } catch (error: unknown) {
-    console.error('Webhook error:', error);
-    
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: `Webhook Error: ${error.message}` },
-        { status: 400 }
-      );
+      // 4. Salva il customerId in Firestore
+      await setDoc(userDocRef, { customerId }, { merge: true });
     }
     
-    return NextResponse.json(
-      { error: 'Unknown error occurred' },
-      { status: 400 }
-    );
+    // 5. Crea la sessione di checkout usando il customerId
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId, // Usa il customerId
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: process.env.STRIPE_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/register`,
+      metadata: {
+        userId, // Passa userId anche nei metadata per sicurezza
+      },
+    });
+
+    return NextResponse.json({ url: session.url }); // Restituisci la URL, non la session ID
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    return NextResponse.json({ error: 'Error creating checkout session' }, { status: 500 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
