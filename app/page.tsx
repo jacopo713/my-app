@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { Brain, Eye, Star, User, Zap, Book, Music, Clock, Target, Award } from 'lucide-react';
+import { Brain, Eye, Star, User, Book, Music, Clock, Target, Award } from 'lucide-react';
 
 export default function HomePage() {
   return (
