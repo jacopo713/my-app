@@ -25,4 +25,4 @@ fi
 
 # Usage instructions
 echo "Git quickpush command has been created!"
-echo "To use it, type: git quickpush "upd"
+echo "To use it, type: git quickpush "vercel"
