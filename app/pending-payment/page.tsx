@@ -1,35 +1,77 @@
 'use client';
 
 import { useAuth } from '@/app/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/app/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function PendingPayment() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      if (user) {
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            console.log('Checking user payment status:', userData);
+            
+            if (userData.paymentCompleted && userData.subscriptionStatus === 'active') {
+              console.log('Payment already completed, redirecting to dashboard');
+              router.push('/dashboard');
+              return;
+            }
+          }
+          setCheckingStatus(false);
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+          setError('Error verifying payment status');
+          setCheckingStatus(false);
+        }
+      } else {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkPaymentStatus();
+  }, [user, router]);
 
   const handleCheckout = async () => {
     setLoading(true);
     setError('');
     
     try {
+      if (!user) {
+        throw new Error('No user found');
+      }
+
       // Get the ID token
-      const idToken = await user?.getIdToken();
+      const idToken = await user.getIdToken();
+      console.log('Starting checkout process');
       
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}` // Add the token to headers
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          email: user?.email,
-          userId: user?.uid,
+          email: user.email,
+          userId: user.uid,
         }),
       });
 
       const data = await response.json();
+      console.log('Checkout session response:', data);
       
       if (data.error) {
         throw new Error(data.error);
@@ -59,6 +101,16 @@ export default function PendingPayment() {
       setLoading(false);
     }
   };
+
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse">
+          <div className="text-lg text-gray-600">Checking payment status...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

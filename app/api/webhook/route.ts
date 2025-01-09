@@ -42,6 +42,8 @@ export async function POST(req: Request) {
       webhookSecret
     );
 
+    console.log('Processing webhook event:', event.type);
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as unknown as WebhookSession;
@@ -50,13 +52,19 @@ export async function POST(req: Request) {
           throw new Error('Missing userId in session metadata');
         }
 
+        console.log('Updating user after successful checkout:', session.metadata.userId);
+
         await setDoc(doc(db, 'users', session.metadata.userId), {
           subscriptionStatus: 'active',
           customerId: session.customer,
           subscriptionId: session.subscription,
           email: session.customer_details?.email,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          paymentCompleted: true,
+          checkoutCompleted: new Date().toISOString()
         }, { merge: true });
+
+        console.log('User updated successfully');
         break;
       }
 
@@ -70,7 +78,8 @@ export async function POST(req: Request) {
         await setDoc(doc(db, 'users', session.metadata.userId), {
           subscriptionStatus: 'payment_required',
           lastCheckoutExpired: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          paymentCompleted: false
         }, { merge: true });
         break;
       }
@@ -84,7 +93,8 @@ export async function POST(req: Request) {
 
         await setDoc(doc(db, 'users', subscription.metadata.userId), {
           subscriptionStatus: 'inactive',
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          paymentCompleted: false
         }, { merge: true });
         break;
       }
