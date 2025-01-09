@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { Brain, Grid, Eye, Star, User } from 'lucide-react';
+import { Brain, Eye, Star, User } from 'lucide-react';
 
 export default function HomePage() {
   return (
