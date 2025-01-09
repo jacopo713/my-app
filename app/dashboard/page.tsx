@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 interface SubscriptionData {
@@ -13,32 +14,60 @@ interface SubscriptionData {
   email: string;
   createdAt: string;
   updatedAt: string;
+  paymentCompleted?: boolean;
 }
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       if (user) {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setSubscriptionData(docSnap.data() as SubscriptionData);
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const userData = docSnap.data() as SubscriptionData;
+            setSubscriptionData(userData);
+            
+            // Verifica lo stato del pagamento
+            if (!userData.paymentCompleted || userData.subscriptionStatus !== 'active') {
+              console.log('Subscription not active, redirecting to pending-payment');
+              router.push('/pending-payment');
+              return;
+            }
+          }
+          
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching subscription data:', error);
+          setLoading(false);
         }
-        setLoading(false);
       }
     };
 
-    fetchSubscriptionData();
-  }, [user]);
+    // Se c'è un success=true nei parametri, forza il controllo dello stato
+    const success = searchParams.get('success');
+    if (success === 'true') {
+      console.log('Payment success detected, checking subscription status');
+      // Aggiungi un piccolo delay per dare tempo al webhook di aggiornare i dati
+      setTimeout(fetchSubscriptionData, 2000);
+    } else {
+      fetchSubscriptionData();
+    }
+  }, [user, router, searchParams]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="animate-pulse">
+          <div className="text-lg text-gray-600">Loading dashboard...</div>
+        </div>
       </div>
     );
   }

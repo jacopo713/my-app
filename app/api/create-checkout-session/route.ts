@@ -1,4 +1,3 @@
-// app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
 import * as admin from 'firebase-admin';
@@ -70,13 +69,12 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard`,  // Modificato qui
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pending-payment`,  // E qui
+      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pending-payment`,
       metadata: {
         userId,
       },
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
+      allow_promotion_codes: true
     });
 
     console.log('Checkout session created:', session.id);
