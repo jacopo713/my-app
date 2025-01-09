@@ -1,4 +1,4 @@
-// /api/create-checkout-session/route.ts
+// app/api/create-checkout-session/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
 import * as admin from 'firebase-admin';
@@ -19,7 +19,7 @@ const db = admin.firestore();
 export async function POST(req: Request) {
   try {
     const { email, userId } = await req.json();
-    console.log('Received request with email:', email, 'and userId:', userId);
+    console.log('Creating checkout session for:', email, userId);
 
     if (!email || !userId) {
       return NextResponse.json({ error: 'Missing email or userId' }, { status: 400 });
@@ -54,7 +54,6 @@ export async function POST(req: Request) {
       });
       customerId = customer.id;
 
-      // Update user with Admin SDK
       await db.collection('users').doc(userId).update({ 
         customerId,
         updatedAt: new Date().toISOString()
@@ -71,14 +70,16 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/register`,
+      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard`,  // Modificato qui
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pending-payment`,  // E qui
       metadata: {
         userId,
       },
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
     });
 
-    console.log('Session created:', session.id);
+    console.log('Checkout session created:', session.id);
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {
     console.error('Error creating checkout session:', error);
