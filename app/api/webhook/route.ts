@@ -1,12 +1,14 @@
-// src/app/api/webhook.ts (o il percorso corretto)
+// src/app/api/webhook/route.ts
+
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
-import { db } from '@/app/lib/firebaseAdmin'; // Cambiato a firebaseAdmin
+import { db, admin } from '@/app/lib/firebaseAdmin'; // Importa da firebaseAdmin
 import Stripe from 'stripe';
 
+// Definizione delle interfacce
 interface UpdateData {
   subscriptionStatus: string;
-  updatedAt: FirebaseFirestore.Timestamp; // Usa il tipo Timestamp di Firestore
+  updatedAt: FirebaseFirestore.Timestamp;
   paymentCompleted?: boolean;
   lastPaymentSuccess?: FirebaseFirestore.Timestamp;
   lastPaymentFailure?: FirebaseFirestore.Timestamp;
@@ -29,7 +31,7 @@ type WebhookSession = Stripe.Checkout.Session & {
   };
 };
 
-type WebhookSubscription = Stripe.Subscription & {
+type WebhookSubscription = Stripe.Subscription & { // Assicurati di usare questa tipizzazione
   metadata: {
     userId: string;
   };
@@ -38,6 +40,7 @@ type WebhookSubscription = Stripe.Subscription & {
 
 export async function POST(req: Request) {
   try {
+    console.log('Webhook POST request received');
     const body = await req.text();
     const signature = req.headers.get('stripe-signature') || '';
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -58,28 +61,43 @@ export async function POST(req: Request) {
       webhookSecret
     );
 
-    console.log('Processing webhook event:', event.type);
+    console.log('Constructed event:', event.type);
+
+    const eventId = event.id;
+
+    // Idempotency: verifica se l'evento è già stato elaborato
+    const eventRef = db.collection('webhookEvents').doc(eventId);
+    const eventDoc = await eventRef.get();
+
+    if (eventDoc.exists) {
+      console.log(`Evento ${eventId} già elaborato.`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Segna l'evento come elaborato
+    await eventRef.set({ received: true });
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        console.log('Checkout session completed event received');
-        const session = event.data.object as unknown as WebhookSession;
+        console.log('Handling checkout.session.completed event');
+        const session = event.data.object as WebhookSession;
 
         if (!session.metadata?.userId) {
           console.error('Missing userId in session metadata');
           throw new Error('Missing userId in session metadata');
         }
 
-        console.log('Updating user data for userId:', session.metadata.userId);
+        console.log('User ID from session metadata:', session.metadata.userId);
 
-        // Verifica se il documento utente esiste
         const userRef = db.collection('users').doc(session.metadata.userId);
         const userDoc = await userRef.get();
 
         if (!userDoc.exists) {
-          console.error('User document not found');
+          console.error('User document not found for userId:', session.metadata.userId);
           throw new Error('User document not found');
         }
+
+        console.log('User document found:', userDoc.id);
 
         const updateData: UpdateData = {
           subscriptionStatus: 'active',
@@ -91,15 +109,99 @@ export async function POST(req: Request) {
           lastPaymentSuccess: admin.firestore.Timestamp.now(),
         };
 
-        console.log('Updating user with data:', updateData);
+        console.log('Update data:', updateData);
 
         await userRef.set(updateData, { merge: true });
 
-        console.log('User document updated successfully');
+        console.log('User document updated successfully for userId:', session.metadata.userId);
         break;
       }
 
-      // Gestisci altri tipi di eventi similmente...
+      case 'checkout.session.expired': {
+        const session = event.data.object as WebhookSession;
+        console.log('Session expired for user:', session.metadata?.userId);
+
+        if (!session.metadata?.userId) {
+          throw new Error('Missing userId in session metadata');
+        }
+
+        const updateData: UpdateData = {
+          subscriptionStatus: 'payment_required',
+          lastCheckoutExpired: admin.firestore.Timestamp.now(),
+          updatedAt: admin.firestore.Timestamp.now(),
+          paymentCompleted: false,
+        };
+
+        await db.collection('users').doc(session.metadata.userId).set(updateData, { merge: true });
+        console.log('User document updated for expired session:', session.metadata.userId);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
+        console.log('Subscription deleted for user:', subscription.metadata?.userId);
+
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        const updateData: UpdateData = {
+          subscriptionStatus: 'inactive',
+          updatedAt: admin.firestore.Timestamp.now(),
+          paymentCompleted: false,
+          subscriptionDeletedAt: admin.firestore.Timestamp.now(),
+        };
+
+        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
+        console.log('User document updated for deleted subscription:', subscription.metadata.userId);
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
+        console.log('Subscription updated for user:', subscription.metadata?.userId);
+
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        const updateData: UpdateData = {
+          subscriptionStatus: subscription.status,
+          updatedAt: admin.firestore.Timestamp.now(),
+        };
+
+        if (subscription.status === 'active') {
+          updateData.paymentCompleted = true;
+          updateData.lastPaymentSuccess = admin.firestore.Timestamp.now();
+        } else if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+          updateData.paymentCompleted = false;
+          updateData.lastPaymentFailure = admin.firestore.Timestamp.now();
+        }
+
+        console.log('Updating subscription with data:', updateData);
+
+        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
+        console.log('User document updated successfully for subscription update:', subscription.metadata.userId);
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
+
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        const updateData: UpdateData = {
+          subscriptionStatus: subscription.status,
+          trialEndWarning: admin.firestore.Timestamp.now(),
+          updatedAt: admin.firestore.Timestamp.now(),
+        };
+
+        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
+        console.log('User document updated for trial end warning:', subscription.metadata.userId);
+        break;
+      }
 
       default:
         console.log(`Unhandled event type ${event.type}`);
