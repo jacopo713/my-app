@@ -4,6 +4,19 @@ import { db } from '@/app/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
 
+interface UpdateData {
+  subscriptionStatus: string;
+  updatedAt: string;
+  paymentCompleted?: boolean;
+  lastPaymentSuccess?: string;
+  lastPaymentFailure?: string;
+  customerId?: string;
+  subscriptionId?: string;
+  email?: string;
+  trialEndWarning?: string;
+  subscriptionDeletedAt?: string;
+}
+
 type WebhookSession = Stripe.Checkout.Session & {
   customer: string;
   subscription: string;
