@@ -1,7 +1,6 @@
 // app/api/webhook/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
-import { headers } from 'next/headers';
 import { db } from '@/app/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
@@ -25,8 +24,7 @@ interface WebhookSubscription {
 export async function POST(req: Request) {
   try {
     const body = await req.text();
-    const headerList = headers();
-    const signature = headerList.get('stripe-signature') || '';
+    const signature = req.headers.get('stripe-signature') || '';
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!signature || !webhookSecret) {
