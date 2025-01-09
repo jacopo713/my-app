@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -14,91 +15,71 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+
     try {
       // 1. Creiamo l'utente in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
+
       // 2. Aggiorniamo il profilo con il nome
       await updateProfile(userCredential.user, {
-        displayName: name
+        displayName: name,
       });
 
-      // 3. Creiamo il documento utente con stato payment_required
+      // 3. Creiamo il documento utente in Firestore con stato "payment_required"
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email,
         displayName: name,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
 
-      // 4. Procediamo con il checkout Stripe
-     const response = await fetch('/api/create-checkout-session', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email,
-    userId: userCredential.user.uid,
-  }),
-});
+      // 4. Creiamo la sessione di checkout Stripe
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          userId: userCredential.user.uid,
+        }),
+      });
 
-const response = await fetch('/api/create-checkout-session', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email,
-    userId: userCredential.user.uid,
-  }),
-});
+      const data = await response.json();
+      console.log('Checkout session response:', data); // Debug: verifica la risposta
 
-const response = await fetch('/api/create-checkout-session', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email,
-    userId: userCredential.user.uid,
-  }),
-});
+      if (!data.sessionId) {
+        throw new Error('Failed to create checkout session: sessionId is missing');
+      }
 
-const response = await fetch('/api/create-checkout-session', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email,
-    userId: userCredential.user.uid,
-  }),
-});
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe failed to initialize');
+      }
 
-const data = await response.json();
-console.log('Checkout session response:', data); // Debug: verifica la risposta
+      // 5. Reindirizziamo l'utente a Stripe per il pagamento
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId,
+      });
 
-const { sessionId } = data; // Estrai sessionId dalla risposta
-
-const stripe = await stripePromise;
-if (!stripe) {
-  throw new Error('Stripe failed to initialize');
-}
-
-const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
-
-if (stripeError) {
-  setError(stripeError.message || 'An error occurred with the payment process');
-}
-    } catch (err) {
+      if (stripeError) {
+        setError(stripeError.message || 'An error occurred with the payment process');
+      }
+    } catch (err: any) {
       console.error('Registration error:', err);
-      setError('Failed to create account. Please try again.');
+
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email already in use. Please use a different email.');
+      } else {
+        setError('Failed to create account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -152,7 +133,9 @@ if (stripeError) {
 
           <button
             type="submit"
-            className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             disabled={loading}
           >
             {loading ? 'Processing...' : 'Register and Subscribe'}
