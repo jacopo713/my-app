@@ -15,6 +15,7 @@ interface UpdateData {
   email?: string;
   trialEndWarning?: string;
   subscriptionDeletedAt?: string;
+  lastCheckoutExpired?: string;
 }
 
 type WebhookSession = Stripe.Checkout.Session & {
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
           throw new Error('User document not found');
         }
 
-        const updateData = {
+        const updateData: UpdateData = {
           subscriptionStatus: 'active',
           customerId: session.customer,
           subscriptionId: session.subscription,
@@ -106,12 +107,14 @@ export async function POST(req: Request) {
           throw new Error('Missing userId in session metadata');
         }
 
-        await setDoc(doc(db, 'users', session.metadata.userId), {
+        const updateData: UpdateData = {
           subscriptionStatus: 'payment_required',
           lastCheckoutExpired: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           paymentCompleted: false
-        }, { merge: true });
+        };
+
+        await setDoc(doc(db, 'users', session.metadata.userId), updateData, { merge: true });
         break;
       }
 
@@ -123,12 +126,14 @@ export async function POST(req: Request) {
           throw new Error('Missing userId in subscription metadata');
         }
 
-        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+        const updateData: UpdateData = {
           subscriptionStatus: 'inactive',
           updatedAt: new Date().toISOString(),
           paymentCompleted: false,
           subscriptionDeletedAt: new Date().toISOString()
-        }, { merge: true });
+        };
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), updateData, { merge: true });
         break;
       }
 
@@ -140,7 +145,7 @@ export async function POST(req: Request) {
           throw new Error('Missing userId in subscription metadata');
         }
 
-        const updateData = {
+        const updateData: UpdateData = {
           subscriptionStatus: subscription.status,
           updatedAt: new Date().toISOString()
         };
@@ -166,10 +171,13 @@ export async function POST(req: Request) {
           throw new Error('Missing userId in subscription metadata');
         }
 
-        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+        const updateData: UpdateData = {
+          subscriptionStatus: subscription.status,
           trialEndWarning: new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        }, { merge: true });
+        };
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), updateData, { merge: true });
         break;
       }
     }
