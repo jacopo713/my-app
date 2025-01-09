@@ -110,7 +110,63 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Rest of the content remains the same ... */}
+          {/* Test Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Brain className="w-10 h-10 text-blue-500" />
+                <h2 className="text-2xl font-bold ml-3">Test di Ragionamento</h2>
+              </div>
+              <p className="text-gray-600 text-lg">
+                Valuta la tua capacità di risolvere problemi complessi
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Eye className="w-10 h-10 text-green-500" />
+                <h2 className="text-2xl font-bold ml-3">Test di Percezione</h2>
+              </div>
+              <p className="text-gray-600 text-lg">
+                Misura la tua velocità di elaborazione visiva
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Star className="w-10 h-10 text-purple-500" />
+                <h2 className="text-2xl font-bold ml-3">Test di Memoria</h2>
+              </div>
+              <p className="text-gray-600 text-lg">
+                Verifica le tue capacità di memoria e concentrazione
+              </p>
+            </div>
+          </div>
+
+          {/* Benefits Section */}
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
+            <h2 className="text-3xl font-bold text-blue-600 mb-8 text-center">Perché Scegliere il Nostro Test?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+              <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+                <h3 className="text-xl font-semibold mb-4">Professionale</h3>
+                <p className="text-gray-600">
+                  Sviluppato da esperti del settore
+                </p>
+              </div>
+              <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+                <h3 className="text-xl font-semibold mb-4">Accurato</h3>
+                <p className="text-gray-600">
+                  Risultati dettagliati e precisi
+                </p>
+              </div>
+              <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
+                <h3 className="text-xl font-semibold mb-4">Completo</h3>
+                <p className="text-gray-600">
+                  Valutazione di molteplici capacità
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
