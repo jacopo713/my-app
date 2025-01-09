@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 
 export default function PendingPayment() {
   const { user } = useAuth();
