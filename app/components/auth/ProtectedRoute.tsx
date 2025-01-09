@@ -45,17 +45,19 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             await new Promise(resolve => setTimeout(resolve, 5000));
             // Ricontrolliamo i dati dopo l'attesa
             const updatedDoc = await getDoc(docRef);
-            const updatedData = updatedDoc.data();
             
-            if (updatedData.subscriptionStatus === 'active') {
-              setCheckingSubscription(false);
-              return;
+            if (updatedDoc.exists()) {
+              const updatedData = updatedDoc.data();
+              if (updatedData?.subscriptionStatus === 'active') {
+                setCheckingSubscription(false);
+                return;
+              }
             }
           }
           
           // Verifica normale per le altre situazioni
-          if (userData.subscriptionStatus !== 'active') {
-            console.log('Subscription not active:', userData.subscriptionStatus);
+          if (userData?.subscriptionStatus !== 'active') {
+            console.log('Subscription not active:', userData?.subscriptionStatus);
             router.push('/pending-payment');
             return;
           }
