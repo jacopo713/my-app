@@ -1,7 +1,8 @@
+// app/components/auth/RegisterForm.tsx
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
@@ -15,29 +16,34 @@ export default function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegularSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    await handleRegistration('email', { email, password, name });
+  };
+
+  const handleGoogleSignup = async () => {
+    await handleRegistration('google');
+  };
+
+  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
     setLoading(true);
     try {
-      console.log('Starting registration...');
-      // 1. Creare l'utente in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created in Auth:', userCredential.user.uid);
+      let userCredential;
       
-      // 2. Aggiornare il profilo utente
-      await updateProfile(userCredential.user, {
-        displayName: name
-      });
-      console.log('Profile updated');
+      if (provider === 'google') {
+        const googleProvider = new GoogleAuthProvider();
+        userCredential = await signInWithPopup(auth, googleProvider);
+      } else {
+        if (!credentials) throw new Error('Credentials required for email signup');
+        userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        await updateProfile(userCredential.user, {
+          displayName: credentials.name
+        });
+      }
 
-      // 3. Ottenere il token ID
-      const idToken = await userCredential.user.getIdToken();
-      console.log('Got ID token');
-
-      // 4. Creare il documento utente in Firestore con tutti i campi necessari
       const userData = {
-        email,
-        displayName: name,
+        email: userCredential.user.email,
+        displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -46,13 +52,13 @@ export default function RegisterForm() {
         lastLoginAt: new Date().toISOString(),
         isActive: true,
         paymentMethod: null,
-        billingDetails: null
+        billingDetails: null,
+        authProvider: provider
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-      console.log('User document created in Firestore');
+      const idToken = await userCredential.user.getIdToken();
 
-      // 5. Chiamare l'API per creare la sessione di checkout
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -60,94 +66,136 @@ export default function RegisterForm() {
           'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          email,
+          email: userCredential.user.email,
           userId: userCredential.user.uid,
         }),
       });
 
       const data = await response.json();
-      console.log('Checkout session response:', data);
-
+      
       if (data.error) {
         throw new Error(data.error);
       }
 
-      const { sessionId } = data;
-      
-      // 6. Reindirizzare al checkout di Stripe
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
       }
       
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId
+      });
 
       if (stripeError) {
-        setError(stripeError.message || 'An error occurred with the payment process');
+        throw stripeError;
       }
+
     } catch (err) {
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-        <h2 className="text-center text-3xl font-bold text-gray-900">Register</h2>
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <input
-                type="text"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <input
-                type="email"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : 'Register and Subscribe'}
-          </button>
-        </form>
+    <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Start your journey with us
+        </p>
       </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          {error}
+        </div>
+      )}
+
+      {/* Google Signup Button */}
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        disabled={loading}
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4"
+          />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853"
+          />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05"
+          />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335"
+          />
+        </svg>
+        Sign up with Google
+      </button>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500">Or sign up with email</span>
+        </div>
+      </div>
+
+      <form className="mt-8 space-y-6" onSubmit={handleRegularSignup}>
+        <div className="rounded-md shadow-sm space-y-4">
+          <div>
+            <input
+              type="text"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <input
+              type="email"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              required
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {loading ? 'Processing...' : 'Create Account'}
+        </button>
+      </form>
     </div>
   );
 }
