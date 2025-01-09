@@ -12,13 +12,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   useEffect(() => {
-    // Prima verifica se l'utente non è loggato
+    // Se non c'è utente, redirect al login
     if (!loading && !user) {
       router.push('/login');
       return;
     }
 
-    // Verifica lo stato dell'abbonamento
     const checkSubscription = async () => {
       if (user) {
         try {
@@ -32,28 +31,18 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           }
 
           const userData = docSnap.data();
-          if (userData.subscriptionStatus !== 'active') {
-            // Se non c'è abbonamento attivo, redirect al checkout
-            const response = await fetch('/api/create-checkout-session', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: user.email,
-                userId: user.uid,
-              }),
-            });
-
-            const { url } = await response.json();
-            window.location.href = url;
+          
+          // Se lo stato è payment_required o non è active, reindirizza al pending-payment
+          if (userData.subscriptionStatus === 'payment_required' || userData.subscriptionStatus !== 'active') {
+            console.log('Subscription status:', userData.subscriptionStatus);
+            router.push('/pending-payment');
             return;
           }
 
           setCheckingSubscription(false);
         } catch (error) {
           console.error('Error checking subscription:', error);
-          setCheckingSubscription(false);
+          router.push('/login');
         }
       }
     };
