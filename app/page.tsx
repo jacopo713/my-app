@@ -2,6 +2,7 @@
 'use client';
 
 import { Brain, Grid, Eye, Star } from 'lucide-react';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -15,20 +16,20 @@ export default function HomePage() {
             </div>
             
             <div className="hidden sm:flex sm:items-center sm:space-x-4">
-              <a 
+              <Link 
                 href="/"
                 className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 flex items-center"
               >
                 <Brain className="w-5 h-5 mr-2" />
                 Home
-              </a>
-              <a 
+              </Link>
+              <Link 
                 href="/tests"
                 className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 flex items-center"
               >
                 <Grid className="w-5 h-5 mr-2" />
                 Test Disponibili
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -42,12 +43,12 @@ export default function HomePage() {
             <p className="text-xl sm:text-2xl mb-8 font-light">
               Scopri il tuo potenziale intellettivo con test scientificamente validati
             </p>
-            <a
+            <Link
               href="/register"
               className="inline-block bg-white text-blue-600 font-bold text-lg px-10 py-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
             >
               Inizia il Test
-            </a>
+            </Link>
           </div>
 
           {/* Card dei Test */}
