@@ -1,7 +1,10 @@
 // app/page.tsx
 import Link from 'next/link';
+import { useAuth } from './contexts/AuthContext'; // Importa il contesto di autenticazione
 
 export default function HomePage() {
+  const { user } = useAuth(); // Ottieni lo stato dell'utente
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
@@ -117,6 +120,22 @@ export default function HomePage() {
         >
           Register
         </Link>
+      </div>
+
+      {/* Pulsante per verificare se l'utente è loggato */}
+      <div className="flex justify-center mt-8">
+        <button
+          onClick={() => {
+            if (user) {
+              alert(`Sei loggato come: ${user.email}`);
+            } else {
+              alert('Non sei loggato.');
+            }
+          }}
+          className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+        >
+          Verifica Login
+        </button>
       </div>
     </div>
   );
