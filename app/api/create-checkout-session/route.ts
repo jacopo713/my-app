@@ -6,7 +6,7 @@ import { db } from '@/app/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
 
-interface WebhookSession extends Stripe.Checkout.Session {
+interface WebhookSession {
   metadata: {
     userId: string;
   };
@@ -15,11 +15,11 @@ interface WebhookSession extends Stripe.Checkout.Session {
   customer_email: string;
 }
 
-interface WebhookSubscription extends Stripe.Subscription {
+interface WebhookSubscription {
   metadata: {
     userId: string;
   };
-  status: string;
+  status: Stripe.Subscription.Status;
 }
 
 export async function POST(req: Request) {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     // Gestisce gli eventi dell'abbonamento
     switch (event.type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object as WebhookSession;
         await setDoc(doc(db, 'users', session.metadata.userId), {
           subscriptionStatus: 'active',
@@ -55,22 +55,25 @@ export async function POST(req: Request) {
           updatedAt: new Date().toISOString()
         });
         break;
+      }
 
-      case 'customer.subscription.deleted':
+      case 'customer.subscription.deleted': {
         const subscription = event.data.object as WebhookSubscription;
         await setDoc(doc(db, 'users', subscription.metadata.userId), {
           subscriptionStatus: 'inactive',
           updatedAt: new Date().toISOString()
         }, { merge: true });
         break;
+      }
 
-      case 'customer.subscription.updated':
+      case 'customer.subscription.updated': {
         const updatedSubscription = event.data.object as WebhookSubscription;
         await setDoc(doc(db, 'users', updatedSubscription.metadata.userId), {
           subscriptionStatus: updatedSubscription.status,
           updatedAt: new Date().toISOString()
         }, { merge: true });
         break;
+      }
     }
 
     return NextResponse.json({ received: true });
