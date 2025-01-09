@@ -5,7 +5,6 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -15,7 +14,6 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,10 +70,10 @@ export default function RegisterForm() {
       if (stripeError) {
         setError(stripeError.message || 'An error occurred with the payment process');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
 
-      if (err.code === 'auth/email-already-in-use') {
+      if (err instanceof Error && 'code' in err && err.code === 'auth/email-already-in-use') {
         setError('Email already in use. Please use a different email.');
       } else {
         setError('Failed to create account. Please try again.');
