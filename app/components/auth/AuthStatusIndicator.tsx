@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { UserCheck, UserX, LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/app/lib/firebase';
