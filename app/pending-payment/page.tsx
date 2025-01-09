@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useState } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 
 export default function PendingPayment() {
   const { user } = useAuth();
@@ -13,10 +14,14 @@ export default function PendingPayment() {
     setError('');
     
     try {
+      // Get the ID token
+      const idToken = await user?.getIdToken();
+      
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}` // Add the token to headers
         },
         body: JSON.stringify({
           email: user?.email,
@@ -24,11 +29,32 @@ export default function PendingPayment() {
         }),
       });
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data.sessionId) {
+        throw new Error('No session ID returned');
+      }
+
+      // Redirect to Stripe
+      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+      if (!stripe) {
+        throw new Error('Failed to initialize Stripe');
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId
+      });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
     } catch (error) {
       console.error('Checkout error:', error);
-      setError('Unable to initialize checkout. Please try again.');
+      setError(error instanceof Error ? error.message : 'Unable to initialize checkout. Please try again.');
     } finally {
       setLoading(false);
     }
