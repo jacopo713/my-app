@@ -48,8 +48,41 @@ export default function RegisterForm() {
   }),
 });
 
-const data = await response.json(); // Estrai la risposta JSON
-console.log('Response from API:', data); // Debug: verifica la risposta
+const response = await fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email,
+    userId: userCredential.user.uid,
+  }),
+});
+
+const response = await fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email,
+    userId: userCredential.user.uid,
+  }),
+});
+
+const response = await fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email,
+    userId: userCredential.user.uid,
+  }),
+});
+
+const data = await response.json();
+console.log('Checkout session response:', data); // Debug: verifica la risposta
 
 const { sessionId } = data; // Estrai sessionId dalla risposta
 
