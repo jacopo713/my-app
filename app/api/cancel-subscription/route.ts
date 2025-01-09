@@ -19,7 +19,8 @@ export async function POST(req: Request) {
       if (decodedToken.uid !== userId) {
         return NextResponse.json({ error: 'Invalid user ID' }, { status: 403 });
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Token verification error:', err);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
