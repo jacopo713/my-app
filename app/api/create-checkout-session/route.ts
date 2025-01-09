@@ -1,4 +1,4 @@
-// app/api/create-checkout-session/route.ts
+// app/api/create-checkout-sessiion/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
 import { db } from '@/app/lib/firebase';
