@@ -19,23 +19,39 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Starting registration process...');
       
+      // Step 1: Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User created in Firebase Auth:', userCredential.user.uid);
+      
+      // Step 2: Update profile
       await updateProfile(userCredential.user, {
         displayName: name
       });
+      console.log('Profile updated with displayName');
 
-      // Ottieni il token ID
+      try {
+        // Step 3: Create Firestore document
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email,
+          displayName: name,
+          subscriptionStatus: 'payment_required',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        console.log('User document created in Firestore');
+      } catch (firestoreError) {
+        console.error('Firestore error:', firestoreError);
+        throw new Error('Failed to create user document');
+      }
+
+      // Step 4: Get ID token
       const idToken = await userCredential.user.getIdToken();
+      console.log('Got ID token');
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        email,
-        displayName: name,
-        subscriptionStatus: 'payment_required',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-
+      // Step 5: Create checkout session
+      console.log('Creating checkout session...');
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -49,12 +65,15 @@ export default function RegisterForm() {
       });
 
       const data = await response.json();
+      console.log('Checkout session response:', data);
+      
       if (data.error) {
         throw new Error(data.error);
       }
 
       const { sessionId } = data;
       
+      // Step 6: Initialize Stripe and redirect
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
