@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { Brain, Eye, Star, User } from 'lucide-react';
+import { Brain, Eye, Star, User, Zap, Book, Music, Clock, Target, Award } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -49,18 +49,65 @@ export default function HomePage() {
 
       <main className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Hero Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl shadow-2xl p-8 text-center text-white mb-16">
-            <h1 className="text-5xl sm:text-6xl font-bold mb-6">Test del QI</h1>
-            <p className="text-xl sm:text-2xl mb-8 font-light">
-              Scopri il tuo potenziale intellettivo
-            </p>
-            <a
-              href="/register"
-              className="inline-block bg-white text-blue-600 font-bold text-lg px-10 py-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
-            >
-              Inizia il Test
-            </a>
+          {/* Hero Section with Test Preview */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl shadow-2xl p-8 text-white mb-16">
+            <div className="flex flex-col lg:flex-row items-center">
+              {/* Text Content */}
+              <div className="lg:w-1/2 text-center lg:text-left mb-8 lg:mb-0">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">Test del QI</h1>
+                <p className="text-xl sm:text-2xl mb-8 font-light">
+                  Scopri il tuo potenziale intellettivo
+                </p>
+                <a
+                  href="/test-iq"
+                  className="inline-block bg-white text-blue-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
+                >
+                  Inizia il Test
+                </a>
+              </div>
+
+              {/* Test Preview Grid */}
+              <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg hover:bg-white/20 transition-all">
+                  <Brain className="w-8 h-8 mb-2 text-white" />
+                  <h3 className="font-semibold">Ragionamento Astratto</h3>
+                  <p className="text-sm text-white/80">Test delle matrici progressive</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg hover:bg-white/20 transition-all">
+                  <Eye className="w-8 h-8 mb-2 text-white" />
+                  <h3 className="font-semibold">Coordinazione</h3>
+                  <p className="text-sm text-white/80">Test occhio-mano</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg hover:bg-white/20 transition-all">
+                  <Book className="w-8 h-8 mb-2 text-white" />
+                  <h3 className="font-semibold">Lettura Veloce</h3>
+                  <p className="text-sm text-white/80">Test di comprensione</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg hover:bg-white/20 transition-all">
+                  <Music className="w-8 h-8 mb-2 text-white" />
+                  <h3 className="font-semibold">Senso del Ritmo</h3>
+                  <p className="text-sm text-white/80">Test di sincronizzazione</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Test Duration and Info */}
+            <div className="mt-8 border-t border-white/20 pt-6">
+              <div className="flex justify-center gap-8 text-sm">
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>Durata: 45 minuti</span>
+                </div>
+                <div className="flex items-center">
+                  <Target className="w-4 h-4 mr-2" />
+                  <span>7 Test Completi</span>
+                </div>
+                <div className="flex items-center">
+                  <Award className="w-4 h-4 mr-2" />
+                  <span>Risultati Immediati</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Test Cards */}
