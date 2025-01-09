@@ -1,31 +1,68 @@
-// app/api/create-checkout-session/route.ts
+// app/api/webhook/route.ts
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
+import { headers } from 'next/headers';
+import { db } from '@/app/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(req: Request) {
+  const body = await req.text();
+  const sig = headers().get('stripe-signature');
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   try {
-    const { email, userId } = await req.json();
+    const event = stripe.webhooks.constructEvent(
+      body,
+      sig!,
+      webhookSecret!
+    );
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: process.env.STRIPE_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/register`,
-      customer_email: email,
-      metadata: {
-        userId: userId,
-      },
-    });
+    // Gestisce gli eventi dell'abbonamento
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        // Aggiorna lo stato dell'abbonamento in Firestore
+        await setDoc(doc(db, 'users', session.metadata.userId), {
+          subscriptionStatus: 'active',
+          customerId: session.customer,
+          subscriptionId: session.subscription,
+          email: session.customer_email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        break;
 
-    return NextResponse.json({ sessionId: session.id });
-  } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Error creating checkout session' }, { status: 500 });
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        // Aggiorna lo stato quando l'abbonamento viene cancellato
+        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+          subscriptionStatus: 'inactive',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        break;
+
+      case 'customer.subscription.updated':
+        const updatedSubscription = event.data.object;
+        // Aggiorna lo stato quando l'abbonamento viene modificato
+        await setDoc(doc(db, 'users', updatedSubscription.metadata.userId), {
+          subscriptionStatus: updatedSubscription.status,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        break;
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    return NextResponse.json(
+      { error: `Webhook Error: ${err.message}` },
+      { status: 400 }
+    );
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
