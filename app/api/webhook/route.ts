@@ -1,11 +1,8 @@
-// src/app/api/webhook/route.ts
-
 import { NextResponse } from 'next/server';
 import { stripe } from '@/app/lib/stripe';
-import { db, admin } from '@/app/lib/firebaseAdmin'; // Importa da firebaseAdmin
+import { db, admin } from '@/app/lib/firebaseAdmin';
 import Stripe from 'stripe';
 
-// Definizione delle interfacce
 interface UpdateData {
   subscriptionStatus: string;
   updatedAt: FirebaseFirestore.Timestamp;
@@ -31,12 +28,49 @@ type WebhookSession = Stripe.Checkout.Session & {
   };
 };
 
-type WebhookSubscription = Stripe.Subscription & { // Assicurati di usare questa tipizzazione
+type WebhookSubscription = Stripe.Subscription & {
   metadata: {
     userId: string;
   };
   status: string;
+  customer: string;
 };
+
+async function findUserByCustomerId(customerId: string): Promise<string | null> {
+  try {
+    console.log('Searching for user - customerId:', customerId);
+    
+    // Prima cerca per customerId
+    const userByCustomerId = await db
+      .collection('users')
+      .where('customerId', '==', customerId)
+      .limit(1)
+      .get();
+
+    if (!userByCustomerId.empty) {
+      console.log('User found by customerId');
+      return userByCustomerId.docs[0].id;
+    }
+
+    // Se non trova, prova a cercare nelle subscriptions
+    const subscriptions = await db
+      .collection('users')
+      .where('subscriptionId', '==', customerId)
+      .limit(1)
+      .get();
+
+    if (!subscriptions.empty) {
+      console.log('User found by subscriptionId');
+      return subscriptions.docs[0].id;
+    }
+
+    console.log('No user found with either customerId or subscriptionId');
+    return null;
+  } catch (error) {
+    console.error('Error finding user:', error);
+    return null;
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -53,7 +87,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log('Received webhook with signature:', signature);
+    console.log('Webhook signature:', signature);
 
     const event = stripe.webhooks.constructEvent(
       body,
@@ -61,43 +95,41 @@ export async function POST(req: Request) {
       webhookSecret
     );
 
-    console.log('Constructed event:', event.type);
+    console.log('Event type:', event.type);
+    console.log('Event data:', JSON.stringify(event.data.object, null, 2));
 
     const eventId = event.id;
 
-    // Idempotency: verifica se l'evento è già stato elaborato
+    // Idempotency check
     const eventRef = db.collection('webhookEvents').doc(eventId);
     const eventDoc = await eventRef.get();
 
     if (eventDoc.exists) {
-      console.log(`Evento ${eventId} già elaborato.`);
+      console.log(`Event ${eventId} already processed`);
       return NextResponse.json({ received: true });
     }
 
-    // Segna l'evento come elaborato
+    // Mark event as processed
     await eventRef.set({ received: true });
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        console.log('Handling checkout.session.completed event');
+        console.log('Processing checkout.session.completed');
         const session = event.data.object as WebhookSession;
+        console.log('Complete session data:', JSON.stringify(session, null, 2));
 
         if (!session.metadata?.userId) {
           console.error('Missing userId in session metadata');
           throw new Error('Missing userId in session metadata');
         }
 
-        console.log('User ID from session metadata:', session.metadata.userId);
-
         const userRef = db.collection('users').doc(session.metadata.userId);
         const userDoc = await userRef.get();
 
         if (!userDoc.exists) {
-          console.error('User document not found for userId:', session.metadata.userId);
+          console.error('User document not found:', session.metadata.userId);
           throw new Error('User document not found');
         }
-
-        console.log('User document found:', userDoc.id);
 
         const updateData: UpdateData = {
           subscriptionStatus: 'active',
@@ -109,17 +141,15 @@ export async function POST(req: Request) {
           lastPaymentSuccess: admin.firestore.Timestamp.now(),
         };
 
-        console.log('Update data:', updateData);
-
+        console.log('Updating user document with:', updateData);
         await userRef.set(updateData, { merge: true });
-
-        console.log('User document updated successfully for userId:', session.metadata.userId);
+        console.log('User document updated successfully');
         break;
       }
 
       case 'checkout.session.expired': {
+        console.log('Processing checkout.session.expired');
         const session = event.data.object as WebhookSession;
-        console.log('Session expired for user:', session.metadata?.userId);
 
         if (!session.metadata?.userId) {
           throw new Error('Missing userId in session metadata');
@@ -133,16 +163,21 @@ export async function POST(req: Request) {
         };
 
         await db.collection('users').doc(session.metadata.userId).set(updateData, { merge: true });
-        console.log('User document updated for expired session:', session.metadata.userId);
+        console.log('Session expired status updated');
         break;
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
-        console.log('Subscription deleted for user:', subscription.metadata?.userId);
+        console.log('Processing customer.subscription.deleted');
+        const subscription = event.data.object as WebhookSubscription;
+        console.log('Full subscription data:', JSON.stringify(subscription, null, 2));
 
-        if (!subscription.metadata?.userId) {
-          throw new Error('Missing userId in subscription metadata');
+        // Se non abbiamo metadata.userId, proviamo a trovare l'utente tramite il customerId
+        const userId = subscription.metadata?.userId || await findUserByCustomerId(subscription.customer);
+
+        if (!userId) {
+          console.log('Could not find associated user');
+          return NextResponse.json({ received: true });
         }
 
         const updateData: UpdateData = {
@@ -152,17 +187,22 @@ export async function POST(req: Request) {
           subscriptionDeletedAt: admin.firestore.Timestamp.now(),
         };
 
-        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
-        console.log('User document updated for deleted subscription:', subscription.metadata.userId);
+        await db.collection('users').doc(userId).set(updateData, { merge: true });
+        console.log('Subscription deleted status updated');
         break;
       }
 
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
-        console.log('Subscription updated for user:', subscription.metadata?.userId);
+        console.log('Processing customer.subscription.updated');
+        const subscription = event.data.object as WebhookSubscription;
+        console.log('Full subscription data:', JSON.stringify(subscription, null, 2));
 
-        if (!subscription.metadata?.userId) {
-          throw new Error('Missing userId in subscription metadata');
+        // Usa lo stesso pattern di fallback al customerId
+        const userId = subscription.metadata?.userId || await findUserByCustomerId(subscription.customer);
+
+        if (!userId) {
+          console.log('Could not find associated user');
+          return NextResponse.json({ received: true });
         }
 
         const updateData: UpdateData = {
@@ -178,18 +218,21 @@ export async function POST(req: Request) {
           updateData.lastPaymentFailure = admin.firestore.Timestamp.now();
         }
 
-        console.log('Updating subscription with data:', updateData);
-
-        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
-        console.log('User document updated successfully for subscription update:', subscription.metadata.userId);
+        console.log('Updating subscription with:', updateData);
+        await db.collection('users').doc(userId).set(updateData, { merge: true });
+        console.log('Subscription update completed');
         break;
       }
 
       case 'customer.subscription.trial_will_end': {
-        const subscription = event.data.object as WebhookSubscription; // Utilizzo della tipizzazione
+        console.log('Processing customer.subscription.trial_will_end');
+        const subscription = event.data.object as WebhookSubscription;
+        
+        const userId = subscription.metadata?.userId || await findUserByCustomerId(subscription.customer);
 
-        if (!subscription.metadata?.userId) {
-          throw new Error('Missing userId in subscription metadata');
+        if (!userId) {
+          console.log('Could not find associated user');
+          return NextResponse.json({ received: true });
         }
 
         const updateData: UpdateData = {
@@ -198,8 +241,8 @@ export async function POST(req: Request) {
           updatedAt: admin.firestore.Timestamp.now(),
         };
 
-        await db.collection('users').doc(subscription.metadata.userId).set(updateData, { merge: true });
-        console.log('User document updated for trial end warning:', subscription.metadata.userId);
+        await db.collection('users').doc(userId).set(updateData, { merge: true });
+        console.log('Trial end warning updated');
         break;
       }
 
@@ -230,4 +273,3 @@ export const config = {
     bodyParser: false,
   },
 };
-
