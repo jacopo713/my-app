@@ -5,21 +5,17 @@ import { db } from '@/app/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
 
-interface WebhookSession {
+type StripeCheckoutSession = Stripe.Checkout.Session & {
   metadata: {
     userId: string;
   };
-  customer: string;
-  subscription: string;
-  customer_email: string;
-}
+};
 
-interface WebhookSubscription {
+type StripeSubscription = Stripe.Subscription & {
   metadata: {
     userId: string;
   };
-  status: Stripe.Subscription.Status;
-}
+};
 
 export async function POST(req: Request) {
   try {
@@ -43,12 +39,18 @@ export async function POST(req: Request) {
     // Gestisce gli eventi dell'abbonamento
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as WebhookSession;
+        const session = event.data.object as unknown as StripeCheckoutSession;
+        
+        // Verifica che i dati necessari esistano
+        if (!session.metadata?.userId) {
+          throw new Error('Missing userId in session metadata');
+        }
+
         await setDoc(doc(db, 'users', session.metadata.userId), {
           subscriptionStatus: 'active',
           customerId: session.customer,
           subscriptionId: session.subscription,
-          email: session.customer_email,
+          email: session.customer_details?.email,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -56,7 +58,12 @@ export async function POST(req: Request) {
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as WebhookSubscription;
+        const subscription = event.data.object as unknown as StripeSubscription;
+        
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
         await setDoc(doc(db, 'users', subscription.metadata.userId), {
           subscriptionStatus: 'inactive',
           updatedAt: new Date().toISOString()
@@ -65,9 +72,14 @@ export async function POST(req: Request) {
       }
 
       case 'customer.subscription.updated': {
-        const updatedSubscription = event.data.object as WebhookSubscription;
-        await setDoc(doc(db, 'users', updatedSubscription.metadata.userId), {
-          subscriptionStatus: updatedSubscription.status,
+        const subscription = event.data.object as unknown as StripeSubscription;
+        
+        if (!subscription.metadata?.userId) {
+          throw new Error('Missing userId in subscription metadata');
+        }
+
+        await setDoc(doc(db, 'users', subscription.metadata.userId), {
+          subscriptionStatus: subscription.status,
           updatedAt: new Date().toISOString()
         }, { merge: true });
         break;
