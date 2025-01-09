@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/app/lib/firebase';
+import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
+import { doc, setDoc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -18,11 +19,24 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     try {
+      // 1. Creiamo l'utente in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Aggiorniamo il profilo con il nome
       await updateProfile(userCredential.user, {
         displayName: name
       });
 
+      // 3. Creiamo il documento utente con stato payment_required
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email,
+        displayName: name,
+        subscriptionStatus: 'payment_required',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      // 4. Procediamo con il checkout Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
