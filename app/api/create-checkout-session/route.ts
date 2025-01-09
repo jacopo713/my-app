@@ -23,13 +23,13 @@ interface WebhookSubscription {
 }
 
 export async function POST(req: Request) {
-  const body = await req.text();
-  const headersList = headers();
-  const sig = headersList.get('stripe-signature');
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
   try {
-    if (!sig || !webhookSecret) {
+    const body = await req.text();
+    const headerList = headers();
+    const signature = headerList.get('stripe-signature') || '';
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!signature || !webhookSecret) {
       return NextResponse.json(
         { error: 'Missing signature or webhook secret' },
         { status: 400 }
@@ -38,9 +38,9 @@ export async function POST(req: Request) {
 
     const event = stripe.webhooks.constructEvent(
       body,
-      sig,
+      signature,
       webhookSecret
-    ) as Stripe.Event;
+    );
 
     // Gestisce gli eventi dell'abbonamento
     switch (event.type) {
