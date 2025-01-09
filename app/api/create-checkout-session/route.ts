@@ -4,6 +4,23 @@ import { stripe } from '@/app/lib/stripe';
 import { headers } from 'next/headers';
 import { db } from '@/app/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import Stripe from 'stripe';
+
+interface WebhookSession extends Stripe.Checkout.Session {
+  metadata: {
+    userId: string;
+  };
+  customer: string;
+  subscription: string;
+  customer_email: string;
+}
+
+interface WebhookSubscription extends Stripe.Subscription {
+  metadata: {
+    userId: string;
+  };
+  status: string;
+}
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -23,13 +40,12 @@ export async function POST(req: Request) {
       body,
       sig,
       webhookSecret
-    );
+    ) as Stripe.Event;
 
     // Gestisce gli eventi dell'abbonamento
     switch (event.type) {
       case 'checkout.session.completed':
-        const session = event.data.object as any;
-        // Aggiorna lo stato dell'abbonamento in Firestore
+        const session = event.data.object as WebhookSession;
         await setDoc(doc(db, 'users', session.metadata.userId), {
           subscriptionStatus: 'active',
           customerId: session.customer,
@@ -41,8 +57,7 @@ export async function POST(req: Request) {
         break;
 
       case 'customer.subscription.deleted':
-        const subscription = event.data.object as any;
-        // Aggiorna lo stato quando l'abbonamento viene cancellato
+        const subscription = event.data.object as WebhookSubscription;
         await setDoc(doc(db, 'users', subscription.metadata.userId), {
           subscriptionStatus: 'inactive',
           updatedAt: new Date().toISOString()
@@ -50,8 +65,7 @@ export async function POST(req: Request) {
         break;
 
       case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object as any;
-        // Aggiorna lo stato quando l'abbonamento viene modificato
+        const updatedSubscription = event.data.object as WebhookSubscription;
         await setDoc(doc(db, 'users', updatedSubscription.metadata.userId), {
           subscriptionStatus: updatedSubscription.status,
           updatedAt: new Date().toISOString()
@@ -60,10 +74,16 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error('Webhook error:', err);
+  } catch (error: unknown) {
+    console.error('Webhook error:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: `Webhook Error: ${error.message}` },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: `Webhook Error: ${err.message}` },
+      { error: 'Unknown error occurred' },
       { status: 400 }
     );
   }
