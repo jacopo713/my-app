@@ -37,29 +37,32 @@ export default function RegisterForm() {
       });
 
       // 4. Procediamo con il checkout Stripe
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          userId: userCredential.user.uid,
-        }),
-      });
+     const response = await fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email,
+    userId: userCredential.user.uid,
+  }),
+});
 
-      const { sessionId } = await response.json();
-      
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Stripe failed to initialize');
-      }
-      
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+const data = await response.json(); // Estrai la risposta JSON
+console.log('Response from API:', data); // Debug: verifica la risposta
 
-      if (stripeError) {
-        setError(stripeError.message || 'An error occurred with the payment process');
-      }
+const { sessionId } = data; // Estrai sessionId dalla risposta
+
+const stripe = await stripePromise;
+if (!stripe) {
+  throw new Error('Stripe failed to initialize');
+}
+
+const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+
+if (stripeError) {
+  setError(stripeError.message || 'An error occurred with the payment process');
+}
     } catch (err) {
       console.error('Registration error:', err);
       setError('Failed to create account. Please try again.');

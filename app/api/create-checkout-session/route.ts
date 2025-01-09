@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ url: session.url }); // Restituisci la URL, non la session ID
+    return NextResponse.json({ sessionId: session.id }); // Restituisci la URL, non la session ID
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json({ error: 'Error creating checkout session' }, { status: 500 });
