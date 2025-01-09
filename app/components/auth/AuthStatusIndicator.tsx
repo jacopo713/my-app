@@ -1,8 +1,8 @@
-// components/AuthStatusIndicator.tsx
+// app/components/auth/AuthStatusIndicator.tsx
 'use client';
 
 import React from 'react';
-import { useAuth } from '.../contexts/AuthContext';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { UserCheck, UserX } from 'lucide-react';
 
 const AuthStatusIndicator: React.FC<AuthStatusProps> = ({ className = '' }) => {
