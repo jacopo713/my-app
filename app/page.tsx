@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import AuthStatusIndicator from '../components/AuthStatusIndicator';
+import AuthStatusIndicator from './components/auth/AuthStatusIndicator';
 
 export default function HomePage() {
   return (
