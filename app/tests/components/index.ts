@@ -3,12 +3,12 @@
 import RavenTest from './Raven';
 import EyeHandTest from './EyeHand';
 import StroopTest from './Stroop';
-import SpeedReadingTrainer from './SpeedReadingTrainer'; // Importa il nuovo componente
+import SpeedReadingTrainer from './SpeedReading'; // Importa il nuovo componente
 
 // Export interfaces
 export type { RavenTestProps } from './Raven';
 export type { EyeHandTestProps } from './EyeHand';
-export type { SpeedReadingTrainerProps } from './SpeedReadingTrainer'; // Esporta l'interfaccia del nuovo componente
+export type { SpeedReadingTrainerProps } from './SpeedReading'; // Esporta l'interfaccia del nuovo componente
 
 // Export components
 export {
