@@ -1,19 +1,9 @@
 // app/components/subscription/CancelSubscription.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface Props {
   customerId: string | null;
@@ -23,7 +13,7 @@ interface Props {
 export default function CancelSubscription({ customerId, subscriptionId }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -54,14 +44,14 @@ export default function CancelSubscription({ customerId, subscriptionId }: Props
         throw new Error(data.error || 'Failed to cancel subscription');
       }
 
-      // Reindirizza alla home page dopo la cancellazione
+      // Redirect to home page after cancellation
       router.push('/');
     } catch (err) {
       console.error('Error cancelling subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to cancel subscription');
     } finally {
       setIsLoading(false);
-      setIsDialogOpen(false);
+      setShowConfirmDialog(false);
     }
   };
 
@@ -74,18 +64,21 @@ export default function CancelSubscription({ customerId, subscriptionId }: Props
       )}
 
       <button
-        onClick={() => setIsDialogOpen(true)}
+        onClick={() => setShowConfirmDialog(true)}
         disabled={isLoading}
         className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-600 rounded-lg hover:bg-red-50 transition-colors duration-200"
       >
         {isLoading ? 'Processing...' : 'Cancel Subscription'}
       </button>
 
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
-            <AlertDialogDescription>
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Cancel Subscription
+            </h3>
+            <div className="text-sm text-gray-500 mb-6">
               Are you sure you want to cancel your subscription? This will:
               <ul className="mt-2 list-disc list-inside">
                 <li>Cancel your current subscription immediately</li>
@@ -93,19 +86,26 @@ export default function CancelSubscription({ customerId, subscriptionId }: Props
                 <li>Remove all your data</li>
               </ul>
               This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, keep my subscription</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleCancellation}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Yes, cancel subscription
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={isLoading}
+              >
+                No, keep my subscription
+              </button>
+              <button
+                onClick={handleCancellation}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Yes, cancel subscription'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
