@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain } from 'lucide-react';
 import RavenTest from './components/Raven';
-import { useAuth } from '@/app/contexts/AuthContext';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 type TestPhase = "intro" | "raven" | "results";
