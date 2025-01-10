@@ -6,7 +6,7 @@ import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, sign
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/app/components/ui/Alert';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 

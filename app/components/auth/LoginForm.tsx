@@ -8,7 +8,7 @@ import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/app/components/ui/Alert';
 
 interface AuthError {
   message: string;
