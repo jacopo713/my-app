@@ -206,8 +206,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
   /** Trova la "risposta corretta" (spesso l'ultima cella [2,2]) */
   const getCorrectAnswer = useCallback((newMatrix: Array<Array<ShapeProps | null>>, level: number): ShapeProps => {
-    // Esempio: se [2,2] è null, la prendiamo come "corretta" che andrà riempita
-    // Oppure generiamo un "pattern" coerente con la logica
     const c = complexityMatrix[level as keyof typeof complexityMatrix];
     if (!newMatrix[2][2]) {
       return {
@@ -218,8 +216,8 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         scale: level >= 7 ? systemConfig.scales[(2 * 2) % c.scales] : 1,
       };
     }
-    // Se per qualche motivo [2,2] è stato riempito, lo consideriamo come correct
-    return { ...(newMatrix[2][2] as ShapeProps), isCorrect: true };
+    // Restituisci solo ShapeProps, senza isCorrect
+    return newMatrix[2][2] as ShapeProps;
   }, [systemConfig.shapes, systemConfig.rotations, systemConfig.colors, systemConfig.opacities, systemConfig.scales]);
 
   /**
@@ -229,7 +227,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   const generateAnswers = useCallback((correctAnswer: ShapeProps, level: number): Answer[] => {
     const c = complexityMatrix[level as keyof typeof complexityMatrix];
     const allAnswers: Answer[] = [
-      { ...correctAnswer, isCorrect: true },
+      { ...correctAnswer, isCorrect: true }, // Aggiungi isCorrect qui
     ];
 
     let attempts = 0;
@@ -243,14 +241,12 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         false
       );
 
-      // Se livello <= 10, introduciamo piccole variazioni
       if (level <= 10) {
         newAnswer.rotation = ((newAnswer.rotation ?? 0) + 45) % 360;
         newAnswer.color =
           systemConfig.colors[(systemConfig.colors.indexOf(newAnswer.color!) + 1) % c.colors];
       }
 
-      // Evita risposte "visualmente identiche"
       if (allAnswers.some((ans) => areVisuallyIdentical(ans, newAnswer))) {
         attempts++;
         continue;
@@ -258,7 +254,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
       allAnswers.push(newAnswer);
     }
 
-    // Prendi 4 risposte totali (1 corretta + 3 distrattori)
     const finalAnswers = allAnswers.sort(() => Math.random() - 0.5).slice(0, 4);
     return finalAnswers.sort(() => Math.random() - 0.5);
   }, [systemConfig.shapes, systemConfig.rotations, systemConfig.colors, systemConfig.opacities, systemConfig.scales]);
