@@ -3,11 +3,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare } from 'lucide-react';
-import { RavenTest, EyeHandTest, StroopTest } from './components';
+import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
+import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "results";
 
 interface TestResults {
   raven: {
@@ -27,6 +27,11 @@ interface TestResults {
     interferenceScore: number;
     responsesPerMinute: string;
   } | null;
+  speedReading: {
+    wpm: number;
+    accuracy: number;
+    score: number;
+  } | null;
 }
 
 export default function TestPage() {
@@ -34,7 +39,8 @@ export default function TestPage() {
   const [results, setResults] = useState<TestResults>({
     raven: null,
     eyeHand: null,
-    stroop: null
+    stroop: null,
+    speedReading: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -47,7 +53,7 @@ export default function TestPage() {
         percentile: Math.round((ravenResults.score / 1000) * 100)
       }
     }));
-    setProgress(33);
+    setProgress(25);
     setPhase("eyehand");
   };
 
@@ -56,32 +62,34 @@ export default function TestPage() {
       ...prev,
       eyeHand: eyeHandResults
     }));
-    setProgress(66);
+    setProgress(50);
     setPhase("stroop");
   };
 
-  interface StroopResults {
-  score: number;
-  accuracy: number;
-  averageReactionTime: number;
-  interferenceScore: number;
-  responsesPerMinute: string;
-}
-
-  const handleStroopComplete = (stroopResults: StroopResults) => {
+  const handleStroopComplete = (stroopResults: {
+    score: number;
+    accuracy: number;
+    averageReactionTime: number;
+    interferenceScore: number;
+    responsesPerMinute: string;
+  }) => {
     setResults(prev => ({
       ...prev,
-      stroop: {
-        score: stroopResults.score,
-        accuracy: stroopResults.accuracy,
-        averageReactionTime: stroopResults.averageReactionTime,
-        interferenceScore: stroopResults.interferenceScore,
-        responsesPerMinute: stroopResults.responsesPerMinute
-      }
+      stroop: stroopResults
+    }));
+    setProgress(75);
+    setPhase("speedreading");
+  };
+
+  const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; accuracy: number; score: number }) => {
+    setResults(prev => ({
+      ...prev,
+      speedReading: speedReadingResults
     }));
     setProgress(100);
     setPhase("results");
   };
+
   const renderCurrentPhase = () => {
     switch (phase) {
       case "intro":
@@ -91,7 +99,7 @@ export default function TestPage() {
               <h1 className="text-3xl font-bold text-gray-800 mb-6">
                 Test del Quoziente Intellettivo
               </h1>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
                 <div className="bg-blue-50 p-6 rounded-lg">
                   <Brain className="w-8 h-8 text-blue-500 mb-4" />
                   <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
@@ -106,6 +114,11 @@ export default function TestPage() {
                   <ActivitySquare className="w-8 h-8 text-purple-500 mb-4" />
                   <h3 className="font-bold mb-2">Interferenza Cognitiva</h3>
                   <p className="text-gray-600">Test di Stroop</p>
+                </div>
+                <div className="bg-orange-50 p-6 rounded-lg">
+                  <BookOpen className="w-8 h-8 text-orange-500 mb-4" />
+                  <h3 className="font-bold mb-2">Lettura Veloce</h3>
+                  <p className="text-gray-600">Test di velocità di lettura</p>
                 </div>
               </div>
               <button
@@ -127,6 +140,9 @@ export default function TestPage() {
 
       case "stroop":
         return <StroopTest onComplete={handleStroopComplete} />;
+
+      case "speedreading":
+        return <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />;
 
       case "results":
         return (
@@ -167,6 +183,17 @@ export default function TestPage() {
                     <p>Tempo di Reazione Medio: {results.stroop.averageReactionTime.toFixed(0)}ms</p>
                     <p>Effetto Interferenza: {results.stroop.interferenceScore.toFixed(0)}ms</p>
                     <p>Risposte al Minuto: {results.stroop.responsesPerMinute}</p>
+                  </div>
+                )}
+                {results.speedReading && (
+                  <div className="p-4 bg-orange-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-6 h-6 text-orange-500" />
+                      <h3 className="font-bold">Lettura Veloce</h3>
+                    </div>
+                    <p>Velocità: {results.speedReading.wpm} WPM</p>
+                    <p>Precisione: {results.speedReading.accuracy}%</p>
+                    <p>Punteggio: {results.speedReading.score}</p>
                   </div>
                 )}
               </div>
