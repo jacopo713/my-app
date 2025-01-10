@@ -1,3 +1,4 @@
+// app/tests/components/Raven/index.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ interface Answer extends ShapeProps {
   isCorrect: boolean;
 }
 
+// Esporta RavenTestProps correttamente
 export interface RavenTestProps {
   onComplete: (results: { score: number; accuracy: number }) => void;
 }
@@ -376,4 +378,3 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 };
 
 export default RavenTest;
-export type { RavenTestProps };
