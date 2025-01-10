@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Clock, Target } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface Position {
   x: number;
@@ -303,70 +302,68 @@ const EyeHandTest = ({ onComplete }: { onComplete: (r: Results) => void }) => {
   }, [calculateAveragePrecision, onComplete, gameState.isRunning]);
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-bold">
+    <div className="max-w-2xl mx-auto p-4 bg-white rounded-lg shadow-lg">
+      <div className="flex flex-row items-center justify-between pb-4">
+        <div className="text-2xl font-bold">
           <div className="flex items-center gap-2">
             <Target className="w-6 h-6 text-blue-600" />
             Test di Coordinazione
           </div>
-        </CardTitle>
+        </div>
         <TimerDisplay seconds={gameState.timer} />
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>Precisione Media: {averagePrecision.toFixed(1)}%</span>
-            <span>Misurazioni: {totalMeasurements}</span>
-          </div>
-          
-          <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+      </div>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex justify-between items-center text-sm text-gray-600">
+          <span>Precisione Media: {averagePrecision.toFixed(1)}%</span>
+          <span>Misurazioni: {totalMeasurements}</span>
+        </div>
+        
+        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-200 ease-out"
+            style={{ 
+              width: `${currentPrecision}%`,
+              transitionProperty: 'width, background-color',
+              transitionDuration: isMobile ? '300ms' : '200ms'
+            }}
+          />
+        </div>
+      </div>
+
+      <div
+        ref={containerRef}
+        className="relative bg-white rounded-lg shadow-lg aspect-square w-full touch-none select-none"
+        onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {gameState.isRunning && (
+          <>
             <div
-              className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-200 ease-out"
-              style={{ 
-                width: `${currentPrecision}%`,
-                transitionProperty: 'width, background-color',
-                transitionDuration: isMobile ? '300ms' : '200ms'
+              className="absolute w-16 h-16 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"
+              style={{
+                left: position.x,
+                top: position.y,
+                transition: isMobile ? 'transform 100ms ease-out' : 'none'
               }}
             />
-          </div>
-        </div>
-
-        <div
-          ref={containerRef}
-          className="relative bg-white rounded-lg shadow-lg aspect-square w-full touch-none select-none"
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {gameState.isRunning && (
-            <>
-              <div
-                className="absolute w-16 h-16 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"
-                style={{
-                  left: position.x,
-                  top: position.y,
-                  transition: isMobile ? 'transform 100ms ease-out' : 'none'
-                }}
-              />
-              <div
-                className="absolute w-20 h-20 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ 
-                  left: cursorPos.x, 
-                  top: cursorPos.y,
-                  opacity: isTouch ? 0.9 : 0.6,
-                  transition: isMobile ? 'all 100ms ease-out' : 'none'
-                }}
-              >
-                <div className="w-full h-full border-4 border-blue-500 rounded-full" />
-                <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2" />
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div
+              className="absolute w-20 h-20 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ 
+                left: cursorPos.x, 
+                top: cursorPos.y,
+                opacity: isTouch ? 0.9 : 0.6,
+                transition: isMobile ? 'all 100ms ease-out' : 'none'
+              }}
+            >
+              <div className="w-full h-full border-4 border-blue-500 rounded-full" />
+              <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2" />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 
