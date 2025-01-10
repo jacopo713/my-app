@@ -7,8 +7,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   fetchSignInMethodsForEmail,
-  AuthError,
-  UserCredential
+  AuthError
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -51,7 +50,6 @@ export default function LoginForm() {
     } catch (err) {
       console.error('Google login error:', err);
       
-      // Type guard per controllare se l'errore è di tipo AuthError
       if (err instanceof Error && 'code' in err) {
         const authError = err as AuthError;
         
@@ -120,7 +118,6 @@ export default function LoginForm() {
         </div>
       )}
       
-      {/* Google Login Button */}
       <button
         type="button"
         onClick={handleGoogleLogin}

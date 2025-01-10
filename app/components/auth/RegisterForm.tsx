@@ -17,13 +17,6 @@ import { doc, setDoc, getDoc, DocumentReference } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-interface RegisterError extends Error {
-  code?: string;
-  customData?: {
-    email?: string;
-  };
-}
-
 interface UserData {
   email: string | null;
   displayName: string | null;
@@ -280,6 +273,7 @@ export default function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              minLength={6}
             />
           </div>
         </div>
