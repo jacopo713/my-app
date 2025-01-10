@@ -373,5 +373,9 @@ const EyeHandTest: React.FC<EyeHandTestProps> = ({ onComplete }) => {
   );
 };
 
+
+export interface EyeHandTestProps {
+  onComplete: (results: Results) => void;
+}
 export default EyeHandTest;
 

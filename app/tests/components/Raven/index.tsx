@@ -289,4 +289,9 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   );
 };
 
+
+export interface RavenTestProps {
+  onComplete: (results: { score: number; accuracy: number }) => void;
+}
+
 export default RavenTest;
