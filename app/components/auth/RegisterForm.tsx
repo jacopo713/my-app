@@ -2,122 +2,131 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, 
+         signInWithPopup, fetchSignInMethodsForEmail, signOut } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Alert, AlertDescription } from '@/app/components/ui/Alert';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface AuthError {
- message: string;
- type: 'error' | 'warning' | 'info';
- action?: string;
+  message: string;
+  type: 'error' | 'warning' | 'info';
+  action?: string;
 }
 
 interface UserRegistrationData {
- email: string;
- displayName: string;
- authProvider: 'email' | 'google';
- subscriptionStatus: 'payment_required';
- createdAt: string;
- updatedAt: string;
- customerId: null;
- subscriptionId: null;
- lastLoginAt: string;
- isActive: boolean;
- paymentMethod: null;
- billingDetails: null;
- photoURL?: string | null;
+  email: string;
+  displayName: string;
+  authProvider: 'email' | 'google';
+  subscriptionStatus: 'payment_required';
+  createdAt: string;
+  updatedAt: string;
+  customerId: null;
+  subscriptionId: null;
+  lastLoginAt: string;
+  isActive: boolean;
+  paymentMethod: null;
+  billingDetails: null;
+  photoURL?: string | null;
 }
 
 export default function RegisterForm() {
- const [email, setEmail] = useState('');
- const [password, setPassword] = useState('');
- const [name, setName] = useState('');
- const [authError, setAuthError] = useState<AuthError | null>(null);
- const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [authError, setAuthError] = useState<AuthError | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-const validateNewRegistration = async (email: string, provider: 'email' | 'google'): Promise<boolean> => {
-  try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    
-    if (methods.length > 0) {
-      // Se esistono già metodi di autenticazione per questa email
-      if (methods.includes('password')) {
-        setAuthError({
-          message: 'Questa email è già registrata con password. Per favore, accedi con email e password.',
-          type: 'warning',
-          action: 'login'
-        });
-        return false;
-      }
-      
-      if (methods.includes('google.com')) {
-        setAuthError({
-          message: 'Questa email è già registrata con Google. Per favore, usa il pulsante "Continua con Google" per accedere.',
-          type: 'warning',
-          action: 'useGoogle'
-        });
-        return false;
-      }
-    }
+  const validateNewRegistration = async (email: string, provider: 'email' | 'google'): Promise<boolean> => {
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      console.log('Available auth methods:', methods);
 
-    // Se stiamo tentando di registrare con Google, verifichiamo che l'email non sia già usata
-    if (provider === 'google') {
-      if (methods.includes('password')) {
+      if (methods.length > 0) {
+        // Check for existing email/password account
+        if (methods.includes('password')) {
+          setAuthError({
+            message: 'Questa email è già registrata. Accedi con email e password.',
+            type: 'warning',
+            action: 'login'
+          });
+          return false;
+        }
+
+        // Check for existing Google account
+        if (methods.includes('google.com')) {
+          setAuthError({
+            message: 'Questa email è già registrata con Google. Usa il pulsante "Continua con Google".',
+            type: 'warning',
+            action: 'useGoogle'
+          });
+          return false;
+        }
+      }
+
+      // Additional provider-specific checks
+      if (provider === 'google' && methods.includes('password')) {
         setAuthError({
-          message: 'Questa email è già registrata con password. Non è possibile utilizzare lo stesso indirizzo email con Google.',
+          message: 'Email già registrata con password. Usa un\'altra email per Google.',
           type: 'error'
         });
         return false;
       }
-    }
 
-    // Se stiamo tentando di registrare con email/password, verifichiamo che l'email non sia già usata con Google
-    if (provider === 'email') {
-      if (methods.includes('google.com')) {
+      if (provider === 'email' && methods.includes('google.com')) {
         setAuthError({
-          message: 'Questa email è già registrata con Google. Non è possibile utilizzare lo stesso indirizzo email con password.',
+          message: 'Email già registrata con Google. Usa un\'altra email.',
           type: 'error'
         });
         return false;
       }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating registration:', error);
+      setAuthError({
+        message: 'Errore durante la verifica dell\'email.',
+        type: 'error'
+      });
+      return false;
     }
+  };
 
-    return true;
-  } catch (error) {
-    console.error('Error validating registration:', error);
-    setAuthError({
-      message: 'Errore durante la verifica dell\'email.',
-      type: 'error'
-    });
-    return false;
-  } };
+  const createUserDocument = async (
+    userId: string, 
+    data: UserRegistrationData
+  ): Promise<void> => {
+    try {
+      // Check if user document already exists
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        console.log('User document already exists:', userDoc.data());
+        throw new Error('Account già esistente con questo ID');
+      }
 
- const createUserDocument = async (
-   userId: string, 
-   data: UserRegistrationData
- ): Promise<void> => {
+      await setDoc(doc(db, 'users', userId), {
+        ...data,
+        uid: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error creating user document:', error);
+      throw new Error('Errore durante la creazione del profilo utente');
+    }
+  };
+const proceedToPayment = async (userId: string, email: string): Promise<void> => {
    try {
-     await setDoc(doc(db, 'users', userId), {
-       ...data,
-       uid: userId,
-       createdAt: new Date().toISOString(),
-       updatedAt: new Date().toISOString()
-     });
-   } catch (error) {
-     console.error('Error creating user document:', error);
-     throw new Error('Errore durante la creazione del profilo utente');
-   }
- };
+     const currentUser = auth.currentUser;
+     if (!currentUser) throw new Error('Utente non autenticato');
 
- const proceedToPayment = async (userId: string, email: string): Promise<void> => {
-   try {
-     const idToken = await auth.currentUser?.getIdToken();
-     if (!idToken) throw new Error('Token non disponibile');
+     const idToken = await currentUser.getIdToken();
      
      const response = await fetch('/api/create-checkout-session', {
        method: 'POST',
@@ -127,6 +136,11 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
        },
        body: JSON.stringify({ email, userId }),
      });
+
+     if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.message || 'Errore durante la creazione della sessione di pagamento');
+     }
 
      const data = await response.json();
      
@@ -143,11 +157,26 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
 
    } catch (error) {
      console.error('Payment error:', error);
+     // Gestione degli errori di pagamento
+     await cleanup(userId);
      setAuthError({
-       message: 'Errore durante l\'inizializzazione del pagamento.',
+       message: 'Errore durante l\'inizializzazione del pagamento. Riprova più tardi.',
        type: 'error'
      });
      throw error;
+   }
+ };
+
+ const cleanup = async (userId: string): Promise<void> => {
+   try {
+     // Elimina il documento utente se esiste
+     await setDoc(doc(db, 'users', userId), {
+       isActive: false,
+       deletedAt: new Date().toISOString(),
+       lastError: 'Payment initialization failed'
+     }, { merge: true });
+   } catch (error) {
+     console.error('Cleanup error:', error);
    }
  };
 
@@ -157,15 +186,18 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
    setAuthError(null);
 
    try {
-     const isValid = await validateNewRegistration(email);
+     // Validazione preventiva
+     const isValid = await validateNewRegistration(email, 'email');
      if (!isValid) {
        setLoading(false);
        return;
      }
 
+     // Creazione account
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      await updateProfile(userCredential.user, { displayName: name });
 
+     // Creazione documento utente
      const userData: UserRegistrationData = {
        email,
        displayName: name,
@@ -190,11 +222,18 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
        message: error instanceof Error ? error.message : 'Errore durante la registrazione.',
        type: 'error'
      });
+     
+     // Se c'è un errore, proviamo a fare cleanup
+     if (auth.currentUser) {
+       const userId = auth.currentUser.uid;
+       await cleanup(userId);
+       await auth.currentUser.delete();
+     }
+     
      setLoading(false);
    }
  };
-
- const handleGoogleRegistration = async (): Promise<void> => {
+const handleGoogleRegistration = async (): Promise<void> => {
    setLoading(true);
    setAuthError(null);
 
@@ -206,13 +245,30 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
        throw new Error('Email Google non disponibile');
      }
 
-     const isValid = await validateNewRegistration(result.user.email);
+     // Validazione preventiva
+     const isValid = await validateNewRegistration(result.user.email, 'google');
      if (!isValid) {
-       await auth.signOut();
+       await signOut(auth); // Logout immediato se non valido
        setLoading(false);
        return;
      }
 
+     // Verifica se esiste già un documento utente
+     const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+     if (userDoc.exists()) {
+       console.log('User document already exists:', userDoc.data());
+       if (userDoc.data().authProvider === 'password') {
+         setAuthError({
+           message: 'Account già esistente con email/password. Usa il login con email.',
+           type: 'error'
+         });
+         await signOut(auth);
+         setLoading(false);
+         return;
+       }
+     }
+
+     // Creazione documento utente
      const userData: UserRegistrationData = {
        email: result.user.email,
        displayName: result.user.displayName || '',
@@ -234,10 +290,35 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
 
    } catch (error) {
      console.error('Google registration error:', error);
-     setAuthError({
-       message: error instanceof Error ? error.message : 'Errore durante la registrazione con Google.',
-       type: 'error'
-     });
+     
+     // Gestione specifica degli errori
+     if (error instanceof Error) {
+       if (error.message.includes('account-exists')) {
+         setAuthError({
+           message: 'Account già esistente con questa email. Accedi con il metodo appropriato.',
+           type: 'warning',
+           action: 'login'
+         });
+       } else {
+         setAuthError({
+           message: error.message,
+           type: 'error'
+         });
+       }
+     } else {
+       setAuthError({
+         message: 'Errore durante la registrazione con Google.',
+         type: 'error'
+       });
+     }
+
+     // Cleanup in caso di errore
+     if (auth.currentUser) {
+       const userId = auth.currentUser.uid;
+       await cleanup(userId);
+       await signOut(auth);
+     }
+     
      setLoading(false);
    }
  };
@@ -264,6 +345,7 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
        </Alert>
      )}
 
+     {/* Pulsante Google */}
      <button
        type="button"
        onClick={handleGoogleRegistration}
@@ -300,12 +382,11 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
        </div>
      </div>
 
+     {/* Form Email */}
      <form className="mt-8 space-y-6" onSubmit={handleEmailRegistration}>
        <div className="rounded-md shadow-sm space-y-4">
          <div>
-           <label htmlFor="name" className="sr-only">
-             Nome completo
-           </label>
+           <label htmlFor="name" className="sr-only">Nome completo</label>
            <input
              id="name"
              type="text"
@@ -318,9 +399,7 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
            />
          </div>
          <div>
-           <label htmlFor="email" className="sr-only">
-             Indirizzo email
-           </label>
+           <label htmlFor="email" className="sr-only">Indirizzo email</label>
            <input
              id="email"
              type="email"
@@ -333,9 +412,7 @@ const validateNewRegistration = async (email: string, provider: 'email' | 'googl
            />
          </div>
          <div>
-           <label htmlFor="password" className="sr-only">
-             Password
-           </label>
+           <label htmlFor="password" className="sr-only">Password</label>
            <input
              id="password"
              type="password"
