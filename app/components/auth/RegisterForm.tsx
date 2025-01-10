@@ -2,10 +2,18 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { 
+  createUserWithEmailAndPassword, 
+  updateProfile, 
+  GoogleAuthProvider, 
+  signInWithPopup,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  EmailAuthProvider
+} from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -16,6 +24,25 @@ export default function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const checkExistingAccount = async (email: string) => {
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        // Account già esistente
+        const methodsList = methods.join(', ');
+        throw new Error(`An account already exists with this email. Please sign in using: ${methodsList}`);
+      }
+      return false;
+    } catch (error: any) {
+      if (error.message.includes('An account already exists')) {
+        throw error;
+      }
+      // Altri errori di firebase
+      console.error('Error checking existing account:', error);
+      return false;
+    }
+  };
+
   const handleRegularSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     await handleRegistration('email', { email, password, name });
@@ -25,25 +52,22 @@ export default function RegisterForm() {
     await handleRegistration('google');
   };
 
-  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
-    setLoading(true);
-    try {
-      let userCredential;
-      
-      if (provider === 'google') {
-        const googleProvider = new GoogleAuthProvider();
-        userCredential = await signInWithPopup(auth, googleProvider);
-      } else {
-        if (!credentials) throw new Error('Credentials required for email signup');
-        userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-        await updateProfile(userCredential.user, {
-          displayName: credentials.name
-        });
-      }
+  const createOrUpdateUserDoc = async (
+    userId: string, 
+    userData: { 
+      email: string | null; 
+      displayName: string | null;
+      provider: string;
+    }
+  ) => {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
 
-      const userData = {
-        email: userCredential.user.email,
-        displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
+    if (!userSnap.exists()) {
+      // Nuovo utente - crea documento completo
+      await setDoc(userRef, {
+        email: userData.email,
+        displayName: userData.displayName,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -53,12 +77,83 @@ export default function RegisterForm() {
         isActive: true,
         paymentMethod: null,
         billingDetails: null,
-        authProvider: provider
-      };
+        authProvider: userData.provider
+      });
+    } else {
+      // Utente esistente - aggiorna solo i campi necessari
+      await setDoc(userRef, {
+        lastLoginAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        authProvider: userData.provider
+      }, { merge: true }); // Mantiene i dati esistenti
+    }
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+    return userRef;
+  };
+
+  const handleRegistration = async (
+    provider: 'email' | 'google',
+    credentials?: { email: string; password: string; name: string }
+  ) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      let userCredential;
+      let userData;
+
+      if (provider === 'google') {
+        // Verifica se esiste già un account con la stessa email
+        const googleProvider = new GoogleAuthProvider();
+        try {
+          userCredential = await signInWithPopup(auth, googleProvider);
+        } catch (error: any) {
+          if (error.code === 'auth/account-exists-with-different-credential') {
+            const email = error.customData?.email;
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            throw new Error(`This email is already registered. Please sign in using: ${methods.join(', ')}`);
+          }
+          throw error;
+        }
+
+        userData = {
+          email: userCredential.user.email,
+          displayName: userCredential.user.displayName,
+          provider: 'google.com'
+        };
+      } else {
+        if (!credentials) throw new Error('Credentials required for email signup');
+        
+        // Verifica account esistente prima della registrazione email
+        await checkExistingAccount(credentials.email);
+        
+        userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          credentials.email, 
+          credentials.password
+        );
+        
+        await updateProfile(userCredential.user, {
+          displayName: credentials.name
+        });
+
+        userData = {
+          email: credentials.email,
+          displayName: credentials.name,
+          provider: 'password'
+        };
+      }
+
+      // Crea/Aggiorna documento utente
+      const userRef = await createOrUpdateUserDoc(
+        userCredential.user.uid,
+        userData
+      );
+
+      // Ottieni token per Stripe
       const idToken = await userCredential.user.getIdToken();
 
+      // Crea sessione Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -66,7 +161,7 @@ export default function RegisterForm() {
           'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          email: userCredential.user.email,
+          email: userData.email,
           userId: userCredential.user.uid,
         }),
       });
@@ -77,6 +172,7 @@ export default function RegisterForm() {
         throw new Error(data.error);
       }
 
+      // Redirect a Stripe
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
@@ -90,9 +186,9 @@ export default function RegisterForm() {
         throw stripeError;
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+      setError(err.message || 'Failed to create account. Please try again.');
       setLoading(false);
     }
   };

@@ -1,15 +1,21 @@
+// app/components/auth/LoginForm.tsx
 'use client';
 
 import { useState } from 'react';
 import { 
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
-  signInWithPopup,
+  signInWithPopup, 
+  fetchSignInMethodsForEmail,
+  signInWithCredential,
+  linkWithCredential,
+  EmailAuthProvider,
+  OAuthProvider
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -18,24 +24,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const findExistingUserDocByEmail = async (email: string) => {
-    try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const docData = querySnapshot.docs[0].data();
-        const docId = querySnapshot.docs[0].id;
-        return { data: docData, id: docId };
-      }
-      return null;
-    } catch (error) {
-      console.error('Error finding user document:', error);
-      return null;
-    }
-  };
-
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -43,10 +31,10 @@ export default function LoginForm() {
 
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await updateOrCreateUserDoc(result.user.uid, email, result.user.displayName || '', 'email');
+      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (err) {
-      console.error('Email login error:', err);
+    } catch (err: any) {
+      console.error('Login error:', err);
       setError('Failed to login. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -60,120 +48,86 @@ export default function LoginForm() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const userEmail = result.user.email;
-
-      if (!userEmail) {
-        throw new Error('No email found in Google account');
-      }
-
-      await updateOrCreateUserDoc(
-        result.user.uid,
-        userEmail,
-        result.user.displayName || '',
-        'google'
-      );
-
+      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Google login error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to login with Google');
+      
+      // Gestione specifica dell'errore di account esistente con credenziali diverse
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        try {
+          // 1. Ottieni l'email dall'errore
+          const email = err.customData?.email;
+          if (!email) throw new Error('Email not found in error data');
+
+          // 2. Recupera i metodi di accesso esistenti per questa email
+          const methods = await fetchSignInMethodsForEmail(auth, email);
+          
+          if (methods.includes('password')) {
+            // L'utente ha un account email/password
+            setError('An account with this email already exists. Please sign in with email and password, then you can link your Google account.');
+          } else if (methods.includes('google.com')) {
+            // L'utente dovrebbe usare Google
+            setError('Please sign in with Google directly.');
+          } else {
+            // Altri provider
+            setError('An account exists with different credentials. Please use your original login method.');
+          }
+        } catch (innerErr) {
+          console.error('Error handling credential conflict:', innerErr);
+          setError('An error occurred while processing your login. Please try again.');
+        }
+      } else {
+        setError('Failed to login with Google.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrCreateUserDoc = async (
-    userId: string, 
-    email: string, 
-    name: string,
-    provider: 'email' | 'google'
-  ) => {
-    try {
-      const existingDoc = await findExistingUserDocByEmail(email);
+  const checkAndCreateUserDoc = async (userId: string, email: string, name: string) => {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
 
-      if (existingDoc) {
-        const { data: existingData, id: existingId } = existingDoc;
-
-        if (existingId !== userId) {
-          // Migrazione a nuovo UID
-          const updatedData = {
-            customerId: existingData.customerId,
-            subscriptionId: existingData.subscriptionId,
-            subscriptionStatus: existingData.subscriptionStatus,
-            paymentMethod: existingData.paymentMethod,
-            billingDetails: existingData.billingDetails,
-            email,
-            displayName: name || existingData.displayName,
-            updatedAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-            linkedAccounts: {
-              ...(existingData.linkedAccounts || {}),
-              [provider]: true
-            }
-          };
-
-          await setDoc(doc(db, 'users', userId), updatedData);
-          await deleteDoc(doc(db, 'users', existingId));
-          console.log('Document successfully migrated');
-        } else {
-          // Aggiornamento documento esistente
-          const userRef = doc(db, 'users', userId);
-          await updateDoc(userRef, {
-            lastLoginAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            [`linkedAccounts.${provider}`]: true
-          });
-          console.log('Document successfully updated');
-        }
-      } else {
-        // Creazione nuovo documento
-        const newUserData = {
-          email,
-          displayName: name,
-          subscriptionStatus: 'payment_required',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          customerId: null,
-          subscriptionId: null,
-          lastLoginAt: new Date().toISOString(),
-          isActive: true,
-          paymentMethod: null,
-          billingDetails: null,
-          authProvider: provider,
-          linkedAccounts: {
-            [provider]: true
-          }
-        };
-
-        await setDoc(doc(db, 'users', userId), newUserData);
-        console.log('New document created');
-      }
-    } catch (error) {
-      console.error('Error managing user document:', error);
-      throw error;
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        email,
+        displayName: name,
+        subscriptionStatus: 'payment_required',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        customerId: null,
+        subscriptionId: null,
+        lastLoginAt: new Date().toISOString(),
+        isActive: true,
+        paymentMethod: null,
+        billingDetails: null,
+        authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
+      });
+    } else {
+      // Aggiorna solo lastLoginAt e provider se necessario
+      await setDoc(userRef, {
+        lastLoginAt: new Date().toISOString(),
+        authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
+      }, { merge: true });
     }
   };
 
   return (
     <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Please sign in to your account
-        </p>
-      </div>
-
+      <h2 className="text-center text-3xl font-bold text-gray-900">Login</h2>
       {error && (
-        <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-          <p className="text-sm">{error}</p>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
         </div>
       )}
-
+      
+      {/* Google Login Button */}
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -208,16 +162,10 @@ export default function LoginForm() {
       <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
             <input
-              id="email"
-              name="email"
               type="email"
-              autoComplete="email"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -225,16 +173,10 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
             <input
-              id="password"
-              name="password"
               type="password"
-              autoComplete="current-password"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -257,30 +199,12 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </span>
-          ) : (
-            'Sign in'
-          )}
+          {loading ? 'Loading...' : 'Sign in'}
         </button>
-
-        <div className="text-center text-sm">
-          <span className="text-gray-600">Don&apos;t have an account? </span>
-          <Link
-            href="/register"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            Sign up
-          </Link>
-        </div>
       </form>
     </div>
   );
