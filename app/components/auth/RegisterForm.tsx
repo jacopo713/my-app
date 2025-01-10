@@ -7,14 +7,36 @@ import {
   updateProfile, 
   GoogleAuthProvider, 
   signInWithPopup,
-  fetchSignInMethodsForEmail 
+  fetchSignInMethodsForEmail,
+  FirebaseError
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+interface RegistrationCredentials {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface UserData {
+  email: string | null;
+  displayName: string | null;
+  subscriptionStatus: 'payment_required' | 'active' | 'cancelled' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+  customerId: string | null;
+  subscriptionId: string | null;
+  lastLoginAt: string;
+  isActive: boolean;
+  paymentMethod: string | null;
+  billingDetails: Record<string, unknown> | null;
+  authProvider: 'email' | 'google';
+}
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -44,9 +66,15 @@ export default function RegisterForm() {
       }
 
       await handleRegistration('email', { email, password, name });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to create account. Please try again.');
+      if (err instanceof FirebaseError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to create account. Please try again.');
+      }
       setLoading(false);
     }
   };
@@ -57,10 +85,14 @@ export default function RegisterForm() {
     
     try {
       await handleRegistration('google');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Google signup error:', err);
-      if (err.code === 'auth/account-exists-with-different-credential') {
-        setError('An account already exists with this email using a different sign-in method.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          setError('An account already exists with this email using a different sign-in method.');
+        } else {
+          setError(err.message);
+        }
       } else {
         setError('Failed to sign up with Google. Please try again.');
       }
@@ -70,11 +102,7 @@ export default function RegisterForm() {
 
   const handleRegistration = async (
     provider: 'email' | 'google', 
-    credentials?: { 
-      email: string; 
-      password: string; 
-      name: string 
-    }
+    credentials?: RegistrationCredentials
   ) => {
     try {
       let userCredential;
@@ -89,7 +117,7 @@ export default function RegisterForm() {
         
         if (userSnap.exists()) {
           // User exists, redirect to dashboard or appropriate page
-          const userData = userSnap.data();
+          const userData = userSnap.data() as UserData;
           if (userData.subscriptionStatus === 'active') {
             router.push('/dashboard');
           } else {
@@ -109,7 +137,7 @@ export default function RegisterForm() {
         });
       }
 
-      const userData = {
+      const userData: UserData = {
         email: userCredential.user.email,
         displayName: provider === 'google' 
           ? userCredential.user.displayName 
@@ -142,7 +170,7 @@ export default function RegisterForm() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as { sessionId: string; error?: string };
       
       if (data.error) {
         throw new Error(data.error);

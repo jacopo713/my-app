@@ -6,7 +6,9 @@ import {
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  fetchSignInMethodsForEmail 
+  fetchSignInMethodsForEmail,
+  AuthError,
+  FirebaseError 
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -38,12 +40,16 @@ export default function LoginForm() {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '', 'email');
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login error:', err);
-      if (err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/invalid-credential') {
+          setError('Invalid email or password.');
+        } else {
+          setError('Failed to login. Please try again.');
+        }
       } else {
-        setError('Failed to login. Please try again.');
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -78,12 +84,16 @@ export default function LoginForm() {
       }
       
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Google login error:', err);
-      if (err.code === 'auth/account-exists-with-different-credential') {
-        setError('An account already exists with this email using a different sign-in method.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          setError('An account already exists with this email using a different sign-in method.');
+        } else {
+          setError('Failed to login with Google. Please try again.');
+        }
       } else {
-        setError('Failed to login with Google. Please try again.');
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
