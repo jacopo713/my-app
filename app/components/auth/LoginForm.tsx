@@ -5,12 +5,11 @@ import {
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithPopup,
-  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -90,47 +89,36 @@ export default function LoginForm() {
     provider: 'email' | 'google'
   ) => {
     try {
-      // 1. Cerca un documento esistente con la stessa email
       const existingDoc = await findExistingUserDocByEmail(email);
 
-      // 2. Se esiste un documento con questa email
       if (existingDoc) {
         const { data: existingData, id: existingId } = existingDoc;
 
-        // Se il documento esistente ha un ID diverso dal userId corrente
         if (existingId !== userId) {
           console.log('Migrating document from', existingId, 'to', userId);
           
-          // Preserva tutti i dati importanti, inclusi dati Stripe
           const updatedData = {
             ...existingData,
             email,
             displayName: name || existingData.displayName,
-            // Mantieni i dati di sottoscrizione esistenti
             subscriptionStatus: existingData.subscriptionStatus,
             customerId: existingData.customerId,
             subscriptionId: existingData.subscriptionId,
             paymentMethod: existingData.paymentMethod,
             billingDetails: existingData.billingDetails,
-            // Aggiorna i timestamp
             updatedAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString(),
-            // Aggiorna i metodi di autenticazione
             linkedAccounts: {
               ...(existingData.linkedAccounts || {}),
               [provider]: true
             }
           };
 
-          // Crea il nuovo documento con l'ID corretto
           await setDoc(doc(db, 'users', userId), updatedData);
-
-          // Elimina il vecchio documento
           await deleteDoc(doc(db, 'users', existingId));
           
           console.log('Document successfully migrated');
         } else {
-          // Aggiorna il documento esistente
           const updateData = {
             ...existingData,
             lastLoginAt: new Date().toISOString(),
@@ -145,7 +133,6 @@ export default function LoginForm() {
           console.log('Existing document updated');
         }
       } else {
-        // 3. Se non esiste un documento, creane uno nuovo
         const newUserData = {
           email,
           displayName: name,
@@ -188,7 +175,6 @@ export default function LoginForm() {
         </div>
       )}
 
-      {/* Google Login Button */}
       <button
         type="button"
         onClick={handleGoogleLogin}
