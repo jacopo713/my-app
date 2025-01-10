@@ -51,7 +51,7 @@ export default function RegisterForm() {
       
       const userCredential = await signInWithPopup(auth, googleProvider);
       logRegistrationStep('Popup Google completato', { 
-        email: userCredential.user.email,
+        email: userCredential.user.email || undefined, // Converti null in undefined
         uid: userCredential.user.uid 
       });
 
