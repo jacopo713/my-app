@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from "react";
 import { Clock, Brain } from "lucide-react";
 
 const colorValues = {
@@ -62,6 +62,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
+  const timerRef = useRef(timer);
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
@@ -122,9 +123,12 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   }, [responses]);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     if (isRunning && timer > 0) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setTimer((prev) => {
+          console.log("Timer tick:", prev); // Debug
           if (prev <= 1) {
             clearInterval(interval);
             setIsRunning(false);
@@ -136,9 +140,14 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
           return prev - 1;
         });
       }, 1000);
-
-      return () => clearInterval(interval);
     }
+
+    return () => {
+      if (interval) {
+        console.log("Clearing interval"); // Debug
+        clearInterval(interval);
+      }
+    };
   }, [isRunning, timer, onComplete, calculateResults]);
 
   useEffect(() => {
@@ -157,7 +166,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       reactionTime: Date.now() - responseStartTime,
     };
 
-    setResponses(prev => [...prev, response]);
+    setResponses((prev) => [...prev, response]);
     generateNextStimulus();
   }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
 
