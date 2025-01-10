@@ -2,11 +2,16 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  fetchSignInMethodsForEmail 
+} from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -18,13 +23,28 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    
     try {
+      // Check sign in methods for this email
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      
+      if (methods.includes('google.com')) {
+        setError('This email is registered with Google. Please use "Continue with Google" button.');
+        setLoading(false);
+        return;
+      }
+      
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
+      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '', 'email');
       router.push('/dashboard');
-    } catch (err) {
-      console.error(err);
-      setError('Failed to login. Please check your credentials.');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      if (err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password.');
+      } else {
+        setError('Failed to login. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -32,20 +52,50 @@ export default function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setError('');
+    
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
+      
+      // Check if user already exists
+      const userRef = doc(db, 'users', result.user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        // New user - create document
+        await checkAndCreateUserDoc(
+          result.user.uid, 
+          result.user.email || '', 
+          result.user.displayName || '',
+          'google'
+        );
+      } else {
+        // Existing user - update last login
+        await setDoc(userRef, {
+          lastLoginAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+      
       router.push('/dashboard');
-    } catch (err) {
-      console.error(err);
-      setError('Failed to login with Google.');
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        setError('An account already exists with this email using a different sign-in method.');
+      } else {
+        setError('Failed to login with Google. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const checkAndCreateUserDoc = async (userId: string, email: string, name: string) => {
+  const checkAndCreateUserDoc = async (
+    userId: string, 
+    email: string, 
+    name: string,
+    provider: 'email' | 'google'
+  ) => {
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
 
@@ -62,7 +112,7 @@ export default function LoginForm() {
         isActive: true,
         paymentMethod: null,
         billingDetails: null,
-        authProvider: 'google'
+        authProvider: provider
       });
     }
   };
