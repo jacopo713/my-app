@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 
-// Define the props interface
-interface SpeedReadingTrainerProps {
+// Esporta l'interfaccia
+export interface SpeedReadingTrainerProps {
   onComplete?: (results: { wpm: number; accuracy: number; score: number }) => void;
 }
 
@@ -21,11 +21,12 @@ const Statistics = memo(({ cycleCount, wpm }: { cycleCount: number; wpm: number 
 Statistics.displayName = 'Statistics';
 
 const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete }) => {
-  const WORDS = [
+  // Usa useMemo per memorizzare l'array WORDS
+  const WORDS = useMemo(() => [
     "ETERNAMENTE", "TRAPPOLA", "SCRITTA", "MESCOLATE", 
     "CAMICETTA", "ACCAPPATOIO", "EDITTO", "PIACERE",
     "SOSTANZA", "BELLEZZA", "ARMONIA", "SERENITÀ"
-  ];
+  ], []); // L'array di dipendenze è vuoto, quindi WORDS non cambierà mai
 
   const [isStarted, setIsStarted] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(-1);
