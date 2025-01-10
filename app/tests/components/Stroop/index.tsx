@@ -47,7 +47,7 @@ const Statistics = memo(({ responses }: { responses: Response[] }) => {
 
   return (
     <div className="mt-6 text-sm text-gray-600">
-      <div key={stats.totalResponses} className="transition-all duration-200 ease-in-out">
+      <div className="transition-all duration-200 ease-in-out">
         Risposte: {stats.totalResponses} | Corrette: {stats.correctResponses}
       </div>
     </div>
@@ -65,6 +65,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
+  // Genera un singolo stimolo
   const generateStimulus = useCallback(
     (type: "congruent" | "incongruent"): Stimulus => {
       const wordIndex = Math.floor(Math.random() * colors.length);
@@ -89,6 +90,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
+  // Genera stimolo successivo
   const generateNextStimulus = useCallback(() => {
     const types: ("congruent" | "incongruent")[] = ["congruent", "incongruent"];
     const type = types[Math.floor(Math.random() * types.length)];
@@ -97,6 +99,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     setResponseStartTime(Date.now());
   }, [generateStimulus]);
 
+  // Calcola i risultati
   const calculateResults = useCallback(() => {
     const correct = responses.filter((r) => r.correct).length;
     const accuracy = responses.length > 0 ? correct / responses.length : 0;
@@ -110,8 +113,8 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     const interferenceScore =
       incongruentResponses.length > 0 && congruentResponses.length > 0
-        ? incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length -
-          congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length
+        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
+          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
         : 0;
 
     return {
@@ -125,15 +128,18 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     };
   }, [responses]);
 
-  // EFFECT PER LA GESTIONE DEL TIMER
+  // 1) Gestione del TIMER: NON dipende da 'timer'
   useEffect(() => {
     if (!isRunning) return;
 
     const interval = setInterval(() => {
       setTimer((prevTimer) => {
+        // Se siamo a 1, allora al prossimo tick va a 0 -> fine test
         if (prevTimer <= 1) {
           clearInterval(interval);
           setIsRunning(false);
+
+          // Calcolo i risultati finali e li passo a onComplete
           if (onComplete) {
             onComplete(calculateResults());
           }
@@ -148,16 +154,17 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     };
   }, [isRunning, onComplete, calculateResults]);
 
-  // Avvio primo stimolo se il test è in corso e non è presente uno stimolo
+  // 2) Avvio primo stimolo
   useEffect(() => {
     if (isRunning && !currentStimulus) {
       generateNextStimulus();
     }
   }, [isRunning, currentStimulus, generateNextStimulus]);
 
-  // Handler per la risposta
+  // 3) Gestione della risposta
   const handleResponse = useCallback(
     (selectedColor: ColorKey) => {
+      // Se il test non è in corso o non c’è uno stimolo valido, non facciamo nulla
       if (!currentStimulus || !isRunning || !responseStartTime) return;
 
       const response: Response = {
@@ -167,7 +174,10 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTime,
       };
 
+      // Aggiorna lo stato delle risposte
       setResponses((prev) => [...prev, response]);
+
+      // Subito dopo, genera un nuovo stimolo
       generateNextStimulus();
     },
     [currentStimulus, isRunning, responseStartTime, generateNextStimulus]
@@ -193,6 +203,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         </div>
       </div>
 
+      {/* Mostra lo stimolo solo se esiste e se il test è in corso */}
       {currentStimulus && isRunning && (
         <>
           <div className="text-center py-12 mb-6">
@@ -219,6 +230,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         </>
       )}
 
+      {/* Statistiche */}
       <Statistics responses={responses} />
     </div>
   );
