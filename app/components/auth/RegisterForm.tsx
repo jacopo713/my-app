@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -22,30 +22,7 @@ export default function RegisterForm() {
   };
 
   const handleGoogleSignup = async () => {
-    setLoading(true);
-    try {
-      const googleProvider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      // Verifica se l'email esiste già nel database
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', user.email));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        setError('An account with this email already exists. Please use the email form to sign in.');
-        setLoading(false);
-        return;
-      }
-
-      // Se l'email non esiste, procedi con la registrazione
-      await handleRegistration('google');
-    } catch (err) {
-      console.error('Google signup error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to sign up with Google. Please try again.');
-      setLoading(false);
-    }
+    await handleRegistration('google');
   };
 
   const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
@@ -222,3 +199,4 @@ export default function RegisterForm() {
     </div>
   );
 }
+
