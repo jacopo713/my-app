@@ -8,14 +8,27 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   fetchSignInMethodsForEmail,
-  linkWithCredential,
-  EmailAuthProvider
+  AuthError,
+  UserCredential
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, DocumentReference } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+interface RegisterError extends Error {
+  code?: string;
+  customData?: {
+    email?: string;
+  };
+}
+
+interface UserData {
+  email: string | null;
+  displayName: string | null;
+  provider: string;
+}
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -24,21 +37,19 @@ export default function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const checkExistingAccount = async (email: string) => {
+  const checkExistingAccount = async (email: string): Promise<boolean> => {
     try {
       const methods = await fetchSignInMethodsForEmail(auth, email);
       if (methods.length > 0) {
-        // Account già esistente
         const methodsList = methods.join(', ');
         throw new Error(`An account already exists with this email. Please sign in using: ${methodsList}`);
       }
       return false;
-    } catch (error: any) {
-      if (error.message.includes('An account already exists')) {
-        throw error;
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('An account already exists')) {
+        throw err;
       }
-      // Altri errori di firebase
-      console.error('Error checking existing account:', error);
+      console.error('Error checking existing account:', err);
       return false;
     }
   };
@@ -54,17 +65,12 @@ export default function RegisterForm() {
 
   const createOrUpdateUserDoc = async (
     userId: string, 
-    userData: { 
-      email: string | null; 
-      displayName: string | null;
-      provider: string;
-    }
-  ) => {
+    userData: UserData
+  ): Promise<DocumentReference> => {
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      // Nuovo utente - crea documento completo
       await setDoc(userRef, {
         email: userData.email,
         displayName: userData.displayName,
@@ -80,12 +86,11 @@ export default function RegisterForm() {
         authProvider: userData.provider
       });
     } else {
-      // Utente esistente - aggiorna solo i campi necessari
       await setDoc(userRef, {
         lastLoginAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         authProvider: userData.provider
-      }, { merge: true }); // Mantiene i dati esistenti
+      }, { merge: true });
     }
 
     return userRef;
@@ -99,21 +104,23 @@ export default function RegisterForm() {
     setError('');
 
     try {
-      let userCredential;
-      let userData;
+      let userCredential: UserCredential;
+      let userData: UserData;
 
       if (provider === 'google') {
-        // Verifica se esiste già un account con la stessa email
         const googleProvider = new GoogleAuthProvider();
         try {
           userCredential = await signInWithPopup(auth, googleProvider);
-        } catch (error: any) {
+        } catch (err) {
+          const error = err as AuthError;
           if (error.code === 'auth/account-exists-with-different-credential') {
             const email = error.customData?.email;
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            throw new Error(`This email is already registered. Please sign in using: ${methods.join(', ')}`);
+            if (email) {
+              const methods = await fetchSignInMethodsForEmail(auth, email);
+              throw new Error(`This email is already registered. Please sign in using: ${methods.join(', ')}`);
+            }
           }
-          throw error;
+          throw err;
         }
 
         userData = {
@@ -124,7 +131,6 @@ export default function RegisterForm() {
       } else {
         if (!credentials) throw new Error('Credentials required for email signup');
         
-        // Verifica account esistente prima della registrazione email
         await checkExistingAccount(credentials.email);
         
         userCredential = await createUserWithEmailAndPassword(
@@ -144,16 +150,13 @@ export default function RegisterForm() {
         };
       }
 
-      // Crea/Aggiorna documento utente
-      const userRef = await createOrUpdateUserDoc(
+      await createOrUpdateUserDoc(
         userCredential.user.uid,
         userData
       );
 
-      // Ottieni token per Stripe
       const idToken = await userCredential.user.getIdToken();
 
-      // Crea sessione Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -168,11 +171,10 @@ export default function RegisterForm() {
 
       const data = await response.json();
       
-      if (data.error) {
+      if ('error' in data) {
         throw new Error(data.error);
       }
 
-      // Redirect a Stripe
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to initialize');
@@ -186,9 +188,9 @@ export default function RegisterForm() {
         throw stripeError;
       }
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to create account. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
       setLoading(false);
     }
   };

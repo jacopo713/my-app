@@ -7,10 +7,8 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   fetchSignInMethodsForEmail,
-  signInWithCredential,
-  linkWithCredential,
-  EmailAuthProvider,
-  OAuthProvider
+  AuthError,
+  UserCredential
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -33,7 +31,7 @@ export default function LoginForm() {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login error:', err);
       setError('Failed to login. Please check your credentials.');
     } finally {
@@ -50,35 +48,36 @@ export default function LoginForm() {
       const result = await signInWithPopup(auth, provider);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Google login error:', err);
       
-      // Gestione specifica dell'errore di account esistente con credenziali diverse
-      if (err.code === 'auth/account-exists-with-different-credential') {
-        try {
-          // 1. Ottieni l'email dall'errore
-          const email = err.customData?.email;
-          if (!email) throw new Error('Email not found in error data');
+      // Type guard per controllare se l'errore è di tipo AuthError
+      if (err instanceof Error && 'code' in err) {
+        const authError = err as AuthError;
+        
+        if (authError.code === 'auth/account-exists-with-different-credential') {
+          try {
+            const email = authError.customData?.email;
+            if (!email) throw new Error('Email not found in error data');
 
-          // 2. Recupera i metodi di accesso esistenti per questa email
-          const methods = await fetchSignInMethodsForEmail(auth, email);
-          
-          if (methods.includes('password')) {
-            // L'utente ha un account email/password
-            setError('An account with this email already exists. Please sign in with email and password, then you can link your Google account.');
-          } else if (methods.includes('google.com')) {
-            // L'utente dovrebbe usare Google
-            setError('Please sign in with Google directly.');
-          } else {
-            // Altri provider
-            setError('An account exists with different credentials. Please use your original login method.');
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            
+            if (methods.includes('password')) {
+              setError('An account with this email already exists. Please sign in with email and password, then you can link your Google account.');
+            } else if (methods.includes('google.com')) {
+              setError('Please sign in with Google directly.');
+            } else {
+              setError('An account exists with different credentials. Please use your original login method.');
+            }
+          } catch (innerErr) {
+            console.error('Error handling credential conflict:', innerErr);
+            setError('An error occurred while processing your login. Please try again.');
           }
-        } catch (innerErr) {
-          console.error('Error handling credential conflict:', innerErr);
-          setError('An error occurred while processing your login. Please try again.');
+        } else {
+          setError('Failed to login with Google.');
         }
       } else {
-        setError('Failed to login with Google.');
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -105,7 +104,6 @@ export default function LoginForm() {
         authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
       });
     } else {
-      // Aggiorna solo lastLoginAt e provider se necessario
       await setDoc(userRef, {
         lastLoginAt: new Date().toISOString(),
         authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
