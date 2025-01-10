@@ -14,7 +14,7 @@ interface Pattern {
 }
 
 interface Question {
-  grid: Pattern[][];
+  grid: (Pattern | null)[][]; // Modificato per accettare null
   correctAnswer: Pattern;
   options: Pattern[];
   level: number;
@@ -33,26 +33,22 @@ const generatePattern = (level: number): Pattern => {
   return {
     type: config.shapes[Math.floor(Math.random() * config.shapes.length)],
     rotation: config.rotations[Math.floor(Math.random() * config.rotations.length)],
-    size: level <= 5 ? 1 : Math.random() * 0.5 + 0.75, // Varia dimensione dopo livello 5
-    fill: level <= 4 ? '#2563eb' : ['#2563eb', '#dc2626', '#059669'][Math.floor(Math.random() * 3)], // Varia colore dopo livello 4
-    opacity: level <= 6 ? 1 : [1, 0.8, 0.6][Math.floor(Math.random() * 3)] // Varia opacità dopo livello 6
+    size: level <= 5 ? 1 : Math.random() * 0.5 + 0.75,
+    fill: level <= 4 ? '#2563eb' : ['#2563eb', '#dc2626', '#059669'][Math.floor(Math.random() * 3)],
+    opacity: level <= 6 ? 1 : [1, 0.8, 0.6][Math.floor(Math.random() * 3)]
   };
 };
 
 const generateLogicalPattern = (row: number, col: number, level: number): Pattern => {
   const basePattern = generatePattern(level);
   
-  // Logiche progressive basate sul livello
   if (level <= 3) {
-    // Pattern semplici: solo rotazione orizzontale
     basePattern.rotation = (basePattern.rotation + col * 90) % 360;
   } else if (level <= 6) {
-    // Pattern medi: rotazione e tipo forme
     basePattern.rotation = (basePattern.rotation + (row + col) * 45) % 360;
     const shapeIndex = (row + col) % LEVELS.MEDIUM.shapes.length;
     basePattern.type = LEVELS.MEDIUM.shapes[shapeIndex];
   } else {
-    // Pattern complessi: tutte le proprietà variano
     basePattern.rotation = (basePattern.rotation + (row * col * 30)) % 360;
     basePattern.size = 0.75 + (Math.sin(row + col) * 0.25);
     basePattern.opacity = 0.6 + (Math.cos(row + col) * 0.4);
@@ -62,18 +58,16 @@ const generateLogicalPattern = (row: number, col: number, level: number): Patter
 };
 
 const generateQuestion = (level: number): Question => {
-  const grid: Pattern[][] = Array(3).fill(null).map((_, row) => 
+  const grid: (Pattern | null)[][] = Array(3).fill(null).map((_, row) => 
     Array(3).fill(null).map((_, col) => {
-      if (row === 2 && col === 2) return null; // Spazio per la risposta
+      if (row === 2 && col === 2) return null;
       return generateLogicalPattern(row, col, level);
     })
   );
 
-  // Genera la risposta corretta seguendo la logica del pattern
   const correctAnswer = generateLogicalPattern(2, 2, level);
-
-  // Genera distrattori che sembrano plausibili
   const options = [correctAnswer];
+
   for (let i = 0; i < 3; i++) {
     const distractorPattern = {...correctAnswer};
     switch (i) {
@@ -107,6 +101,8 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
   useEffect(() => {
     setQuestion(generateQuestion(currentLevel));
+    setSelectedAnswer(null);
+    setShowFeedback(false);
   }, [currentLevel]);
 
   const handleAnswer = (answerIndex: number) => {
@@ -123,8 +119,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     setTimeout(() => {
       if (currentLevel < 10) {
         setCurrentLevel(prev => prev + 1);
-        setSelectedAnswer(null);
-        setShowFeedback(false);
       } else {
         onComplete({
           score: score + (isCorrect ? 1 : 0),
