@@ -179,20 +179,20 @@ const proceedToPayment = async (userId: string, email: string): Promise<void> =>
      console.error('Cleanup error:', error);
    }
  };
+  const handleEmailRegistration = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthError(null);
 
- const handleEmailRegistration = async (e: React.FormEvent): Promise<void> => {
-   e.preventDefault();
-   setLoading(true);
-   setAuthError(null);
+    try {
+      // Modifica qui: aggiungiamo 'email' come secondo argomento
+      const isValid = await validateNewRegistration(email, 'email');
+      if (!isValid) {
+        setLoading(false);
+        return;
+      }
 
-   try {
-     // Validazione preventiva
-     const isValid = await validateNewRegistration(email, 'email');
-     if (!isValid) {
-       setLoading(false);
-       return;
-     }
-
+ 
      // Creazione account
      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
      await updateProfile(userCredential.user, { displayName: name });
