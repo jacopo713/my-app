@@ -40,37 +40,62 @@ export default function RegisterForm() {
  const [authError, setAuthError] = useState<AuthError | null>(null);
  const [loading, setLoading] = useState(false);
 
- const validateNewRegistration = async (email: string): Promise<boolean> => {
-   try {
-     const methods = await fetchSignInMethodsForEmail(auth, email);
-     
-     if (methods.length > 0) {
-       if (methods.includes('password')) {
-         setAuthError({
-           message: 'Email già registrata con password. Effettua il login.',
-           type: 'warning',
-           action: 'login'
-         });
-       } else if (methods.includes('google.com')) {
-         setAuthError({
-           message: 'Email già registrata con Google. Usa il pulsante "Continua con Google".',
-           type: 'warning',
-           action: 'useGoogle'
-         });
-       }
-       return false;
-     }
+const validateNewRegistration = async (email: string, provider: 'email' | 'google'): Promise<boolean> => {
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    
+    if (methods.length > 0) {
+      // Se esistono già metodi di autenticazione per questa email
+      if (methods.includes('password')) {
+        setAuthError({
+          message: 'Questa email è già registrata con password. Per favore, accedi con email e password.',
+          type: 'warning',
+          action: 'login'
+        });
+        return false;
+      }
+      
+      if (methods.includes('google.com')) {
+        setAuthError({
+          message: 'Questa email è già registrata con Google. Per favore, usa il pulsante "Continua con Google" per accedere.',
+          type: 'warning',
+          action: 'useGoogle'
+        });
+        return false;
+      }
+    }
 
-     return true;
-   } catch (error) {
-     console.error('Error validating registration:', error);
-     setAuthError({
-       message: 'Errore durante la verifica dell\'email.',
-       type: 'error'
-     });
-     return false;
-   }
- };
+    // Se stiamo tentando di registrare con Google, verifichiamo che l'email non sia già usata
+    if (provider === 'google') {
+      if (methods.includes('password')) {
+        setAuthError({
+          message: 'Questa email è già registrata con password. Non è possibile utilizzare lo stesso indirizzo email con Google.',
+          type: 'error'
+        });
+        return false;
+      }
+    }
+
+    // Se stiamo tentando di registrare con email/password, verifichiamo che l'email non sia già usata con Google
+    if (provider === 'email') {
+      if (methods.includes('google.com')) {
+        setAuthError({
+          message: 'Questa email è già registrata con Google. Non è possibile utilizzare lo stesso indirizzo email con password.',
+          type: 'error'
+        });
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error validating registration:', error);
+    setAuthError({
+      message: 'Errore durante la verifica dell\'email.',
+      type: 'error'
+    });
+    return false;
+  } };
 
  const createUserDocument = async (
    userId: string, 
