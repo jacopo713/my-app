@@ -25,7 +25,7 @@ interface RegistrationCredentials {
 
 interface UserData {
   email: string | null;
-  displayName: string | null;
+  displayName: string | null | undefined;
   subscriptionStatus: 'payment_required' | 'active' | 'cancelled' | 'inactive';
   createdAt: string;
   updatedAt: string;
@@ -52,7 +52,6 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      // Check if email is already registered
       const methods = await fetchSignInMethodsForEmail(auth, email);
       
       if (methods.length > 0) {
@@ -111,12 +110,10 @@ export default function RegisterForm() {
         const googleProvider = new GoogleAuthProvider();
         userCredential = await signInWithPopup(auth, googleProvider);
         
-        // Check if user already exists
         const userRef = doc(db, 'users', userCredential.user.uid);
         const userSnap = await getDoc(userRef);
         
         if (userSnap.exists()) {
-          // User exists, redirect to dashboard or appropriate page
           const userData = userSnap.data() as UserData;
           if (userData.subscriptionStatus === 'active') {
             router.push('/dashboard');
@@ -140,8 +137,8 @@ export default function RegisterForm() {
       const userData: UserData = {
         email: userCredential.user.email,
         displayName: provider === 'google' 
-          ? userCredential.user.displayName 
-          : credentials?.name,
+          ? userCredential.user.displayName || null
+          : credentials?.name || null,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -157,7 +154,6 @@ export default function RegisterForm() {
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
       const idToken = await userCredential.user.getIdToken();
 
-      // Create Stripe checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -195,6 +191,7 @@ export default function RegisterForm() {
     }
   };
 
+  // Rest of the component (JSX)
   return (
     <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
       <div className="text-center">
@@ -210,7 +207,6 @@ export default function RegisterForm() {
         </div>
       )}
 
-      {/* Google Signup Button */}
       <button
         type="button"
         onClick={handleGoogleSignup}
