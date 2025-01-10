@@ -1,4 +1,3 @@
-// @ts-ignore
 import React, { useState, useEffect, useCallback, memo } from 'react';
 
 // Define the props interface
@@ -42,14 +41,14 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   const generateSequence = useCallback(() => {
     const shuffled = [...WORDS].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 9);
-  }, []);
+  }, [WORDS]); // Aggiunto WORDS come dipendenza
 
   const generateOptions = useCallback((correct: string): string[] => {
     const otherWords = WORDS.filter(w => w !== correct);
     const shuffledOthers = otherWords.sort(() => Math.random() - 0.5).slice(0, 3);
     const allOptions = [...shuffledOthers, correct];
     return allOptions.sort(() => Math.random() - 0.5);
-  }, []);
+  }, [WORDS]); // Aggiunto WORDS come dipendenza
 
   const showNextWord = useCallback(() => {
     if (currentPosition >= 8) {
