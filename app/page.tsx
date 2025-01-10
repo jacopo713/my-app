@@ -101,7 +101,7 @@ export default function HomePage() {
                 </p>
                 <a
                   href="/test-iq"
-                  className="inline-block bg-white text-blue-600 font-bold text-base sm:text-lg px-6 py-2 rounded-xl 
+                  className="inline-block bg-white text-blue-600 font-bold text-lg sm:text-xl px-8 py-3 rounded-xl 
                              hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
                 >
                   Inizia il Test
@@ -127,30 +127,30 @@ export default function HomePage() {
               </div>
 
               {/* Anteprima del contenuto test */}
-              <div className="lg:w-1/2 grid grid-cols-2 gap-2 sm:gap-3 mt-6 lg:mt-0">
-                <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg hover:bg-white/20 transition-all">
-                  <Brain className="w-6 h-6 mb-1 text-white" />
+              <div className="lg:w-1/2 grid grid-cols-2 gap-3 sm:gap-4 mt-6 lg:mt-0">
+                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg hover:bg-white/30 transition-all">
+                  <Brain className="w-8 h-8 mb-2 text-blue-300" />
                   <h3 className="font-semibold text-sm">
                     Ragionamento Astratto
                   </h3>
                   <p className="text-xs text-white/80">Matrici progressive</p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg hover:bg-white/20 transition-all">
-                  <Eye className="w-6 h-6 mb-1 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg hover:bg-white/30 transition-all">
+                  <Eye className="w-8 h-8 mb-2 text-green-300" />
                   <h3 className="font-semibold text-sm">
                     Coordinazione
                   </h3>
                   <p className="text-xs text-white/80">Occhio-mano</p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg hover:bg-white/20 transition-all">
-                  <Book className="w-6 h-6 mb-1 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg hover:bg-white/30 transition-all">
+                  <Book className="w-8 h-8 mb-2 text-purple-300" />
                   <h3 className="font-semibold text-sm">
                     Lettura Veloce
                   </h3>
                   <p className="text-xs text-white/80">Comprensione testuale</p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg hover:bg-white/20 transition-all">
-                  <Music className="w-6 h-6 mb-1 text-white" />
+                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg hover:bg-white/30 transition-all">
+                  <Music className="w-8 h-8 mb-2 text-yellow-300" />
                   <h3 className="font-semibold text-sm">
                     Senso del Ritmo
                   </h3>
@@ -251,4 +251,3 @@ export default function HomePage() {
     </div>
   );
 }
-
