@@ -2,54 +2,103 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  fetchSignInMethodsForEmail
-} from 'firebase/auth';
-import { FirebaseError } from 'firebase/app';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, 
+         fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+interface AuthError {
+  message: string;
+  type: 'error' | 'warning' | 'info';
+  action?: string;
+}
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [authError, setAuthError] = useState<AuthError | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
+  const validateAuthMethod = async (email: string, attemptedMethod: 'password' | 'google'): Promise<boolean> => {
     try {
-      // Check sign in methods for this email
       const methods = await fetchSignInMethodsForEmail(auth, email);
       
-      if (methods.includes('google.com')) {
-        setError('This email is registered with Google. Please use "Continue with Google" button.');
+      // Se l'email non è registrata
+      if (methods.length === 0) {
+        setAuthError({
+          message: 'Nessun account trovato con questa email.',
+          type: 'info',
+          action: 'register'
+        });
+        return false;
+      }
+
+      // Se si tenta login con password ma l'account è Google
+      if (attemptedMethod === 'password' && !methods.includes('password') && methods.includes('google.com')) {
+        setAuthError({
+          message: 'Questo account utilizza Google per l\'accesso.',
+          type: 'warning',
+          action: 'useGoogle'
+        });
+        return false;
+      }
+
+      // Se si tenta login con Google ma l'account è password
+      if (attemptedMethod === 'google' && !methods.includes('google.com') && methods.includes('password')) {
+        setAuthError({
+          message: 'Questo account utilizza email e password per l\'accesso.',
+          type: 'warning',
+          action: 'usePassword'
+        });
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating auth method:', error);
+      setAuthError({
+        message: 'Errore durante la verifica del metodo di accesso.',
+        type: 'error'
+      });
+      return false;
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      // Prima validiamo il metodo di autenticazione
+      const isValidMethod = await validateAuthMethod(email, 'password');
+      if (!isValidMethod) {
         setLoading(false);
         return;
       }
-      
+
+      // Procediamo con il login
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '', 'email');
+      
+      // Aggiorniamo/verifichiamo i dati utente
+      await updateUserData(result.user.uid, {
+        email: result.user.email!,
+        lastLoginAt: new Date().toISOString(),
+        authProvider: 'password',
+        lastLoginMethod: 'password'
+      });
+
       router.push('/dashboard');
-    } catch (err) {
-      console.error('Login error:', err);
-      if (err instanceof FirebaseError) {
-        if (err.code === 'auth/invalid-credential') {
-          setError('Invalid email or password.');
-        } else {
-          setError('Failed to login. Please try again.');
-        }
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setAuthError({
+        message: 'Credenziali non valide. Riprova.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -57,90 +106,94 @@ export default function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setError('');
-    
+    setAuthError(null);
+
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
-      // Check if user already exists
-      const userRef = doc(db, 'users', result.user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (!userSnap.exists()) {
-        // New user - create document
-        await checkAndCreateUserDoc(
-          result.user.uid, 
-          result.user.email || '', 
-          result.user.displayName || '',
-          'google'
-        );
-      } else {
-        // Existing user - update last login
-        await setDoc(userRef, {
-          lastLoginAt: new Date().toISOString(),
-        }, { merge: true });
+      const googleEmail = result.user.email;
+
+      if (!googleEmail) {
+        throw new Error('Email Google non disponibile');
       }
-      
+
+      // Validiamo il metodo di autenticazione
+      const isValidMethod = await validateAuthMethod(googleEmail, 'google');
+      if (!isValidMethod) {
+        await auth.signOut(); // Logout per sicurezza
+        setLoading(false);
+        return;
+      }
+
+      // Aggiorniamo/verifichiamo i dati utente
+      await updateUserData(result.user.uid, {
+        email: googleEmail,
+        displayName: result.user.displayName || '',
+        lastLoginAt: new Date().toISOString(),
+        authProvider: 'google',
+        lastLoginMethod: 'google',
+        photoURL: result.user.photoURL
+      });
+
       router.push('/dashboard');
-    } catch (err) {
-      console.error('Google login error:', err);
-      if (err instanceof FirebaseError) {
-        if (err.code === 'auth/account-exists-with-different-credential') {
-          setError('An account already exists with this email using a different sign-in method.');
-        } else {
-          setError('Failed to login with Google. Please try again.');
-        }
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setAuthError({
+        message: 'Errore durante l\'accesso con Google. Riprova.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const checkAndCreateUserDoc = async (
-    userId: string, 
-    email: string, 
-    name: string,
-    provider: 'email' | 'google'
-  ) => {
+  const updateUserData = async (userId: string, data: any) => {
     const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
+    const userDoc = await getDoc(userRef);
 
-    if (!userSnap.exists()) {
+    if (!userDoc.exists()) {
+      // Primo accesso: creiamo il documento
       await setDoc(userRef, {
-        email,
-        displayName: name,
-        subscriptionStatus: 'payment_required',
+        ...data,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        customerId: null,
-        subscriptionId: null,
-        lastLoginAt: new Date().toISOString(),
-        isActive: true,
-        paymentMethod: null,
-        billingDetails: null,
-        authProvider: provider
+        updatedAt: new Date().toISOString()
       });
+    } else {
+      // Aggiorniamo solo i campi necessari
+      await setDoc(userRef, {
+        ...data,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
     }
   };
 
   return (
     <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-      <h2 className="text-center text-3xl font-bold text-gray-900">Login</h2>
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900">Accedi</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Accedi al tuo account per continuare
+        </p>
+      </div>
+
+      {authError && (
+        <Alert variant={authError.type === 'error' ? 'destructive' : 'default'}>
+          <AlertDescription>
+            {authError.message}
+            {authError.action === 'register' && (
+              <Link href="/register" className="ml-2 text-blue-600 hover:text-blue-800">
+                Registrati ora
+              </Link>
+            )}
+          </AlertDescription>
+        </Alert>
       )}
-      
-      {/* Google Login Button */}
+
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -160,36 +213,44 @@ export default function LoginForm() {
             fill="#EA4335"
           />
         </svg>
-        Continue with Google
+        <span>{loading ? 'Accesso in corso...' : 'Continua con Google'}</span>
       </button>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+          <span className="px-2 bg-white text-gray-500">oppure</span>
         </div>
       </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
+            <label htmlFor="email" className="sr-only">
+              Indirizzo email
+            </label>
             <input
+              id="email"
               type="email"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Email address"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Indirizzo email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
             />
           </div>
           <div>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
             <input
+              id="password"
               type="password"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -204,7 +265,7 @@ export default function LoginForm() {
               href="/forgot-password"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              Forgot your password?
+              Password dimenticata?
             </Link>
           </div>
         </div>
@@ -212,11 +273,11 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
             loading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
-          {loading ? 'Loading...' : 'Sign in'}
+          {loading ? 'Accesso in corso...' : 'Accedi'}
         </button>
       </form>
     </div>
