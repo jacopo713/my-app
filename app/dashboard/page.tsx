@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import CancelSubscription from '../components/subscription/CancelSubscription';
 
 interface SubscriptionData {
   subscriptionStatus: string;
@@ -86,7 +87,9 @@ export default function DashboardPage() {
                 <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
                   <div className="md:grid md:grid-cols-3 md:gap-6">
                     <div className="md:col-span-1">
-                      <h3 className="text-lg font-medium leading-6 text-gray-900">Subscription Details</h3>
+                      <h3 className="text-lg font-medium leading-6 text-gray-900">
+                        Subscription Details
+                      </h3>
                       <p className="mt-1 text-sm text-gray-500">
                         Information about your current subscription status.
                       </p>
@@ -133,6 +136,11 @@ export default function DashboardPage() {
                             {new Date(subscriptionData.updatedAt).toLocaleDateString()}
                           </dd>
                         </div>
+
+                        <CancelSubscription 
+                          customerId={subscriptionData.customerId}
+                          subscriptionId={subscriptionData.subscriptionId}
+                        />
                       </div>
                     </div>
                   </div>
