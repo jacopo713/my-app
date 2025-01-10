@@ -10,7 +10,7 @@ import {
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -19,11 +19,22 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const findUserByEmail = async (email: string) => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs[0]?.data();
+  const findExistingUserDocByEmail = async (email: string) => {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const docData = querySnapshot.docs[0].data();
+        const docId = querySnapshot.docs[0].id;
+        return { data: docData, id: docId };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error finding user document:', error);
+      return null;
+    }
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -33,7 +44,7 @@ export default function LoginForm() {
 
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '', 'email');
+      await updateOrCreateUserDoc(result.user.uid, email, result.user.displayName || '', 'email');
       router.push('/dashboard');
     } catch (err) {
       console.error('Email login error:', err);
@@ -56,18 +67,7 @@ export default function LoginForm() {
         throw new Error('No email found in Google account');
       }
 
-      // Check for existing accounts
-      const signInMethods = await fetchSignInMethodsForEmail(auth, userEmail);
-      const existingUserData = await findUserByEmail(userEmail);
-
-      if (signInMethods.includes('password') && existingUserData) {
-        // Account exists with email/password
-        setError('An account with this email already exists. Please login with email and password first.');
-        await auth.signOut();
-        return;
-      }
-
-      await checkAndCreateUserDoc(
+      await updateOrCreateUserDoc(
         result.user.uid,
         userEmail,
         result.user.displayName || '',
@@ -83,36 +83,70 @@ export default function LoginForm() {
     }
   };
 
-  const checkAndCreateUserDoc = async (
+  const updateOrCreateUserDoc = async (
     userId: string, 
     email: string, 
     name: string,
     provider: 'email' | 'google'
   ) => {
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
+    try {
+      // 1. Cerca un documento esistente con la stessa email
+      const existingDoc = await findExistingUserDocByEmail(email);
 
-    if (!userSnap.exists()) {
-      // Check for existing user with same email
-      const existingUserData = await findUserByEmail(email);
+      // 2. Se esiste un documento con questa email
+      if (existingDoc) {
+        const { data: existingData, id: existingId } = existingDoc;
 
-      if (existingUserData) {
-        // Copy existing Stripe and subscription data
-        await setDoc(userRef, {
-          ...existingUserData,
-          email,
-          displayName: name || existingUserData.displayName,
-          updatedAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          authProvider: provider,
-          linkedAccounts: {
-            ...(existingUserData.linkedAccounts || {}),
-            [provider]: true
-          }
-        });
+        // Se il documento esistente ha un ID diverso dal userId corrente
+        if (existingId !== userId) {
+          console.log('Migrating document from', existingId, 'to', userId);
+          
+          // Preserva tutti i dati importanti, inclusi dati Stripe
+          const updatedData = {
+            ...existingData,
+            email,
+            displayName: name || existingData.displayName,
+            // Mantieni i dati di sottoscrizione esistenti
+            subscriptionStatus: existingData.subscriptionStatus,
+            customerId: existingData.customerId,
+            subscriptionId: existingData.subscriptionId,
+            paymentMethod: existingData.paymentMethod,
+            billingDetails: existingData.billingDetails,
+            // Aggiorna i timestamp
+            updatedAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+            // Aggiorna i metodi di autenticazione
+            linkedAccounts: {
+              ...(existingData.linkedAccounts || {}),
+              [provider]: true
+            }
+          };
+
+          // Crea il nuovo documento con l'ID corretto
+          await setDoc(doc(db, 'users', userId), updatedData);
+
+          // Elimina il vecchio documento
+          await deleteDoc(doc(db, 'users', existingId));
+          
+          console.log('Document successfully migrated');
+        } else {
+          // Aggiorna il documento esistente
+          const updateData = {
+            ...existingData,
+            lastLoginAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            linkedAccounts: {
+              ...(existingData.linkedAccounts || {}),
+              [provider]: true
+            }
+          };
+          
+          await setDoc(doc(db, 'users', userId), updateData, { merge: true });
+          console.log('Existing document updated');
+        }
       } else {
-        // Create new user document
-        await setDoc(userRef, {
+        // 3. Se non esiste un documento, creane uno nuovo
+        const newUserData = {
           email,
           displayName: name,
           subscriptionStatus: 'payment_required',
@@ -128,20 +162,14 @@ export default function LoginForm() {
           linkedAccounts: {
             [provider]: true
           }
-        });
+        };
+
+        await setDoc(doc(db, 'users', userId), newUserData);
+        console.log('New document created');
       }
-    } else {
-      // Update existing document
-      const userData = userSnap.data();
-      await setDoc(userRef, {
-        ...userData,
-        lastLoginAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        linkedAccounts: {
-          ...(userData.linkedAccounts || {}),
-          [provider]: true
-        }
-      }, { merge: true });
+    } catch (error) {
+      console.error('Error managing user document:', error);
+      throw error;
     }
   };
 
