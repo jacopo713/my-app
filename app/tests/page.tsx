@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, Star, User, Book, Music, Clock, Target, Award } from 'lucide-react';
+import { Brain, Eye, Star } from 'lucide-react';
 import RavenTest from './components/Raven';
 import EyeHandTest from './components/EyeHand';
 import StroopTest from './components/Stroop';
@@ -12,6 +12,52 @@ import SpeedReadingTrainer from './components/SpeedReading';
 import RhythmTest from './components/Rhythm';
 import { useAuth } from '@/app/contexts/AuthContext';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
+
+interface RavenResults {
+  score: number;
+  accuracy: number;
+}
+
+interface EyeHandResults {
+  score: number;
+  accuracy: number;
+  averageDeviation: number;
+}
+
+interface StroopResults {
+  score: number;
+  accuracy: number;
+  averageReactionTime: number;
+  totalResponses: number;
+  correctResponses: number;
+  interferenceScore: number;
+  responsesPerMinute: string;
+}
+
+interface SchulteResults {
+  score: number;
+  accuracy: number;
+  averageTime: number;
+  gridSizes: number[];
+  completionTimes: number[];
+}
+
+interface ShortTermMemoryResults {
+  score: number;
+  percentile: number;
+  evaluation: string;
+}
+
+interface SpeedReadingResults {
+  wpm: number;
+  accuracy: number;
+  score: number;
+}
+
+interface RhythmResults {
+  precision: number;
+  level: number;
+}
 
 type TestPhase = 
   | "intro" 
@@ -25,51 +71,13 @@ type TestPhase =
   | "results";
 
 interface TestResults {
-  raven: {
-    score: number;
-    accuracy: number;
-    percentile: number;
-  } | null;
-  eyeHand: {
-    score: number;
-    accuracy: number;
-    averageDeviation: number;
-    percentile: number;
-  } | null;
-  stroop: {
-    score: number;
-    accuracy: number;
-    averageReactionTime: number;
-    totalResponses: number;
-    correctResponses: number;
-    interferenceScore: number;
-    responsesPerMinute: string;
-    percentile: number;
-  } | null;
-  schulte: {
-    score: number;
-    accuracy: number;
-    averageTime: number;
-    gridSizes: number[];
-    completionTimes: number[];
-    percentile: number;
-  } | null;
-  shortTermMemory: {
-    score: number;
-    percentile: number;
-    evaluation: string;
-  } | null;
-  speedReading: {
-    wpm: number;
-    accuracy: number;
-    score: number;
-    percentile: number;
-  } | null;
-  rhythm: {
-    precision: number;
-    level: number;
-    percentile: number;
-  } | null;
+  raven: (RavenResults & { percentile: number }) | null;
+  eyeHand: (EyeHandResults & { percentile: number }) | null;
+  stroop: (StroopResults & { percentile: number }) | null;
+  schulte: (SchulteResults & { percentile: number }) | null;
+  shortTermMemory: ShortTermMemoryResults | null;
+  speedReading: (SpeedReadingResults & { percentile: number }) | null;
+  rhythm: (RhythmResults & { percentile: number }) | null;
 }
 
 export default function TestPage() {
@@ -87,7 +95,7 @@ export default function TestPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
+  const handleRavenComplete = (ravenResults: RavenResults) => {
     setResults(prev => ({
       ...prev,
       raven: {
@@ -99,34 +107,43 @@ export default function TestPage() {
     setPhase("eyeHand");
   };
 
-  const handleEyeHandComplete = (eyeHandResults: any) => {
+  const handleEyeHandComplete = (eyeHandResults: EyeHandResults) => {
     setResults(prev => ({
       ...prev,
-      eyeHand: eyeHandResults
+      eyeHand: {
+        ...eyeHandResults,
+        percentile: Math.round((eyeHandResults.score / 1000) * 100)
+      }
     }));
     setProgress(25);
     setPhase("stroop");
   };
 
-  const handleStroopComplete = (stroopResults: any) => {
+  const handleStroopComplete = (stroopResults: StroopResults) => {
     setResults(prev => ({
       ...prev,
-      stroop: stroopResults
+      stroop: {
+        ...stroopResults,
+        percentile: Math.round((stroopResults.score / 1000) * 100)
+      }
     }));
     setProgress(40);
     setPhase("schulte");
   };
 
-  const handleSchulteComplete = (schulteResults: any) => {
+  const handleSchulteComplete = (schulteResults: SchulteResults) => {
     setResults(prev => ({
       ...prev,
-      schulte: schulteResults
+      schulte: {
+        ...schulteResults,
+        percentile: Math.round((schulteResults.score / 1000) * 100)
+      }
     }));
     setProgress(55);
     setPhase("shortTermMemory");
   };
 
-  const handleShortTermMemoryComplete = (memoryResults: any) => {
+  const handleShortTermMemoryComplete = (memoryResults: ShortTermMemoryResults) => {
     setResults(prev => ({
       ...prev,
       shortTermMemory: memoryResults
@@ -135,19 +152,25 @@ export default function TestPage() {
     setPhase("speedReading");
   };
 
-  const handleSpeedReadingComplete = (speedReadingResults: any) => {
+  const handleSpeedReadingComplete = (speedReadingResults: SpeedReadingResults) => {
     setResults(prev => ({
       ...prev,
-      speedReading: speedReadingResults
+      speedReading: {
+        ...speedReadingResults,
+        percentile: Math.round((speedReadingResults.score / 1000) * 100)
+      }
     }));
     setProgress(85);
     setPhase("rhythm");
   };
 
-  const handleRhythmComplete = (rhythmResults: any) => {
+  const handleRhythmComplete = (rhythmResults: RhythmResults) => {
     setResults(prev => ({
       ...prev,
-      rhythm: rhythmResults
+      rhythm: {
+        ...rhythmResults,
+        percentile: Math.round((rhythmResults.precision / 100) * 100)
+      }
     }));
     setProgress(100);
     setPhase("results");
@@ -186,7 +209,8 @@ export default function TestPage() {
               </div>
               <button
                 onClick={() => setPhase("raven")}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg 
+                         hover:bg-blue-700 transition-colors font-medium"
               >
                 Inizia il Test
               </button>
@@ -212,11 +236,22 @@ export default function TestPage() {
         return (
           <div className="max-w-4xl mx-auto px-4">
             <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold mb-6">Risultati del Test</h2>
-              {/* Visualizza i risultati dettagliati */}
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Risultati del Test</h2>
+              <div className="space-y-6">
+                {results.raven && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
+                    <p>Punteggio: {results.raven.score}</p>
+                    <p>Precisione: {results.raven.accuracy}%</p>
+                    <p>Percentile: {results.raven.percentile}°</p>
+                  </div>
+                )}
+                {/* Aggiungi sezioni simili per gli altri test */}
+              </div>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg 
+                         hover:bg-blue-700 transition-colors font-medium"
               >
                 Torna alla Dashboard
               </button>
@@ -229,7 +264,6 @@ export default function TestPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 py-8">
-        {/* Progress bar */}
         <div className="max-w-4xl mx-auto px-4 mb-8">
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
