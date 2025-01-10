@@ -7,7 +7,7 @@ import {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
+    <div className="min-h-screen bg-slate-50 text-gray-800">
 
       {/* // ---------------------
           // NAVBAR
@@ -206,25 +206,22 @@ export default function HomePage() {
           </div>
 
           {/* // ---------------------
-              // BENEFITS SECTION
+              // BENEFITS SECTION (senza "Professionale")
               // --------------------- */}
           <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-12">
             <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
               Perché Scegliere il Nostro Test?
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500 hover:shadow-md transition-all">
-                <h3 className="text-xl font-semibold mb-3">Professionale</h3>
-                <p className="text-gray-600">
-                  Sviluppato da esperti del settore
-                </p>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* 1. ACCURATO */}
               <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500 hover:shadow-md transition-all">
                 <h3 className="text-xl font-semibold mb-3">Accurato</h3>
                 <p className="text-gray-600">
                   Risultati dettagliati e precisi
                 </p>
               </div>
+
+              {/* 2. COMPLETO */}
               <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500 hover:shadow-md transition-all">
                 <h3 className="text-xl font-semibold mb-3">Completo</h3>
                 <p className="text-gray-600">
