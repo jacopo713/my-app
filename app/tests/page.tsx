@@ -24,7 +24,6 @@ export default function TestPage() {
     raven: null
   });
   const [progress, setProgress] = useState(0);
-  const { user } = useAuth();
   const router = useRouter();
 
   const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
