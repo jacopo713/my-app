@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { Clock, Brain } from "lucide-react";
 
 const colorValues = {
@@ -62,7 +62,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
-  const timerRef = useRef(timer);
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
