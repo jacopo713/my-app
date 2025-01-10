@@ -1,12 +1,9 @@
-// app/components/auth/LoginForm.tsx
 'use client';
 
 import { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { handleEmailLogin, handleGoogleLogin } from '@/app/lib/authUtils';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -19,8 +16,7 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
+      await handleEmailLogin(email, password);
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
@@ -30,61 +26,16 @@ export default function LoginForm() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
+      await handleGoogleLogin();
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
       setError('Failed to login with Google.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkAndCreateUserDoc = async (userId: string, email: string, name: string) => {
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      // Controlla se esiste un utente con la stessa email
-      const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(query(usersRef, where('email', '==', email)));
-
-      if (!querySnapshot.empty) {
-        // Se esiste un utente con la stessa email, aggiorna il documento esistente
-        const existingUserDoc = querySnapshot.docs[0];
-        await setDoc(existingUserDoc.ref, {
-          uid: userId, // Aggiungi l'UID del nuovo provider
-          authProvider: 'google', // Aggiorna il provider di autenticazione
-          lastLoginAt: new Date().toISOString(), // Aggiorna l'ultimo accesso
-        }, { merge: true });
-      } else {
-        // Se non esiste un utente con la stessa email, crea un nuovo documento
-        await setDoc(userRef, {
-          email,
-          displayName: name,
-          subscriptionStatus: 'payment_required',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          customerId: null,
-          subscriptionId: null,
-          lastLoginAt: new Date().toISOString(),
-          isActive: true,
-          paymentMethod: null,
-          billingDetails: null,
-          authProvider: 'google'
-        });
-      }
-    } else {
-      // Se il documento esiste già, aggiorna solo i campi necessari
-      await setDoc(userRef, {
-        lastLoginAt: new Date().toISOString(),
-        authProvider: 'google', // Aggiorna il provider di autenticazione
-      }, { merge: true });
     }
   };
 
@@ -100,7 +51,7 @@ export default function LoginForm() {
       {/* Google Login Button */}
       <button
         type="button"
-        onClick={handleGoogleLogin}
+        onClick={handleGoogleSignIn}
         disabled={loading}
         className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >

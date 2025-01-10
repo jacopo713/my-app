@@ -1,13 +1,9 @@
-// app/components/auth/RegisterForm.tsx
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth, db } from '@/app/lib/firebase';
-import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc } from 'firebase/firestore';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { handleEmailRegistration, handleGoogleRegistration } from '@/app/lib/authUtils';
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -15,84 +11,31 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleRegularSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleRegistration('email', { email, password, name });
-  };
-
-  const handleGoogleSignup = async () => {
-    await handleRegistration('google');
-  };
-
-  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
     setLoading(true);
     try {
-      let userCredential;
-      
-      if (provider === 'google') {
-        const googleProvider = new GoogleAuthProvider();
-        userCredential = await signInWithPopup(auth, googleProvider);
-      } else {
-        if (!credentials) throw new Error('Credentials required for email signup');
-        userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-        await updateProfile(userCredential.user, {
-          displayName: credentials.name
-        });
-      }
-
-      const userData = {
-        email: userCredential.user.email,
-        displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
-        subscriptionStatus: 'payment_required',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        customerId: null,
-        subscriptionId: null,
-        lastLoginAt: new Date().toISOString(),
-        isActive: true,
-        paymentMethod: null,
-        billingDetails: null,
-        authProvider: provider
-      };
-
-      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-      const idToken = await userCredential.user.getIdToken();
-
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          email: userCredential.user.email,
-          userId: userCredential.user.uid,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Stripe failed to initialize');
-      }
-      
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId
-      });
-
-      if (stripeError) {
-        throw stripeError;
-      }
-
+      await handleEmailRegistration(email, password, name);
+      router.push('/dashboard');
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+      console.error(err);
+      setError('Failed to register. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setLoading(true);
+    try {
+      await handleGoogleRegistration();
+      router.push('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError('Failed to register with Google.');
+    } finally {
       setLoading(false);
     }
   };
@@ -115,7 +58,7 @@ export default function RegisterForm() {
       {/* Google Signup Button */}
       <button
         type="button"
-        onClick={handleGoogleSignup}
+        onClick={handleGoogleSignUp}
         disabled={loading}
         className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
@@ -149,7 +92,7 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleRegularSignup}>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
             <input
@@ -199,4 +142,3 @@ export default function RegisterForm() {
     </div>
   );
 }
-
