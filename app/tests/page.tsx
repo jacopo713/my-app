@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare } from 'lucide-react';
 import { RavenTest, EyeHandTest } from './components';
-import StroopTest from './components/StroopTest';
+import Stroop from './components/';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "results";
