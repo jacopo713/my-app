@@ -2,7 +2,7 @@
 
 import RavenTest from './Raven';
 import EyeHandTest from './EyeHand';
-import StroopTest from './StroopTest';
+import StroopTest from './Stroop';
 
 // Export interfaces
 export type { RavenTestProps } from './Raven';
