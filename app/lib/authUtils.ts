@@ -1,6 +1,6 @@
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { UserCredential } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 export const checkAndCreateUserDoc = async (userId: string, email: string, name: string, authProvider: string) => {
   const userRef = doc(db, 'users', userId);

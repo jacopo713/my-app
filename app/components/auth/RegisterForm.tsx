@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { handleEmailRegistration, handleGoogleRegistration } from '@/app/lib/authUtils';
 
 export default function RegisterForm() {
