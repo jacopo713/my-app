@@ -57,7 +57,7 @@ const HomePage: React.FC = () => {
       <main className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* HERO SECTION */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-2xl p-8 text-white mb-12">
+          <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 rounded-xl shadow-2xl p-8 text-white mb-12">
             <div className="flex flex-col lg:flex-row items-center">
               <div className="lg:w-1/2 text-center lg:text-left mb-6 lg:mb-0">
                 <h1 className="text-4xl font-bold mb-4">Test del QI</h1>
