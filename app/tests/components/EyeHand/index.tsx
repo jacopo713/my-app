@@ -15,9 +15,6 @@ interface Results {
   score: number;
 }
 
-interface EyeHandTestProps {
-  onComplete: (results: Results) => void;
-}
 
 const TimerDisplay = memo(({ seconds }: { seconds: number }) => {
   const [displayTime, setDisplayTime] = useState(seconds);
