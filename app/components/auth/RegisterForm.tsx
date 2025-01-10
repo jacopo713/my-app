@@ -16,7 +16,7 @@ interface AuthError {
   action?: string;
 }
 
-interface RegistrationData {
+interface UserRegistrationData {
   email: string;
   displayName: string;
   authProvider: 'email' | 'google';
@@ -29,6 +29,7 @@ interface RegistrationData {
   isActive: boolean;
   paymentMethod: null;
   billingDetails: null;
+  photoURL?: string | null;
 }
 
 export default function RegisterForm() {
@@ -38,12 +39,11 @@ export default function RegisterForm() {
   const [authError, setAuthError] = useState<AuthError | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const validateNewRegistration = async (email: string, provider: 'email' | 'google'): Promise<boolean> => {
+  const validateNewRegistration = async (email: string): Promise<boolean> => {
     try {
       const methods = await fetchSignInMethodsForEmail(auth, email);
       
       if (methods.length > 0) {
-        // Email già registrata, verifichiamo con quale provider
         if (methods.includes('password')) {
           setAuthError({
             message: 'Email già registrata con password. Effettua il login.',
@@ -73,8 +73,8 @@ export default function RegisterForm() {
 
   const createUserDocument = async (
     userId: string, 
-    data: RegistrationData
-  ) => {
+    data: UserRegistrationData
+  ): Promise<void> => {
     try {
       await setDoc(doc(db, 'users', userId), {
         ...data,
@@ -88,9 +88,10 @@ export default function RegisterForm() {
     }
   };
 
-  const proceedToPayment = async (userId: string, email: string) => {
+  const proceedToPayment = async (userId: string, email: string): Promise<void> => {
     try {
       const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('Token non disponibile');
       
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -120,28 +121,26 @@ export default function RegisterForm() {
         message: 'Errore durante l\'inizializzazione del pagamento.',
         type: 'error'
       });
+      throw error;
     }
   };
 
-  const handleEmailRegistration = async (e: React.FormEvent) => {
+  const handleEmailRegistration = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setAuthError(null);
 
     try {
-      // Validazione preventiva
-      const isValid = await validateNewRegistration(email, 'email');
+      const isValid = await validateNewRegistration(email);
       if (!isValid) {
         setLoading(false);
         return;
       }
 
-      // Creazione account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
 
-      // Creazione documento utente
-      const userData: RegistrationData = {
+      const userData: UserRegistrationData = {
         email,
         displayName: name,
         authProvider: 'email',
@@ -169,7 +168,7 @@ export default function RegisterForm() {
     }
   };
 
-  const handleGoogleRegistration = async () => {
+  const handleGoogleRegistration = async (): Promise<void> => {
     setLoading(true);
     setAuthError(null);
 
@@ -181,16 +180,14 @@ export default function RegisterForm() {
         throw new Error('Email Google non disponibile');
       }
 
-      // Validazione preventiva
-      const isValid = await validateNewRegistration(result.user.email, 'google');
+      const isValid = await validateNewRegistration(result.user.email);
       if (!isValid) {
-        await auth.signOut(); // Logout per sicurezza
+        await auth.signOut();
         setLoading(false);
         return;
       }
 
-      // Creazione documento utente
-      const userData: RegistrationData = {
+      const userData: UserRegistrationData = {
         email: result.user.email,
         displayName: result.user.displayName || '',
         authProvider: 'google',
@@ -202,7 +199,8 @@ export default function RegisterForm() {
         lastLoginAt: new Date().toISOString(),
         isActive: true,
         paymentMethod: null,
-        billingDetails: null
+        billingDetails: null,
+        photoURL: result.user.photoURL
       };
 
       await createUserDocument(result.user.uid, userData);
@@ -211,7 +209,7 @@ export default function RegisterForm() {
     } catch (error) {
       console.error('Google registration error:', error);
       setAuthError({
-        message: 'Errore durante la registrazione con Google.',
+        message: error instanceof Error ? error.message : 'Errore durante la registrazione con Google.',
         type: 'error'
       });
       setLoading(false);

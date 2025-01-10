@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, 
-         fetchSignInMethodsForEmail } from 'firebase/auth';
+         fetchSignInMethodsForEmail, User } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,6 +14,16 @@ interface AuthError {
   message: string;
   type: 'error' | 'warning' | 'info';
   action?: string;
+}
+
+interface UserData {
+  email: string;
+  displayName?: string;
+  lastLoginAt: string;
+  authProvider: 'password' | 'google';
+  lastLoginMethod: 'password' | 'google';
+  photoURL?: string | null;
+  updatedAt: string;
 }
 
 export default function LoginForm() {
@@ -27,7 +37,6 @@ export default function LoginForm() {
     try {
       const methods = await fetchSignInMethodsForEmail(auth, email);
       
-      // Se l'email non è registrata
       if (methods.length === 0) {
         setAuthError({
           message: 'Nessun account trovato con questa email.',
@@ -37,7 +46,6 @@ export default function LoginForm() {
         return false;
       }
 
-      // Se si tenta login con password ma l'account è Google
       if (attemptedMethod === 'password' && !methods.includes('password') && methods.includes('google.com')) {
         setAuthError({
           message: 'Questo account utilizza Google per l\'accesso.',
@@ -47,7 +55,6 @@ export default function LoginForm() {
         return false;
       }
 
-      // Se si tenta login con Google ma l'account è password
       if (attemptedMethod === 'google' && !methods.includes('google.com') && methods.includes('password')) {
         setAuthError({
           message: 'Questo account utilizza email e password per l\'accesso.',
@@ -68,18 +75,60 @@ export default function LoginForm() {
     }
   };
 
+  const updateUserData = async (userId: string, userData: UserData): Promise<void> => {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      await setDoc(userRef, {
+        ...userData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      await setDoc(userRef, {
+        ...userData,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setAuthError(null);
 
     try {
-      // Prima validiamo il metodo di autenticazione
       const isValidMethod = await validateAuthMethod(email, 'password');
       if (!isValidMethod) {
         setLoading(false);
         return;
       }
+
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      
+      await updateUserData(result.user.uid, {
+        email: result.user.email!,
+        lastLoginAt: new Date().toISOString(),
+        authProvider: 'password',
+        lastLoginMethod: 'password',
+        updatedAt: new Date().toISOString()
+      });
+
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      setAuthError({
+        message: 'Credenziali non valide. Riprova.',
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ... resto del componente rimane uguale ...
+}
 
       // Procediamo con il login
       const result = await signInWithEmailAndPassword(auth, email, password);
