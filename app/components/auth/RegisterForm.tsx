@@ -9,6 +9,14 @@ import { doc, setDoc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
+// Funzione di utility per il logging
+const logRegistrationStep = (step: string, data?: any) => {
+  console.log(`🔐 [Registration Step] ${step}`);
+  if (data) {
+    console.log('📦 Data:', data);
+  }
+};
+
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,30 +32,43 @@ export default function RegisterForm() {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
+      logRegistrationStep('Iniziando registrazione con Google');
+      
       const googleProvider = new GoogleAuthProvider();
+      logRegistrationStep('Provider Google creato');
       
       // Otteniamo il risultato pendente prima di completare il sign-in
+      logRegistrationStep('Apertura popup Google');
       const pendingResult = await signInWithPopup(auth, googleProvider);
+      logRegistrationStep('Popup Google completato', { 
+        email: pendingResult.user.email,
+        uid: pendingResult.user.uid 
+      });
       
       // Verifica se l'email è stata fornita da Google
       if (!pendingResult.user.email) {
+        logRegistrationStep('❌ Email mancante da Google');
         throw new Error('Email is required for registration. Please provide an email address.');
       }
 
       // Verifica PRIMA di procedere con la registrazione
+      logRegistrationStep('Verifica esistenza email', { email: pendingResult.user.email });
       const methods = await fetchSignInMethodsForEmail(auth, pendingResult.user.email);
+      logRegistrationStep('Risultato verifica email', { methods });
+      
       if (methods && methods.length > 0) {
+        logRegistrationStep('❌ Email già esistente, eliminazione utente pendente');
         // Se l'email esiste, elimina l'utente appena creato
         await pendingResult.user.delete();
         throw new Error('An account with this email already exists. Please log in instead.');
       }
 
-      // A questo punto sappiamo che l'email non esiste già
+      logRegistrationStep('✅ Email verificata, procedo con la registrazione');
 
       // Se l'email non esiste, procediamo con la registrazione
       const userData = {
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
+        email: pendingResult.user.email,
+        displayName: pendingResult.user.displayName,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -60,10 +81,14 @@ export default function RegisterForm() {
         authProvider: 'google',
       };
 
-      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+      logRegistrationStep('Salvataggio dati utente in Firestore');
+      await setDoc(doc(db, 'users', pendingResult.user.uid), userData);
+      logRegistrationStep('✅ Dati utente salvati in Firestore');
 
-      const idToken = await userCredential.user.getIdToken();
+      const idToken = await pendingResult.user.getIdToken();
+      logRegistrationStep('Token ottenuto per checkout');
 
+      logRegistrationStep('Creazione sessione checkout');
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -71,12 +96,13 @@ export default function RegisterForm() {
           'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          email: userCredential.user.email,
-          userId: userCredential.user.uid,
+          email: pendingResult.user.email,
+          userId: pendingResult.user.uid,
         }),
       });
 
       const data = await response.json();
+      logRegistrationStep('Risposta checkout', { success: !!data.sessionId });
 
       if (data.error) {
         throw new Error(data.error);
@@ -87,6 +113,7 @@ export default function RegisterForm() {
         throw new Error('Stripe failed to initialize');
       }
 
+      logRegistrationStep('Redirect a Stripe checkout');
       const { error: stripeError } = await stripe.redirectToCheckout({
         sessionId: data.sessionId,
       });
@@ -95,6 +122,10 @@ export default function RegisterForm() {
         throw stripeError;
       }
     } catch (err) {
+      logRegistrationStep('❌ Errore durante la registrazione', { 
+        error: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
       setLoading(false);
@@ -104,19 +135,28 @@ export default function RegisterForm() {
   const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
     setLoading(true);
     try {
+      logRegistrationStep(`Iniziando registrazione con ${provider}`);
+      
       if (provider === 'email') {
         if (!credentials) throw new Error('Credentials required for email signup');
         
         // Per email/password, verifichiamo prima se l'email esiste
+        logRegistrationStep('Verifica esistenza email', { email: credentials.email });
         const methods = await fetchSignInMethodsForEmail(auth, credentials.email);
+        logRegistrationStep('Risultato verifica email', { methods });
+        
         if (methods.length > 0) {
           throw new Error('An account with this email already exists. Please log in instead.');
         }
 
+        logRegistrationStep('Creazione nuovo utente con email/password');
         const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        logRegistrationStep('✅ Utente creato', { uid: userCredential.user.uid });
+
         await updateProfile(userCredential.user, {
           displayName: credentials.name,
         });
+        logRegistrationStep('✅ Profilo utente aggiornato');
 
         const userData = {
           email: credentials.email,
@@ -133,10 +173,14 @@ export default function RegisterForm() {
           authProvider: provider,
         };
 
+        logRegistrationStep('Salvataggio dati utente in Firestore');
         await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+        logRegistrationStep('✅ Dati utente salvati in Firestore');
 
         const idToken = await userCredential.user.getIdToken();
+        logRegistrationStep('Token ottenuto per checkout');
 
+        logRegistrationStep('Creazione sessione checkout');
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
           headers: {
@@ -150,6 +194,7 @@ export default function RegisterForm() {
         });
 
         const data = await response.json();
+        logRegistrationStep('Risposta checkout', { success: !!data.sessionId });
 
         if (data.error) {
           throw new Error(data.error);
@@ -160,6 +205,7 @@ export default function RegisterForm() {
           throw new Error('Stripe failed to initialize');
         }
 
+        logRegistrationStep('Redirect a Stripe checkout');
         const { error: stripeError } = await stripe.redirectToCheckout({
           sessionId: data.sessionId,
         });
@@ -169,6 +215,10 @@ export default function RegisterForm() {
         }
       }
     } catch (err) {
+      logRegistrationStep('❌ Errore durante la registrazione', { 
+        error: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
       setLoading(false);
