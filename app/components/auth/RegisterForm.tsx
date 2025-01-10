@@ -9,7 +9,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Alert, AlertDescription } from '@/app/components/ui/Alert';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
