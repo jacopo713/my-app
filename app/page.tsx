@@ -52,15 +52,15 @@ export default function HomePage() {
               <a
                 href="/login"
                 className="hidden md:flex items-center space-x-2 bg-white border border-blue-600 text-blue-600 
-                           hover:bg-blue-50 px-4 py-2 rounded-full transition-all duration-200"
+                           hover:bg-blue-50 px-4 py-2 rounded-full transition-all duration-200 font-medium"
               >
                 <User size={18} />
                 <span>Accedi</span>
               </a>
               <a
                 href="/register"
-                className="bg-blue-600 text-white hover:bg-blue-700 px-5 py-2 rounded-full 
-                           transition-all duration-200 font-semibold shadow-sm hover:shadow-lg"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 px-5 py-2 rounded-full 
+                           transition-all duration-300 font-semibold shadow-sm hover:shadow-lg"
               >
                 Inizia Ora
               </a>
@@ -93,16 +93,16 @@ export default function HomePage() {
               
               {/* Testo principale del Hero */}
               <div className="lg:w-1/2 text-center lg:text-left mb-6 lg:mb-0">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 drop-shadow">
                   Test del QI Avanzato
                 </h1>
-                <p className="text-base sm:text-lg mb-4 font-light max-w-lg mx-auto lg:mx-0">
+                <p className="text-base sm:text-lg mb-4 font-light max-w-lg mx-auto lg:mx-0 drop-shadow">
                   Scopri il tuo potenziale intellettivo con un esame completo
                 </p>
                 <a
                   href="/test-iq"
                   className="inline-block bg-white text-blue-600 font-bold text-lg sm:text-xl px-8 py-3 rounded-xl 
-                             hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
+                             hover:bg-blue-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
                 >
                   Inizia il Test
                 </a>
@@ -206,7 +206,7 @@ export default function HomePage() {
           </div>
 
           {/* // ---------------------
-              // BENEFITS SECTION (senza "Professionale")
+              // BENEFITS SECTION
               // --------------------- */}
           <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-12">
             <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
@@ -237,8 +237,8 @@ export default function HomePage() {
               </p>
               <a
                 href="/register"
-                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-full text-lg
-                           font-semibold hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-xl"
+                className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-lg
+                           font-semibold hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-xl"
               >
                 Attiva la Prova di 7 Giorni <span className="text-sm">(Gratis)</span>
               </a>
@@ -247,7 +247,7 @@ export default function HomePage() {
 
         </div>
       </main>
-
     </div>
   );
 }
+
