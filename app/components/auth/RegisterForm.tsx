@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword,
   linkWithPopup
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app'; // Importa FirebaseError
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
@@ -115,11 +116,11 @@ export default function RegisterForm() {
     } catch (err) {
       logRegistrationStep('❌ Errore durante la registrazione', {
         error: err instanceof Error ? err.message : 'Unknown error',
-        errorCode: err instanceof Error ? (err as any).code : undefined,
+        errorCode: err instanceof FirebaseError ? err.code : undefined, // Usa FirebaseError
         stack: err instanceof Error ? err.stack : undefined
       });
 
-      if (err instanceof Error && (err as any).code === 'auth/account-exists-with-different-credential') {
+      if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
         setError('You already have an account with this email. Please login with your password to link your Google account.');
         setPendingGoogleProvider(googleProvider);
         setShowPasswordLinkPrompt(true);
@@ -153,79 +154,6 @@ export default function RegisterForm() {
       });
       setError(err instanceof Error ? err.message : 'Failed to link accounts. Please try again.');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
-    setLoading(true);
-    try {
-      if (provider === 'email') {
-        if (!credentials) throw new Error('Credentials required for email signup');
-        
-        const methods = await fetchSignInMethodsForEmail(auth, credentials.email);
-        if (methods.length > 0) {
-          throw new Error('An account with this email already exists. Please log in instead.');
-        }
-
-        const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-        await updateProfile(userCredential.user, {
-          displayName: credentials.name,
-        });
-
-        const userData = {
-          email: credentials.email,
-          displayName: credentials.name,
-          subscriptionStatus: 'payment_required',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          customerId: null,
-          subscriptionId: null,
-          lastLoginAt: new Date().toISOString(),
-          isActive: true,
-          paymentMethod: null,
-          billingDetails: null,
-          authProvider: provider,
-        };
-
-        await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-
-        const idToken = await userCredential.user.getIdToken();
-
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({
-            email: credentials.email,
-            userId: userCredential.user.uid,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        const stripe = await stripePromise;
-        if (!stripe) {
-          throw new Error('Stripe failed to initialize');
-        }
-
-        const { error: stripeError } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId,
-        });
-
-        if (stripeError) {
-          throw stripeError;
-        }
-      }
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
       setLoading(false);
     }
   };
