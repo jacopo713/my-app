@@ -15,18 +15,18 @@ export default function LoginForm() {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
-    } catch (err) {
-      console.error(err);
-      setError('Failed to login. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    router.push('/dashboard');
+  } catch (err) {
+    console.error(err);
+    setError('Failed to login. Please check your credentials.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleGoogleLogin = async () => {
     setLoading(true);
