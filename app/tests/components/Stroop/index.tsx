@@ -42,7 +42,7 @@ interface StroopResults {
 const Statistics = memo(({ responses }: { responses: Response[] }) => {
   const stats: Stats = {
     totalResponses: responses.length,
-    correctResponses: responses.filter(r => r.correct).length
+    correctResponses: responses.filter(r => r.correct).length,
   };
 
   return (
@@ -65,26 +65,29 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
-  const generateStimulus = useCallback((type: "congruent" | "incongruent"): Stimulus => {
-    const wordIndex = Math.floor(Math.random() * colors.length);
-    const word = colors[wordIndex];
-    let colorIndex;
+  const generateStimulus = useCallback(
+    (type: "congruent" | "incongruent"): Stimulus => {
+      const wordIndex = Math.floor(Math.random() * colors.length);
+      const word = colors[wordIndex];
+      let colorIndex;
 
-    if (type === "congruent") {
-      colorIndex = wordIndex;
-    } else {
-      do {
-        colorIndex = Math.floor(Math.random() * colors.length);
-      } while (colorIndex === wordIndex);
-    }
+      if (type === "congruent") {
+        colorIndex = wordIndex;
+      } else {
+        do {
+          colorIndex = Math.floor(Math.random() * colors.length);
+        } while (colorIndex === wordIndex);
+      }
 
-    return {
-      word,
-      color: colors[colorIndex],
-      type,
-      timestamp: Date.now(),
-    };
-  }, [colors]);
+      return {
+        word,
+        color: colors[colorIndex],
+        type,
+        timestamp: Date.now(),
+      };
+    },
+    [colors]
+  );
 
   const generateNextStimulus = useCallback(() => {
     const types: ("congruent" | "incongruent")[] = ["congruent", "incongruent"];
@@ -97,17 +100,18 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const calculateResults = useCallback(() => {
     const correct = responses.filter((r) => r.correct).length;
     const accuracy = responses.length > 0 ? correct / responses.length : 0;
-    const avgTime = responses.length > 0
-      ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length
-      : 0;
+    const avgTime =
+      responses.length > 0
+        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length
+        : 0;
 
     const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
     const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
 
     const interferenceScore =
       incongruentResponses.length > 0 && congruentResponses.length > 0
-        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
-          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
+        ? incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length -
+          congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length
         : 0;
 
     return {
@@ -121,54 +125,55 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     };
   }, [responses]);
 
+  // EFFECT PER LA GESTIONE DEL TIMER
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    if (!isRunning) return;
 
-    if (isRunning && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => {
-          console.log("Timer tick:", prev); // Debug
-          if (prev <= 1) {
-            clearInterval(interval);
-            setIsRunning(false);
-            if (onComplete) {
-              onComplete(calculateResults());
-            }
-            return 0;
+    const interval = setInterval(() => {
+      setTimer((prevTimer) => {
+        if (prevTimer <= 1) {
+          clearInterval(interval);
+          setIsRunning(false);
+          if (onComplete) {
+            onComplete(calculateResults());
           }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+          return 0;
+        }
+        return prevTimer - 1;
+      });
+    }, 1000);
 
     return () => {
-      if (interval) {
-        console.log("Clearing interval"); // Debug
-        clearInterval(interval);
-      }
+      clearInterval(interval);
     };
-  }, [isRunning, timer, onComplete, calculateResults]);
+  }, [isRunning, onComplete, calculateResults]);
 
+  // Avvio primo stimolo se il test è in corso e non è presente uno stimolo
   useEffect(() => {
     if (isRunning && !currentStimulus) {
       generateNextStimulus();
     }
   }, [isRunning, currentStimulus, generateNextStimulus]);
 
-  const handleResponse = useCallback((selectedColor: ColorKey) => {
-    if (!currentStimulus || !isRunning || !responseStartTime) return;
+  // Handler per la risposta
+  const handleResponse = useCallback(
+    (selectedColor: ColorKey) => {
+      if (!currentStimulus || !isRunning || !responseStartTime) return;
 
-    const response: Response = {
-      stimulus: currentStimulus,
-      selectedColor,
-      correct: selectedColor === currentStimulus.color,
-      reactionTime: Date.now() - responseStartTime,
-    };
+      const response: Response = {
+        stimulus: currentStimulus,
+        selectedColor,
+        correct: selectedColor === currentStimulus.color,
+        reactionTime: Date.now() - responseStartTime,
+      };
 
-    setResponses((prev) => [...prev, response]);
-    generateNextStimulus();
-  }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
+      setResponses((prev) => [...prev, response]);
+      generateNextStimulus();
+    },
+    [currentStimulus, isRunning, responseStartTime, generateNextStimulus]
+  );
 
+  // Utility di formattazione tempo
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -220,3 +225,4 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 };
 
 export default StroopTest;
+
