@@ -2,125 +2,29 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { Alert, AlertDescription } from '@/app/components/ui/Alert';
-
-interface AuthError {
-  message: string;
-  type: 'error' | 'warning' | 'info';
-  action?: string;
-}
-
-interface UserData {
-  email: string;
-  displayName?: string;
-  lastLoginAt: string;
-  authProvider: 'password' | 'google';
-  lastLoginMethod: 'password' | 'google';
-  photoURL?: string | null;
-  updatedAt: string;
-}
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState<AuthError | null>(null);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const validateAuthMethod = async (email: string, attemptedMethod: 'password' | 'google'): Promise<boolean> => {
-    try {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      
-      if (methods.length === 0) {
-        setAuthError({
-          message: 'Nessun account trovato con questa email.',
-          type: 'info',
-          action: 'register'
-        });
-        return false;
-      }
-
-      if (attemptedMethod === 'password' && !methods.includes('password') && methods.includes('google.com')) {
-        setAuthError({
-          message: 'Questo account utilizza Google per l\'accesso.',
-          type: 'warning',
-          action: 'useGoogle'
-        });
-        return false;
-      }
-
-      if (attemptedMethod === 'google' && !methods.includes('google.com') && methods.includes('password')) {
-        setAuthError({
-          message: 'Questo account utilizza email e password per l\'accesso.',
-          type: 'warning',
-          action: 'usePassword'
-        });
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error validating auth method:', error);
-      setAuthError({
-        message: 'Errore durante la verifica del metodo di accesso.',
-        type: 'error'
-      });
-      return false;
-    }
-  };
-
-  const updateUserData = async (userId: string, userData: UserData): Promise<void> => {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (!userDoc.exists()) {
-      await setDoc(userRef, {
-        ...userData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-    } else {
-      await setDoc(userRef, {
-        ...userData,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-    }
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setAuthError(null);
-
     try {
-      const isValidMethod = await validateAuthMethod(email, 'password');
-      if (!isValidMethod) {
-        setLoading(false);
-        return;
-      }
-
       const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      await updateUserData(result.user.uid, {
-        email: result.user.email!,
-        lastLoginAt: new Date().toISOString(),
-        authProvider: 'password',
-        lastLoginMethod: 'password',
-        updatedAt: new Date().toISOString()
-      });
-
+      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
-      setAuthError({
-        message: 'Credenziali non valide. Riprova.',
-        type: 'error'
-      });
+    } catch (err) {
+      console.error(err);
+      setError('Failed to login. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -128,73 +32,56 @@ export default function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setAuthError(null);
-
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const googleEmail = result.user.email;
-
-      if (!googleEmail) {
-        throw new Error('Email Google non disponibile');
-      }
-
-      const isValidMethod = await validateAuthMethod(googleEmail, 'google');
-      if (!isValidMethod) {
-        await auth.signOut(); // Logout per sicurezza
-        setLoading(false);
-        return;
-      }
-
-      await updateUserData(result.user.uid, {
-        email: googleEmail,
-        displayName: result.user.displayName || '',
-        lastLoginAt: new Date().toISOString(),
-        authProvider: 'google',
-        lastLoginMethod: 'google',
-        photoURL: result.user.photoURL,
-        updatedAt: new Date().toISOString()
-      });
-
+      await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
-    } catch (error) {
-      console.error('Google login error:', error);
-      setAuthError({
-        message: 'Errore durante l\'accesso con Google. Riprova.',
-        type: 'error'
-      });
+    } catch (err) {
+      console.error(err);
+      setError('Failed to login with Google.');
     } finally {
       setLoading(false);
     }
   };
 
+  const checkAndCreateUserDoc = async (userId: string, email: string, name: string) => {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        email,
+        displayName: name,
+        subscriptionStatus: 'payment_required',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        customerId: null,
+        subscriptionId: null,
+        lastLoginAt: new Date().toISOString(),
+        isActive: true,
+        paymentMethod: null,
+        billingDetails: null,
+        authProvider: 'google'
+      });
+    }
+  };
+
   return (
     <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900">Accedi</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Accedi al tuo account per continuare
-        </p>
-      </div>
-
-      {authError && (
-        <Alert variant={authError.type === 'error' ? 'destructive' : 'default'}>
-          <AlertDescription>
-            {authError.message}
-            {authError.action === 'register' && (
-              <Link href="/register" className="ml-2 text-blue-600 hover:text-blue-800">
-                Registrati ora
-              </Link>
-            )}
-          </AlertDescription>
-        </Alert>
+      <h2 className="text-center text-3xl font-bold text-gray-900">Login</h2>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
       )}
-
+      
+      {/* Google Login Button */}
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -214,44 +101,36 @@ export default function LoginForm() {
             fill="#EA4335"
           />
         </svg>
-        <span>{loading ? 'Accesso in corso...' : 'Continua con Google'}</span>
+        Continue with Google
       </button>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">oppure</span>
+          <span className="px-2 bg-white text-gray-500">Or continue with email</span>
         </div>
       </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
-            <label htmlFor="email" className="sr-only">
-              Indirizzo email
-            </label>
             <input
-              id="email"
               type="email"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Indirizzo email"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
             />
           </div>
           <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
             <input
-              id="password"
               type="password"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -266,7 +145,7 @@ export default function LoginForm() {
               href="/forgot-password"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              Password dimenticata?
+              Forgot your password?
             </Link>
           </div>
         </div>
@@ -274,13 +153,14 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          className={`w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
             loading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
-          {loading ? 'Accesso in corso...' : 'Accedi'}
+          {loading ? 'Loading...' : 'Sign in'}
         </button>
       </form>
     </div>
   );
 }
+
