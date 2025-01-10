@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Scale } from 'lucide-react';
 
 /** ------------------------
- * 1) CONFIG E TIPI GLOBALI
+ *  TIPI E INTERFACCE
  * ------------------------**/
 interface ShapeProps {
   type: string; // 'circle' | 'square' | 'triangle' | 'diamond'
@@ -19,172 +19,19 @@ interface Answer extends ShapeProps {
   isCorrect: boolean;
 }
 
+interface RavenTestResults {
+  score: number;      // ad es. 9
+  accuracy: number;   // es. 69 (int %)
+}
+
 interface RavenTestProps {
-  onComplete: (results: { score: number; accuracy: number }) => void;
-}
-
-/** Semplifichiamo la “complessità” per avere incrementi più graduali,
-    evitando di rendere i pattern troppo difficili già al 6º livello. */
-interface Complexity {
-  shapes: number;     // quante forme diverse usare
-  rotations: number;  // quante rotazioni distinct
-  colors: number;     // quante varianti colore
-  opacities: number;  // quante varianti di opacità
-  scales: number;     // quante varianti di scala
-}
-
-// Ad esempio, rendiamo i livelli 1..13 più lineari.
-const complexityMatrix: Record<number, Complexity> = {
-  1: { shapes: 2, rotations: 1, colors: 1, opacities: 1, scales: 1 },
-  2: { shapes: 2, rotations: 2, colors: 1, opacities: 1, scales: 1 },
-  3: { shapes: 3, rotations: 2, colors: 2, opacities: 1, scales: 1 },
-  4: { shapes: 3, rotations: 3, colors: 2, opacities: 1, scales: 1 },
-  5: { shapes: 3, rotations: 4, colors: 3, opacities: 1, scales: 1 },
-  6: { shapes: 4, rotations: 4, colors: 3, opacities: 2, scales: 1 },
-  7: { shapes: 4, rotations: 5, colors: 3, opacities: 2, scales: 2 },
-  8: { shapes: 4, rotations: 6, colors: 4, opacities: 2, scales: 2 },
-  9: { shapes: 4, rotations: 7, colors: 4, opacities: 3, scales: 3 },
-  10: { shapes: 4, rotations: 8, colors: 4, opacities: 3, scales: 3 },
-  11: { shapes: 4, rotations: 8, colors: 5, opacities: 4, scales: 3 },
-  12: { shapes: 4, rotations: 9, colors: 5, opacities: 5, scales: 4 },
-  13: { shapes: 4, rotations: 10, colors: 5, opacities: 5, scales: 4 },
-};
-
-// Config “globale” per le forme
-const systemConfig = {
-  shapes: ['circle', 'square', 'triangle', 'diamond'],
-  // Riduciamo un po’ la lista di rotazioni per abbassare la difficoltà
-  rotations: [0, 30, 45, 60, 90, 120, 180, 270], 
-  colors: ['#2563eb', '#dc2626', '#059669', '#6b21a8', '#0f766e'],
-  opacities: [1, 0.8, 0.6, 0.4], 
-  scales: [0.6, 0.8, 1, 1.2],
-};
-
-/** ------------------------
- * 2) FUNZIONI GLOBALI
- * ------------------------**/
-// a) Rotazione “visiva”
-function normalizeVisualRotation(shape: string, rotation: number): number {
-  switch (shape) {
-    case 'circle':
-      return 0;
-    case 'square':
-    case 'diamond':
-      return rotation % 90;
-    case 'triangle':
-      return rotation % 120;
-    default:
-      return rotation;
-  }
-}
-function areVisuallyIdentical(a: ShapeProps, b: ShapeProps): boolean {
-  if (a.type !== b.type) return false;
-  if (a.color !== b.color) return false;
-  if (a.opacity !== b.opacity) return false;
-  if (a.scale !== b.scale) return false;
-
-  const normA = normalizeVisualRotation(a.type, a.rotation ?? 0);
-  const normB = normalizeVisualRotation(b.type, b.rotation ?? 0);
-
-  return normA === normB;
-}
-
-// b) Creiamo un singolo Answer
-function createRandomAnswer(
-  shapes: string[],
-  rotations: number[],
-  colors: string[],
-  opacities: number[],
-  scales: number[],
-  isCorrect: boolean
-): Answer {
-  return {
-    type: shapes[Math.floor(Math.random() * shapes.length)],
-    rotation: rotations[Math.floor(Math.random() * rotations.length)],
-    color: colors[Math.floor(Math.random() * colors.length)],
-    opacity: opacities[Math.floor(Math.random() * opacities.length)],
-    scale: scales[Math.floor(Math.random() * scales.length)],
-    isCorrect,
-  };
-}
-
-/** Genera la matrice 3x3 (lasciando [2,2] vuota se vuoi) */
-function generatePattern(level: number): Array<Array<ShapeProps | null>> {
-  const c = complexityMatrix[level];
-  const newMatrix = Array(3)
-    .fill(null)
-    .map(() => Array<ShapeProps | null>(3).fill(null));
-
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      if (i === 2 && j === 2) continue; 
-      // Esempio di logica semplificata
-      newMatrix[i][j] = {
-        type: systemConfig.shapes[(i + j) % c.shapes],
-        rotation: systemConfig.rotations[((i + j) * 2) % c.rotations],
-        color: systemConfig.colors[(i + j) % c.colors],
-        opacity: c.opacities > 1 ? systemConfig.opacities[((i + j) + level) % c.opacities] : 1,
-        scale: c.scales > 1 ? systemConfig.scales[((i * j) + level) % c.scales] : 1,
-      };
-    }
-  }
-  return newMatrix;
-}
-
-/** Ritorna la cella [2,2] come risposta corretta, se nulla */
-function getCorrectAnswer(matrix: Array<Array<ShapeProps | null>>, level: number): ShapeProps {
-  const c = complexityMatrix[level];
-  if (!matrix[2][2]) {
-    return {
-      type: systemConfig.shapes[(2 + 2) % c.shapes],
-      rotation: systemConfig.rotations[((2 + 2) * 2) % c.rotations],
-      color: systemConfig.colors[(2 + 2) % c.colors],
-      opacity: c.opacities > 1 ? systemConfig.opacities[4 % c.opacities] : 1,
-      scale: c.scales > 1 ? systemConfig.scales[4 % c.scales] : 1,
-    };
-  }
-  return matrix[2][2] as ShapeProps;
-}
-
-/** Genera 1 corretta + 3 distrattori (4 totali) */
-function generateAnswers(correct: ShapeProps, level: number): Answer[] {
-  const c = complexityMatrix[level];
-  const allAnswers: Answer[] = [{ ...correct, isCorrect: true }];
-
-  let attempts = 0;
-  while (allAnswers.length < 6 && attempts < 20) {
-    const newAnswer = createRandomAnswer(
-      systemConfig.shapes.slice(0, c.shapes),
-      systemConfig.rotations.slice(0, c.rotations),
-      systemConfig.colors.slice(0, c.colors),
-      systemConfig.opacities.slice(0, c.opacities),
-      systemConfig.scales.slice(0, c.scales),
-      false
-    );
-
-    // Distorsione minima se < livello 10, per differenziarlo
-    if (level < 10) {
-      newAnswer.rotation = ((newAnswer.rotation ?? 0) + 30) % 360;
-    }
-
-    if (allAnswers.some(ans => areVisuallyIdentical(ans, newAnswer))) {
-      attempts++;
-      continue;
-    }
-    allAnswers.push(newAnswer);
-  }
-
-  const finalAnswers = allAnswers
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 4);
-
-  return finalAnswers.sort(() => Math.random() - 0.5);
+  onComplete: (results: RavenTestResults) => void;
 }
 
 /** ------------------------
- * 3) SHAPE COMPONENT (UI)
+ *  SHAPE COMPONENT
  * ------------------------**/
-const ShapeComponent: React.FC<ShapeProps> = ({
+const Shape: React.FC<ShapeProps> = ({
   type,
   rotation = 0,
   size = 20,
@@ -238,57 +85,177 @@ const ShapeComponent: React.FC<ShapeProps> = ({
 };
 
 /** ------------------------
- * 4) COMPONENTE PRINCIPALE
+ *  FUNZIONI DI UTILITÀ
  * ------------------------**/
+
+// Rotazione visiva (un cerchio ruotato appare lo stesso)
+function normalizeVisualRotation(shape: string, rotation: number): number {
+  switch (shape) {
+    case 'circle':
+      return 0;
+    case 'square':
+    case 'diamond':
+      return rotation % 90;
+    case 'triangle':
+      return rotation % 120;
+    default:
+      return rotation;
+  }
+}
+
+// Controllo se due shape sono "visivamente identiche"
+function areVisuallyIdentical(a: ShapeProps, b: ShapeProps): boolean {
+  if (a.type !== b.type) return false;
+  if (a.color !== b.color) return false;
+  if (a.opacity !== b.opacity) return false;
+  if (a.scale !== b.scale) return false;
+
+  const normA = normalizeVisualRotation(a.type, a.rotation ?? 0);
+  const normB = normalizeVisualRotation(b.type, b.rotation ?? 0);
+
+  return normA === normB;
+}
+
+// Creiamo una singola "Answer" random
+function createRandomAnswer(
+  shapes: string[],
+  rotations: number[],
+  colors: string[],
+  opacities: number[],
+  scales: number[],
+  isCorrect: boolean
+): Answer {
+  return {
+    type: shapes[Math.floor(Math.random() * shapes.length)],
+    rotation: rotations[Math.floor(Math.random() * rotations.length)],
+    color: colors[Math.floor(Math.random() * colors.length)],
+    opacity: opacities[Math.floor(Math.random() * opacities.length)],
+    scale: scales[Math.floor(Math.random() * scales.length)],
+    isCorrect,
+  };
+}
+
+/** ------------------------
+ *  RAVEN TEST COMPONENT
+ * ------------------------**/
+/**
+ * Esempio semplificato con 13 livelli, ognuno con 3x3, ultima cella "?" e 4 possibili risposte.
+ * Punteggio finale = #risposte corrette. Calcolo percentile lineare => (score/13)*100.
+ */
 const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   const [level, setLevel] = useState(1);
+  const [score, setScore] = useState(0);
+
   const [matrix, setMatrix] = useState<Array<Array<ShapeProps | null>>>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
   const [isAnswerSelected, setIsAnswerSelected] = useState(false);
 
-  // Funzione “lineare” per calcolare percentile
-  // 13/13 => 100%, 6.5/13 => 50%, ecc.
-  function computePercentile(finalScore: number) {
-    return (finalScore / 13) * 100;
+  // Config semplificata (forme, rotazioni, etc.)
+  const shapes = ['circle', 'square', 'triangle', 'diamond'];
+  const rotations = [0, 30, 45, 60, 90, 120, 180, 270];
+  const colors = ['#2563eb', '#dc2626', '#059669', '#6b21a8', '#0f766e'];
+  const opacities = [1, 0.8, 0.6, 0.4];
+  const scales = [0.6, 0.8, 1, 1.2];
+
+  // Genera la matrice 3x3 con ultima cella nulla
+  function generateMatrix(level: number) {
+    const newMatrix = Array(3)
+      .fill(null)
+      .map(() => Array<ShapeProps | null>(3).fill(null));
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (i === 2 && j === 2) continue; // lascia "?"
+        // Un pattern semplice (es. shape=shapes[(i+j) % 2]) e via
+        newMatrix[i][j] = {
+          type: shapes[(i + j) % 2],
+          rotation: rotations[(i * j) % 4], // meno rotazioni
+          color: colors[(i + j) % 2],       // 2 colori
+          opacity: 1,
+          scale: 1,
+        };
+      }
+    }
+    return newMatrix;
   }
 
+  // Trova la shape corretta x [2,2]
+  function getCorrectAnswer(matrix: Array<Array<ShapeProps | null>>): ShapeProps {
+    // Se [2,2] è vuota => costruiamo una forma coerente
+    return matrix[2][2] ?? {
+      type: 'circle',
+      rotation: 0,
+      color: '#2563eb',
+      opacity: 1,
+      scale: 1,
+    };
+  }
+
+  // Genera 1 corretta + 3 distrattori
+  function generateAnswers(correct: ShapeProps): Answer[] {
+    const allAnswers: Answer[] = [{ ...correct, isCorrect: true }];
+    let attempts = 0;
+
+    while (allAnswers.length < 6 && attempts < 20) {
+      const newAnswer = createRandomAnswer(shapes, rotations, colors, opacities, scales, false);
+
+      // Minimizza differenze
+      newAnswer.rotation = ((newAnswer.rotation ?? 0) + 45) % 360;
+
+      if (allAnswers.some(ans => areVisuallyIdentical(ans, newAnswer))) {
+        attempts++;
+        continue;
+      }
+      allAnswers.push(newAnswer);
+    }
+
+    // Scelta 4 finali
+    const finalAnswers = allAnswers.sort(() => Math.random() - 0.5).slice(0, 4);
+    return finalAnswers.sort(() => Math.random() - 0.5);
+  }
+
+  // Calcolo percentile lineare
+  function computePercentile(finalScore: number): number {
+    const raw = (finalScore / 13) * 100;    // es. 9/13 => 69.23
+    return Math.round(raw);                // 69
+  }
+
+  // Ad ogni cambio di livello => rigenera
   useEffect(() => {
-    const newMatrix = generatePattern(level);
+    const newMatrix = generateMatrix(level);
     setMatrix(newMatrix);
 
-    const correct = getCorrectAnswer(newMatrix, level);
-    const fourAnswers = generateAnswers(correct, level);
+    const correct = getCorrectAnswer(newMatrix);
+    const fourAnswers = generateAnswers(correct);
     setAnswers(fourAnswers);
 
     setSelectedAnswer(null);
     setIsAnswerSelected(false);
   }, [level]);
 
-  function handleAnswer(idx: number) {
+  function handleAnswer(index: number) {
     if (isAnswerSelected) return;
-    setSelectedAnswer(idx);
+    setSelectedAnswer(index);
     setIsAnswerSelected(true);
 
-    const isCorrect = answers[idx].isCorrect;
-    if (isCorrect) {
-      setScore(prev => prev + 1);
+    const chosen = answers[index];
+    if (chosen.isCorrect) {
+      setScore(s => s + 1);
     }
 
     setTimeout(() => {
       if (level < 13) {
-        setLevel(prev => prev + 1);
+        setLevel(l => l + 1);
       } else {
-        const finalScore = score + (isCorrect ? 1 : 0);
-        // Calcoliamo la percentile “lineare”
+        const finalScore = chosen.isCorrect ? score + 1 : score;
         const percentile = computePercentile(finalScore);
         onComplete({
           score: finalScore,
-          accuracy: percentile, // Puoi chiamarlo “accuracy” o “percentile”
+          accuracy: percentile,
         });
       }
-    }, 800);
+    }, 700);
   }
 
   return (
@@ -319,7 +286,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
               className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center border border-gray-200 rounded-lg"
             >
               {cell ? (
-                <ShapeComponent {...cell} size={40} />
+                <Shape {...cell} size={40} />
               ) : (
                 <span className="text-2xl text-gray-400">?</span>
               )}
@@ -333,7 +300,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         <h3 className="text-lg font-medium mb-4">Possibili soluzioni:</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {answers.map((answer, idx) => {
-            const selected = idx === selectedAnswer;
+            const isSelected = idx === selectedAnswer;
             return (
               <button
                 key={idx}
@@ -341,39 +308,59 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
                 disabled={isAnswerSelected}
                 className={`p-4 border rounded-lg flex flex-col items-center justify-center
                   ${
-                    selected
+                    isSelected
                       ? answer.isCorrect
                         ? 'bg-green-50 border-green-500'
                         : 'bg-red-50 border-red-500'
                       : 'hover:bg-gray-50'
                   }
                   ${
-                    isAnswerSelected && !selected
+                    isAnswerSelected && !isSelected
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
                   }
                 `}
               >
                 <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center">
-                  <ShapeComponent {...answer} size={40} />
+                  <Shape {...answer} size={40} />
                 </div>
               </button>
             );
           })}
         </div>
       </div>
-
-      {/* Info per i livelli alti */}
-      {level > 10 && (
-        <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-          <p className="text-sm text-purple-800 font-medium">
-            Livello Avanzato {level - 10}/3
-          </p>
-        </div>
-      )}
     </div>
   );
 };
 
-export default RavenTest;
+/** ------------------------
+ *  COMPONENTE RISULTATI
+ * ------------------------**/
+function ResultsTest({ results }: { results: { score: number; accuracy: number } }) {
+  return (
+    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-8">
+      <h2 className="text-2xl font-bold mb-4">Risultati del Test</h2>
+      <p className="mb-2">Punteggio: {results.score}</p>
+      <p className="mb-2">Precisione: {results.accuracy}%</p>
+      {/* Nessuna traccia di "1°" */}
+    </div>
+  );
+}
+
+/** ------------------------
+ *  PAGINA CHE USA RavenTest
+ * ------------------------**/
+export default function TestPage() {
+  const [testResults, setTestResults] = useState<RavenTestResults | null>(null);
+
+  return (
+    <div className="p-4">
+      {!testResults ? (
+        <RavenTest onComplete={(res) => setTestResults(res)} />
+      ) : (
+        <ResultsTest results={testResults} />
+      )}
+    </div>
+  );
+}
 
