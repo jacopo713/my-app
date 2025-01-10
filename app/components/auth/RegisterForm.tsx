@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, getAuth, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
