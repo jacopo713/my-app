@@ -16,9 +16,6 @@ interface Answer extends ShapeProps {
   isCorrect: boolean;
 }
 
-interface RavenTestProps {
-  onComplete: (results: { score: number; accuracy: number }) => void;
-}
 
 const Shape: React.FC<ShapeProps> = ({
   type,
