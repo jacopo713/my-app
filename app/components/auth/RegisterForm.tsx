@@ -40,7 +40,7 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState<AuthError | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+
 
   const validateNewRegistration = async (email: string, provider: 'email' | 'google'): Promise<boolean> => {
     try {
