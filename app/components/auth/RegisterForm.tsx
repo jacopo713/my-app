@@ -7,11 +7,11 @@ import {
   updateProfile, 
   GoogleAuthProvider, 
   signInWithPopup,
-  fetchSignInMethodsForEmail,
-  FirebaseError
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth, db } from '@/app/lib/firebase';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 

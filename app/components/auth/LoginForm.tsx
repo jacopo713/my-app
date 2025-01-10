@@ -6,10 +6,9 @@ import {
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  fetchSignInMethodsForEmail,
-  AuthError,
-  FirebaseError 
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
