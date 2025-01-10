@@ -16,16 +16,6 @@ export default function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const checkIfEmailExists = async (email: string) => {
-    try {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      return methods.length > 0; // Restituisce true se l'email è già registrata
-    } catch (error) {
-      console.error('Error checking email:', error);
-      return false;
-    }
-  };
-
   const handleRegularSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     await handleRegistration('email', { email, password, name });
@@ -41,8 +31,8 @@ export default function RegisterForm() {
       // Verifica se l'email esiste già
       const emailToCheck = provider === 'google' ? credentials?.email : email;
       if (emailToCheck) {
-        const emailExists = await checkIfEmailExists(emailToCheck);
-        if (emailExists) {
+        const methods = await fetchSignInMethodsForEmail(auth, emailToCheck);
+        if (methods.length > 0) {
           throw new Error('An account with this email already exists. Please log in instead.');
         }
       }
@@ -52,6 +42,11 @@ export default function RegisterForm() {
       if (provider === 'google') {
         const googleProvider = new GoogleAuthProvider();
         userCredential = await signInWithPopup(auth, googleProvider);
+
+        // Verifica se l'email è stata fornita da Google
+        if (!userCredential.user.email) {
+          throw new Error('Email is required for registration. Please provide an email address.');
+        }
       } else {
         if (!credentials) throw new Error('Credentials required for email signup');
         userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
@@ -76,6 +71,7 @@ export default function RegisterForm() {
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+
       const idToken = await userCredential.user.getIdToken();
 
       const response = await fetch('/api/create-checkout-session', {
