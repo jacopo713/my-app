@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { Clock, Brain } from "lucide-react";
 
 const colorValues = {
@@ -29,7 +29,16 @@ interface Stats {
   correctResponses: number;
 }
 
-// Componente statistiche ottimizzato
+interface StroopResults {
+  score: number;
+  accuracy: number;
+  averageReactionTime: number;
+  totalResponses: number;
+  correctResponses: number;
+  interferenceScore: number;
+  responsesPerMinute: string;
+}
+
 const Statistics = memo(({ responses }: { responses: Response[] }) => {
   const stats: Stats = {
     totalResponses: responses.length,
@@ -85,45 +94,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     setResponseStartTime(Date.now());
   }, [generateStimulus]);
 
-useEffect(() => {
-  if (isRunning && timer > 0) {
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsRunning(false);
-          if (onComplete) {
-            onComplete(calculateResults());
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }
-}, [isRunning, timer, onComplete, calculateResults]);
-  useEffect(() => {
-    if (isRunning && !currentStimulus) {
-      generateNextStimulus();
-    }
-  }, [isRunning, currentStimulus, generateNextStimulus]);
-
-  const handleResponse = useCallback((selectedColor: ColorKey) => {
-    if (!currentStimulus || !isRunning || !responseStartTime) return;
-
-    const response: Response = {
-      stimulus: currentStimulus,
-      selectedColor,
-      correct: selectedColor === currentStimulus.color,
-      reactionTime: Date.now() - responseStartTime,
-    };
-
-    setResponses(prev => [...prev, response]);
-    generateNextStimulus();
-  }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
-
   const calculateResults = useCallback(() => {
     const correct = responses.filter((r) => r.correct).length;
     const accuracy = responses.length > 0 ? correct / responses.length : 0;
@@ -150,6 +120,46 @@ useEffect(() => {
       responsesPerMinute: responses.length.toFixed(1),
     };
   }, [responses]);
+
+  useEffect(() => {
+    if (isRunning && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsRunning(false);
+            if (onComplete) {
+              onComplete(calculateResults());
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isRunning, timer, onComplete, calculateResults]);
+
+  useEffect(() => {
+    if (isRunning && !currentStimulus) {
+      generateNextStimulus();
+    }
+  }, [isRunning, currentStimulus, generateNextStimulus]);
+
+  const handleResponse = useCallback((selectedColor: ColorKey) => {
+    if (!currentStimulus || !isRunning || !responseStartTime) return;
+
+    const response: Response = {
+      stimulus: currentStimulus,
+      selectedColor,
+      correct: selectedColor === currentStimulus.color,
+      reactionTime: Date.now() - responseStartTime,
+    };
+
+    setResponses(prev => [...prev, response]);
+    generateNextStimulus();
+  }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
