@@ -9,7 +9,7 @@ import {
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, setDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -95,17 +95,15 @@ export default function LoginForm() {
         const { data: existingData, id: existingId } = existingDoc;
 
         if (existingId !== userId) {
-          console.log('Migrating document from', existingId, 'to', userId);
-          
+          // Migrazione a nuovo UID
           const updatedData = {
-            ...existingData,
-            email,
-            displayName: name || existingData.displayName,
-            subscriptionStatus: existingData.subscriptionStatus,
             customerId: existingData.customerId,
             subscriptionId: existingData.subscriptionId,
+            subscriptionStatus: existingData.subscriptionStatus,
             paymentMethod: existingData.paymentMethod,
             billingDetails: existingData.billingDetails,
+            email,
+            displayName: name || existingData.displayName,
             updatedAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString(),
             linkedAccounts: {
@@ -116,23 +114,19 @@ export default function LoginForm() {
 
           await setDoc(doc(db, 'users', userId), updatedData);
           await deleteDoc(doc(db, 'users', existingId));
-          
           console.log('Document successfully migrated');
         } else {
-          const updateData = {
-            ...existingData,
+          // Aggiornamento documento esistente
+          const userRef = doc(db, 'users', userId);
+          await updateDoc(userRef, {
             lastLoginAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            linkedAccounts: {
-              ...(existingData.linkedAccounts || {}),
-              [provider]: true
-            }
-          };
-          
-          await setDoc(doc(db, 'users', userId), updateData, { merge: true });
-          console.log('Existing document updated');
+            [`linkedAccounts.${provider}`]: true
+          });
+          console.log('Document successfully updated');
         }
       } else {
+        // Creazione nuovo documento
         const newUserData = {
           email,
           displayName: name,
