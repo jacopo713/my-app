@@ -1,6 +1,7 @@
+// app/tests/components/EyeHand/index.tsx
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Clock, Target } from "lucide-react";
 
 interface Position {
