@@ -1,11 +1,3 @@
-Tempo di ragionamento: 2 secondi
-Collegamenti: 6
-
-
-
-Creiamo il file `app/tests/components/Raven/index.tsx`:
-
-```tsx
 // app/tests/components/Raven/index.tsx
 'use client';
 
@@ -30,7 +22,7 @@ interface Question {
 
 const TOTAL_QUESTIONS = 10;
 
-export default function RavenTest({ onComplete }: RavenTestProps) {
+const RavenTest = ({ onComplete }: RavenTestProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -153,7 +145,7 @@ export default function RavenTest({ onComplete }: RavenTestProps) {
   );
 }
 
-function PatternShape({ pattern }: { pattern: Pattern }) {
+const PatternShape = ({ pattern }: { pattern: Pattern }) => {
   const size = pattern.size * 20;
   const centerPoint = size / 2;
 
@@ -190,7 +182,6 @@ function PatternShape({ pattern }: { pattern: Pattern }) {
       )}
     </svg>
   );
-}
-```
+};
 
-Questo è il primo test. Vuoi che proceda con gli altri test? Se sì, quale preferisci vedere per prossimo?
+export default RavenTest;
