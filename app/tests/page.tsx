@@ -3,11 +3,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye } from 'lucide-react';
+import { Brain, Eye, ActivitySquare } from 'lucide-react';
 import { RavenTest, EyeHandTest } from './components';
+import StroopTest from './components/StroopTest';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "eyehand" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "results";
 
 interface TestResults {
   raven: {
@@ -20,13 +21,21 @@ interface TestResults {
     accuracy: number;
     averageDeviation: number;
   } | null;
+  stroop: {
+    score: number;
+    accuracy: number;
+    averageReactionTime: number;
+    interferenceScore: number;
+    responsesPerMinute: string;
+  } | null;
 }
 
 export default function TestPage() {
   const [phase, setPhase] = useState<TestPhase>("intro");
   const [results, setResults] = useState<TestResults>({
     raven: null,
-    eyeHand: null
+    eyeHand: null,
+    stroop: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -39,7 +48,7 @@ export default function TestPage() {
         percentile: Math.round((ravenResults.score / 1000) * 100)
       }
     }));
-    setProgress(50);
+    setProgress(33);
     setPhase("eyehand");
   };
 
@@ -47,6 +56,21 @@ export default function TestPage() {
     setResults(prev => ({
       ...prev,
       eyeHand: eyeHandResults
+    }));
+    setProgress(66);
+    setPhase("stroop");
+  };
+
+  const handleStroopComplete = (stroopResults: any) => {
+    setResults(prev => ({
+      ...prev,
+      stroop: {
+        score: stroopResults.score,
+        accuracy: stroopResults.accuracy,
+        averageReactionTime: stroopResults.averageReactionTime,
+        interferenceScore: stroopResults.interferenceScore,
+        responsesPerMinute: stroopResults.responsesPerMinute
+      }
     }));
     setProgress(100);
     setPhase("results");
@@ -61,7 +85,7 @@ export default function TestPage() {
               <h1 className="text-3xl font-bold text-gray-800 mb-6">
                 Test del Quoziente Intellettivo
               </h1>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                 <div className="bg-blue-50 p-6 rounded-lg">
                   <Brain className="w-8 h-8 text-blue-500 mb-4" />
                   <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
@@ -71,6 +95,11 @@ export default function TestPage() {
                   <Eye className="w-8 h-8 text-green-500 mb-4" />
                   <h3 className="font-bold mb-2">Coordinazione Visiva</h3>
                   <p className="text-gray-600">Test di precisione occhio-mano</p>
+                </div>
+                <div className="bg-purple-50 p-6 rounded-lg">
+                  <ActivitySquare className="w-8 h-8 text-purple-500 mb-4" />
+                  <h3 className="font-bold mb-2">Interferenza Cognitiva</h3>
+                  <p className="text-gray-600">Test di Stroop</p>
                 </div>
               </div>
               <button
@@ -89,6 +118,9 @@ export default function TestPage() {
 
       case "eyehand":
         return <EyeHandTest onComplete={handleEyeHandComplete} />;
+
+      case "stroop":
+        return <StroopTest onComplete={handleStroopComplete} />;
 
       case "results":
         return (
@@ -116,6 +148,19 @@ export default function TestPage() {
                     <p>Punteggio: {results.eyeHand.score}</p>
                     <p>Precisione: {results.eyeHand.accuracy.toFixed(1)}%</p>
                     <p>Deviazione Media: {results.eyeHand.averageDeviation.toFixed(1)}px</p>
+                  </div>
+                )}
+                {results.stroop && (
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ActivitySquare className="w-6 h-6 text-purple-500" />
+                      <h3 className="font-bold">Test di Stroop</h3>
+                    </div>
+                    <p>Punteggio: {results.stroop.score}</p>
+                    <p>Precisione: {(results.stroop.accuracy * 100).toFixed(1)}%</p>
+                    <p>Tempo di Reazione Medio: {results.stroop.averageReactionTime.toFixed(0)}ms</p>
+                    <p>Effetto Interferenza: {results.stroop.interferenceScore.toFixed(0)}ms</p>
+                    <p>Risposte al Minuto: {results.stroop.responsesPerMinute}</p>
                   </div>
                 )}
               </div>
