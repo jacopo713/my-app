@@ -3,11 +3,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain } from 'lucide-react';
+import { Brain, Eye } from 'lucide-react';
 import RavenTest from './components/Raven';
+import EyeHandTest from './components/EyeHand';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "results";
 
 interface TestResults {
   raven: {
@@ -15,12 +16,18 @@ interface TestResults {
     accuracy: number;
     percentile: number;
   } | null;
+  eyeHand: {
+    score: number;
+    accuracy: number;
+    averageDeviation: number;
+  } | null;
 }
 
 export default function TestPage() {
   const [phase, setPhase] = useState<TestPhase>("intro");
   const [results, setResults] = useState<TestResults>({
-    raven: null
+    raven: null,
+    eyeHand: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -32,6 +39,15 @@ export default function TestPage() {
         ...ravenResults,
         percentile: Math.round((ravenResults.score / 1000) * 100)
       }
+    }));
+    setProgress(50);
+    setPhase("eyehand");
+  };
+
+  const handleEyeHandComplete = (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
+    setResults(prev => ({
+      ...prev,
+      eyeHand: eyeHandResults
     }));
     setProgress(100);
     setPhase("results");
@@ -46,11 +62,16 @@ export default function TestPage() {
               <h1 className="text-3xl font-bold text-gray-800 mb-6">
                 Test del Quoziente Intellettivo
               </h1>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="bg-blue-50 p-6 rounded-lg">
                   <Brain className="w-8 h-8 text-blue-500 mb-4" />
                   <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
                   <p className="text-gray-600">Test delle matrici progressive</p>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <Eye className="w-8 h-8 text-green-500 mb-4" />
+                  <h3 className="font-bold mb-2">Coordinazione Visiva</h3>
+                  <p className="text-gray-600">Test di precisione occhio-mano</p>
                 </div>
               </div>
               <button
@@ -67,6 +88,9 @@ export default function TestPage() {
       case "raven":
         return <RavenTest onComplete={handleRavenComplete} />;
 
+      case "eyehand":
+        return <EyeHandTest onComplete={handleEyeHandComplete} />;
+
       case "results":
         return (
           <div className="max-w-4xl mx-auto px-4">
@@ -75,10 +99,24 @@ export default function TestPage() {
               <div className="space-y-6">
                 {results.raven && (
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className="w-6 h-6 text-blue-500" />
+                      <h3 className="font-bold">Ragionamento Astratto</h3>
+                    </div>
                     <p>Punteggio: {results.raven.score}</p>
                     <p>Precisione: {results.raven.accuracy}%</p>
                     <p>Percentile: {results.raven.percentile}°</p>
+                  </div>
+                )}
+                {results.eyeHand && (
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Eye className="w-6 h-6 text-green-500" />
+                      <h3 className="font-bold">Coordinazione Visiva</h3>
+                    </div>
+                    <p>Punteggio: {results.eyeHand.score}</p>
+                    <p>Precisione: {results.eyeHand.accuracy.toFixed(1)}%</p>
+                    <p>Deviazione Media: {results.eyeHand.averageDeviation.toFixed(1)}px</p>
                   </div>
                 )}
               </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Brain, Scale } from 'lucide-react';
 
 /** ------------------------
@@ -103,7 +103,7 @@ function normalizeVisualRotation(shape: string, rotation: number): number {
   }
 }
 
-// Controllo se due shape sono "visivamente identiche"
+// Controllo se due shape sono "visualmente identiche"
 function areVisuallyIdentical(a: ShapeProps, b: ShapeProps): boolean {
   if (a.type !== b.type) return false;
   if (a.color !== b.color) return false;
@@ -159,7 +159,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   const scales = [0.6, 0.8, 1, 1.2];
 
   // Genera la matrice 3x3 con ultima cella nulla
-  function generateMatrix(level: number) {
+  const generateMatrix = useCallback(() => {
     const newMatrix = Array(3)
       .fill(null)
       .map(() => Array<ShapeProps | null>(3).fill(null));
@@ -167,7 +167,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         if (i === 2 && j === 2) continue; // lascia "?"
-        // Un pattern semplice (es. shape=shapes[(i+j) % 2]) e via
         newMatrix[i][j] = {
           type: shapes[(i + j) % 2],
           rotation: rotations[(i * j) % 4], // meno rotazioni
@@ -178,10 +177,10 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
       }
     }
     return newMatrix;
-  }
+  }, [shapes, rotations, colors]);
 
   // Trova la shape corretta x [2,2]
-  function getCorrectAnswer(matrix: Array<Array<ShapeProps | null>>): ShapeProps {
+  const getCorrectAnswer = useCallback((matrix: Array<Array<ShapeProps | null>>): ShapeProps => {
     // Se [2,2] è vuota => costruiamo una forma coerente
     return matrix[2][2] ?? {
       type: 'circle',
@@ -190,10 +189,10 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
       opacity: 1,
       scale: 1,
     };
-  }
+  }, []);
 
   // Genera 1 corretta + 3 distrattori
-  function generateAnswers(correct: ShapeProps): Answer[] {
+  const generateAnswers = useCallback((correct: ShapeProps): Answer[] => {
     const allAnswers: Answer[] = [{ ...correct, isCorrect: true }];
     let attempts = 0;
 
@@ -213,17 +212,17 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     // Scelta 4 finali
     const finalAnswers = allAnswers.sort(() => Math.random() - 0.5).slice(0, 4);
     return finalAnswers.sort(() => Math.random() - 0.5);
-  }
+  }, [shapes, rotations, colors, opacities, scales]);
 
   // Calcolo percentile lineare
-  function computePercentile(finalScore: number): number {
+  const computePercentile = useCallback((finalScore: number): number => {
     const raw = (finalScore / 13) * 100;    // es. 9/13 => 69.23
     return Math.round(raw);                // 69
-  }
+  }, []);
 
   // Ad ogni cambio di livello => rigenera
   useEffect(() => {
-    const newMatrix = generateMatrix(level);
+    const newMatrix = generateMatrix();
     setMatrix(newMatrix);
 
     const correct = getCorrectAnswer(newMatrix);
@@ -232,7 +231,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
     setSelectedAnswer(null);
     setIsAnswerSelected(false);
-  }, [level]);
+  }, [level, generateMatrix, getCorrectAnswer, generateAnswers]);
 
   function handleAnswer(index: number) {
     if (isAnswerSelected) return;
@@ -342,7 +341,6 @@ function ResultsTest({ results }: { results: { score: number; accuracy: number }
       <h2 className="text-2xl font-bold mb-4">Risultati del Test</h2>
       <p className="mb-2">Punteggio: {results.score}</p>
       <p className="mb-2">Precisione: {results.accuracy}%</p>
-      {/* Nessuna traccia di "1°" */}
     </div>
   );
 }
@@ -363,4 +361,3 @@ export default function TestPage() {
     </div>
   );
 }
-
