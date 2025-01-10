@@ -1,10 +1,13 @@
+// app/components/auth/RegisterForm.tsx
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
+import { loadStripe } from '@stripe/stripe-js';
+import { doc, setDoc } from 'firebase/firestore';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -12,38 +15,35 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegularSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    await handleRegistration('email', { email, password, name });
+  };
+
+  const handleGoogleSignup = async () => {
+    await handleRegistration('google');
+  };
+
+  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
     setLoading(true);
-    setError('');
-
     try {
-      // 1. Crea l'utente con email e password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Utente creato:', userCredential.user.uid);
-
-      // 2. Aggiorna il profilo dell'utente con il nome
-      await updateProfile(userCredential.user, { displayName: name });
-      console.log('Profilo aggiornato');
-
-      // 3. Attendere che l'utente sia autenticato
-      await new Promise<void>((resolve, reject) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (user) {
-            resolve();
-          } else {
-            reject(new Error('Utente non autenticato'));
-          }
-          unsubscribe(); // Rimuovi il listener dopo il primo evento
+      let userCredential;
+      
+      if (provider === 'google') {
+        const googleProvider = new GoogleAuthProvider();
+        userCredential = await signInWithPopup(auth, googleProvider);
+      } else {
+        if (!credentials) throw new Error('Credentials required for email signup');
+        userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        await updateProfile(userCredential.user, {
+          displayName: credentials.name
         });
-      });
+      }
 
-      // 4. Crea il documento utente su Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      const userData = {
         email: userCredential.user.email,
-        displayName: name,
+        displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -53,16 +53,46 @@ export default function RegisterForm() {
         isActive: true,
         paymentMethod: null,
         billingDetails: null,
-        authProvider: 'email',
-      });
-      console.log('Documento utente creato su Firestore');
+        authProvider: provider
+      };
 
-      // 5. Reindirizza l'utente alla dashboard
-      router.push('/dashboard');
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+      const idToken = await userCredential.user.getIdToken();
+
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          email: userCredential.user.email,
+          userId: userCredential.user.uid,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe failed to initialize');
+      }
+      
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId
+      });
+
+      if (stripeError) {
+        throw stripeError;
+      }
+
     } catch (err) {
-      console.error('Errore durante la registrazione:', err);
-      setError('Failed to register. Please try again.');
-    } finally {
+      console.error('Registration error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
       setLoading(false);
     }
   };
@@ -82,7 +112,44 @@ export default function RegisterForm() {
         </div>
       )}
 
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      {/* Google Signup Button */}
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        disabled={loading}
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4"
+          />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853"
+          />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05"
+          />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335"
+          />
+        </svg>
+        Sign up with Google
+      </button>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500">Or sign up with email</span>
+        </div>
+      </div>
+
+      <form className="mt-8 space-y-6" onSubmit={handleRegularSignup}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
             <input
