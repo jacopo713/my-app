@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Brain, Scale } from "lucide-react";
 
 interface ShapeProps {
@@ -169,7 +169,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
    * Genera la matrice 3x3 basandosi sulla complessità
    * (stessa logica dell'originale).
    */
-  function generatePattern(level: number) {
+  const generatePattern = useCallback((level: number) => {
     const c = complexityMatrix[level as keyof typeof complexityMatrix];
     const newMatrix = Array(3)
       .fill(null)
@@ -202,10 +202,10 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     }
 
     return newMatrix;
-  }
+  }, [systemConfig.shapes, systemConfig.rotations, systemConfig.colors, systemConfig.opacities, systemConfig.scales]);
 
   /** Trova la "risposta corretta" (spesso l'ultima cella [2,2]) */
-  function getCorrectAnswer(newMatrix: Array<Array<ShapeProps | null>>, level: number): ShapeProps {
+  const getCorrectAnswer = useCallback((newMatrix: Array<Array<ShapeProps | null>>, level: number): ShapeProps => {
     // Esempio: se [2,2] è null, la prendiamo come "corretta" che andrà riempita
     // Oppure generiamo un "pattern" coerente con la logica
     const c = complexityMatrix[level as keyof typeof complexityMatrix];
@@ -220,13 +220,13 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     }
     // Se per qualche motivo [2,2] è stato riempito, lo consideriamo come correct
     return { ...(newMatrix[2][2] as ShapeProps), isCorrect: true };
-  }
+  }, [systemConfig.shapes, systemConfig.rotations, systemConfig.colors, systemConfig.opacities, systemConfig.scales]);
 
   /**
    * Crea un set di risposte:
    * 1 corretta + 5 potenziali distrattori, poi se ne prendono 4 (o quante vuoi).
    */
-  function generateAnswers(correctAnswer: ShapeProps, level: number): Answer[] {
+  const generateAnswers = useCallback((correctAnswer: ShapeProps, level: number): Answer[] => {
     const c = complexityMatrix[level as keyof typeof complexityMatrix];
     const allAnswers: Answer[] = [
       { ...correctAnswer, isCorrect: true },
@@ -234,7 +234,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
     let attempts = 0;
     while (allAnswers.length < 6 && attempts < 20) {
-      let newAnswer = createRandomAnswer(
+      const newAnswer = createRandomAnswer(
         systemConfig.shapes,
         systemConfig.rotations,
         systemConfig.colors,
@@ -250,7 +250,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
           systemConfig.colors[(systemConfig.colors.indexOf(newAnswer.color!) + 1) % c.colors];
       }
 
-      // Evita risposte "visivamente identiche"
+      // Evita risposte "visualmente identiche"
       if (allAnswers.some((ans) => areVisuallyIdentical(ans, newAnswer))) {
         attempts++;
         continue;
@@ -261,7 +261,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
     // Prendi 4 risposte totali (1 corretta + 3 distrattori)
     const finalAnswers = allAnswers.sort(() => Math.random() - 0.5).slice(0, 4);
     return finalAnswers.sort(() => Math.random() - 0.5);
-  }
+  }, [systemConfig.shapes, systemConfig.rotations, systemConfig.colors, systemConfig.opacities, systemConfig.scales]);
 
   useEffect(() => {
     const newMatrix = generatePattern(level);
@@ -273,7 +273,7 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
     setSelectedAnswer(null);
     setIsAnswerSelected(false);
-  }, [level]);
+  }, [level, generatePattern, getCorrectAnswer, generateAnswers]);
 
   function handleAnswer(index: number) {
     if (isAnswerSelected) return;
@@ -379,4 +379,3 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 };
 
 export default RavenTest;
-
