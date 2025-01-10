@@ -10,7 +10,16 @@ import { doc, setDoc } from 'firebase/firestore';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // Funzione di utility per il logging
-const logRegistrationStep = (step: string, data?: any) => {
+type LogData = {
+  email?: string;
+  uid?: string;
+  methods?: string[];
+  success?: boolean;
+  error?: string;
+  stack?: string;
+};
+
+const logRegistrationStep = (step: string, data?: LogData) => {
   console.log(`🔐 [Registration Step] ${step}`);
   if (data) {
     console.log('📦 Data:', data);
