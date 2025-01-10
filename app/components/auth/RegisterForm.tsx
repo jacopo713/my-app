@@ -24,20 +24,25 @@ export default function RegisterForm() {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
-      // Prima apriamo il popup di Google per ottenere le credenziali
       const googleProvider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, googleProvider);
-
+      
+      // Otteniamo il risultato pendente prima di completare il sign-in
+      const pendingResult = await signInWithPopup(auth, googleProvider);
+      
       // Verifica se l'email è stata fornita da Google
-      if (!userCredential.user.email) {
+      if (!pendingResult.user.email) {
         throw new Error('Email is required for registration. Please provide an email address.');
       }
 
-      // Ora verifichiamo se l'email selezionata nel popup è già registrata
-      const methods = await fetchSignInMethodsForEmail(auth, userCredential.user.email);
-      if (methods.length > 0) {
+      // Verifica PRIMA di procedere con la registrazione
+      const methods = await fetchSignInMethodsForEmail(auth, pendingResult.user.email);
+      if (methods && methods.length > 0) {
+        // Se l'email esiste, elimina l'utente appena creato
+        await pendingResult.user.delete();
         throw new Error('An account with this email already exists. Please log in instead.');
       }
+
+      // A questo punto sappiamo che l'email non esiste già
 
       // Se l'email non esiste, procediamo con la registrazione
       const userData = {
