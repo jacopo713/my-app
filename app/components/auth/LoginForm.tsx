@@ -2,8 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, 
-         fetchSignInMethodsForEmail, User } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -127,32 +126,6 @@ export default function LoginForm() {
     }
   };
 
-  // ... resto del componente rimane uguale ...
-}
-
-      // Procediamo con il login
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Aggiorniamo/verifichiamo i dati utente
-      await updateUserData(result.user.uid, {
-        email: result.user.email!,
-        lastLoginAt: new Date().toISOString(),
-        authProvider: 'password',
-        lastLoginMethod: 'password'
-      });
-
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
-      setAuthError({
-        message: 'Credenziali non valide. Riprova.',
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     setAuthError(null);
@@ -166,7 +139,6 @@ export default function LoginForm() {
         throw new Error('Email Google non disponibile');
       }
 
-      // Validiamo il metodo di autenticazione
       const isValidMethod = await validateAuthMethod(googleEmail, 'google');
       if (!isValidMethod) {
         await auth.signOut(); // Logout per sicurezza
@@ -174,14 +146,14 @@ export default function LoginForm() {
         return;
       }
 
-      // Aggiorniamo/verifichiamo i dati utente
       await updateUserData(result.user.uid, {
         email: googleEmail,
         displayName: result.user.displayName || '',
         lastLoginAt: new Date().toISOString(),
         authProvider: 'google',
         lastLoginMethod: 'google',
-        photoURL: result.user.photoURL
+        photoURL: result.user.photoURL,
+        updatedAt: new Date().toISOString()
       });
 
       router.push('/dashboard');
@@ -193,26 +165,6 @@ export default function LoginForm() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateUserData = async (userId: string, data: any) => {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (!userDoc.exists()) {
-      // Primo accesso: creiamo il documento
-      await setDoc(userRef, {
-        ...data,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-    } else {
-      // Aggiorniamo solo i campi necessari
-      await setDoc(userRef, {
-        ...data,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
     }
   };
 
