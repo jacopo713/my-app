@@ -3,11 +3,8 @@
 
 import { useState } from 'react';
 import { 
-  createUserWithEmailAndPassword, 
-  updateProfile, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  fetchSignInMethodsForEmail, 
   signInWithEmailAndPassword,
   linkWithPopup
 } from 'firebase/auth';
