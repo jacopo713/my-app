@@ -47,14 +47,14 @@ const Statistics = memo(({ responses }: { responses: Response[] }) => {
 
 Statistics.displayName = "Statistics";
 
-const StroopTest = ({ onComplete }: { onComplete?: (results: any) => void }) => {
+const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
 
-  const colors: ColorKey[] = ["rosso", "blu", "verde", "arancione"];
+  const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
   const generateStimulus = useCallback((type: "congruent" | "incongruent"): Stimulus => {
     const wordIndex = Math.floor(Math.random() * colors.length);
@@ -85,26 +85,25 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: any) => void }) => 
     setResponseStartTime(Date.now());
   }, [generateStimulus]);
 
-  useEffect(() => {
-    if (isRunning && timer > 0) {
-      const interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            setIsRunning(false);
-            if (onComplete) {
-              onComplete(calculateResults());
-            }
-            return 0;
+useEffect(() => {
+  if (isRunning && timer > 0) {
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsRunning(false);
+          if (onComplete) {
+            onComplete(calculateResults());
           }
-          return prev - 1;
-        });
-      }, 1000);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-      return () => clearInterval(interval);
-    }
-  }, [isRunning, timer, onComplete]);
-
+    return () => clearInterval(interval);
+  }
+}, [isRunning, timer, onComplete, calculateResults]);
   useEffect(() => {
     if (isRunning && !currentStimulus) {
       generateNextStimulus();

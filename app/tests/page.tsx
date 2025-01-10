@@ -4,8 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare } from 'lucide-react';
-import { RavenTest, EyeHandTest } from './components';
-import Stroop from './components/';
+import { RavenTest, EyeHandTest, StroopTest } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "results";
@@ -61,7 +60,15 @@ export default function TestPage() {
     setPhase("stroop");
   };
 
-  const handleStroopComplete = (stroopResults: any) => {
+  interface StroopResults {
+  score: number;
+  accuracy: number;
+  averageReactionTime: number;
+  interferenceScore: number;
+  responsesPerMinute: string;
+}
+
+  const handleStroopComplete = (stroopResults: StroopResults) => {
     setResults(prev => ({
       ...prev,
       stroop: {
@@ -75,7 +82,6 @@ export default function TestPage() {
     setProgress(100);
     setPhase("results");
   };
-
   const renderCurrentPhase = () => {
     switch (phase) {
       case "intro":
