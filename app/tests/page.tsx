@@ -4,8 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye } from 'lucide-react';
-import RavenTest from './components/Raven';
-import EyeHandTest from './components/EyeHand';
+import { RavenTest, EyeHandTest } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 type TestPhase = "intro" | "raven" | "eyehand" | "results";

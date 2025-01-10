@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import { Clock, Target } from "lucide-react";
 
 interface Position {
@@ -12,6 +12,10 @@ interface Results {
   accuracy: number;
   averageDeviation: number;
   score: number;
+}
+
+interface EyeHandTestProps {
+  onComplete: (results: Results) => void;
 }
 
 const TimerDisplay = memo(({ seconds }: { seconds: number }) => {
@@ -39,7 +43,7 @@ const TimerDisplay = memo(({ seconds }: { seconds: number }) => {
 
 TimerDisplay.displayName = "TimerDisplay";
 
-const EyeHandTest = ({ onComplete }: { onComplete: (r: Results) => void }) => {
+const EyeHandTest: React.FC<EyeHandTestProps> = ({ onComplete }) => {
   const [gameState, setGameState] = useState({
     timer: 30,
     startTime: 0,
@@ -312,6 +316,7 @@ const EyeHandTest = ({ onComplete }: { onComplete: (r: Results) => void }) => {
         </div>
         <TimerDisplay seconds={gameState.timer} />
       </div>
+
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex justify-between items-center text-sm text-gray-600">
           <span>Precisione Media: {averagePrecision.toFixed(1)}%</span>
@@ -368,3 +373,4 @@ const EyeHandTest = ({ onComplete }: { onComplete: (r: Results) => void }) => {
 };
 
 export default EyeHandTest;
+
