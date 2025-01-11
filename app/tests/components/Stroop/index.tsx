@@ -106,17 +106,19 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
-  // Calcola i risultati sulla base delle risposte aggiornate
+  // Impostiamo il numero massimo di risposte corrette per il 100° percentile
+  const MAX_CORRECT = 112;
+
+  // Calcola i risultati basandosi esclusivamente sul numero di risposte corrette
   const calculateResults = useCallback(() => {
     const currentResponses = responsesRef.current;
     const correct = currentResponses.filter(r => r.correct).length;
-    const total = currentResponses.length;
     
-    // Score: totale risposte corrette
+    // Score: numero assoluto di risposte corrette
     const score = correct;
     
-    // Percentile: percentuale di risposte corrette
-    const percentile = total > 0 ? Math.round((correct / total) * 100) : 0;
+    // Percentile: percentuale di risposte corrette rispetto a MAX_CORRECT
+    const percentile = MAX_CORRECT > 0 ? Math.round((correct / MAX_CORRECT) * 100) : 0;
 
     // Calcola il tempo medio di reazione per gli stimoli incongruenti e congruenti
     const incongruentResponses = currentResponses.filter(r => r.stimulus.type === "incongruent");
@@ -129,7 +131,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       ? congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length
       : 0;
 
-    // Interference: differenza tra tempo medio incongruenti e congruenti
+    // Interference: differenza tra tempo medio di risposta agli stimoli incongruenti e congruenti
     const interferenceScore = incongruentAvg - congruentAvg;
 
     return {
