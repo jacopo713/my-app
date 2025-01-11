@@ -7,7 +7,6 @@ interface SchulteTableProps {
 
 interface SchulteResults {
   score: number;
-  accuracy: number;
   averageTime: number;
   gridSizes: number[];
   completionTimes: number[];
@@ -47,8 +46,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   // Parametri base
   const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
-  // maxTimePerLevel non viene più usato, perché ora consideriamo il tempo totale per tutto il test.
-  // Impostiamo il tempo ideale per l'intero test
+  // Tempo ideale per l'intero test
   const idealTotalTime = 150; // secondi
 
   // Parametri Neurofeedback Ottimizzati
@@ -64,8 +62,9 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
 
   // Inizializzazione Audio Context
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const AudioContextConstructor = (window.AudioContext || window.webkitAudioContext) as typeof AudioContext;
+    if (typeof window !== "undefined") {
+      const AudioContextConstructor = (window.AudioContext ||
+        window.webkitAudioContext) as typeof AudioContext;
       audioContextRef.current = new AudioContextConstructor();
     }
     return () => {
@@ -87,7 +86,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     const gainNode = audioContextRef.current.createGain();
     const filter = audioContextRef.current.createBiquadFilter();
 
-    oscillator.type = 'sine';
+    oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(
       neurofeedbackParams.startFreq,
       audioContextRef.current.currentTime
@@ -107,8 +106,9 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
       audioContextRef.current.currentTime + neurofeedbackParams.duration
     );
 
-    filter.type = 'bandpass';
-    filter.frequency.value = (neurofeedbackParams.startFreq + neurofeedbackParams.endFreq) / 2;
+    filter.type = "bandpass";
+    filter.frequency.value =
+      (neurofeedbackParams.startFreq + neurofeedbackParams.endFreq) / 2;
     filter.Q.value = 0.3;
 
     oscillator.connect(filter);
@@ -116,7 +116,9 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     gainNode.connect(audioContextRef.current.destination);
 
     oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(audioContextRef.current.currentTime + neurofeedbackParams.duration);
+    oscillator.stop(
+      audioContextRef.current.currentTime + neurofeedbackParams.duration
+    );
   }, [lastFeedbackTime, neurofeedbackParams]);
 
   // Generazione numeri in modo casuale
@@ -130,7 +132,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return nums;
   }, [currentSize]);
 
-  // Inizializza la griglia quando il gioco è attivo
+  // Inizializzazione della griglia quando il gioco è attivo
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
@@ -142,13 +144,13 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     let interval: NodeJS.Timeout;
     if (gameStarted && !isCompleted) {
       interval = setInterval(() => {
-        setTimer(prev => prev + 1);
+        setTimer((prev) => prev + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
-  // Formattazione del tempo in minuti e secondi
+  // Formattazione tempo in minuti e secondi
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -164,57 +166,78 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Gestione del completamento di un livello
+  // Calcolo dei risultati finali
+  // Il punteggio normalizzato è calcolato rispetto al tempo totale ideale (150 sec per tutto il test)
   const handleLevelComplete = useCallback(() => {
     console.log("Livello completato:", currentSize, "x", currentSize);
     const currentResult = { time: timer, size: currentSize };
-    setLevelResults(prev => [...prev, currentResult]);
+    setLevelResults((prev) => [...prev, currentResult]);
 
     if (testLevel === sizes.length - 1) {
       // Fine del test: calcoliamo il tempo totale impiegato in tutti i livelli
       const updatedResults = [...levelResults, currentResult];
       const totalTime = updatedResults.reduce((acc, curr) => acc + curr.time, 0);
-      // Calcola il punteggio normalizzato; se il tempo totale ideale è 150 secondi, allora:
-      const normalizedScore = Math.round(Math.max(0, (1 - totalTime / idealTotalTime)) * 1000);
+      // Calcola il punteggio normalizzato; se l'idealTotalTime è 150 secondi, allora:
+      const normalizedScore = Math.round(
+        Math.max(0, (1 - totalTime / idealTotalTime)) * 1000
+      );
+      // Percentile: mapping lineare rispetto a 1000 punti = 100%
       const percentile = Math.round((normalizedScore / 1000) * 100);
 
       onComplete({
         score: normalizedScore,
-        accuracy: 100,
         averageTime: totalTime,
-        gridSizes: updatedResults.map(r => r.size),
-        completionTimes: updatedResults.map(r => r.time),
-        percentile
+        gridSizes: updatedResults.map((r) => r.size),
+        completionTimes: updatedResults.map((r) => r.time),
+        percentile,
       });
     } else {
       // Passa al livello successivo
       setTimeout(() => {
-        setTestLevel(prev => prev + 1);
+        setTestLevel((prev) => prev + 1);
         setCurrentNumber(1);
         setIsCompleted(false);
         setGameStarted(true);
         setTimer(0);
       }, 2000);
     }
-  }, [timer, currentSize, testLevel, levelResults, sizes.length, idealTotalTime, onComplete]);
+  }, [
+    timer,
+    currentSize,
+    testLevel,
+    levelResults,
+    sizes.length,
+    idealTotalTime,
+    onComplete,
+  ]);
 
   // Gestione del clic sui numeri
-  const handleNumberClick = useCallback((number: number) => {
-    if (!gameStarted || isCompleted) return;
+  const handleNumberClick = useCallback(
+    (number: number) => {
+      if (!gameStarted || isCompleted) return;
 
-    if (number === currentNumber) {
-      playNeurofeedback();
+      if (number === currentNumber) {
+        playNeurofeedback();
 
-      if (number === currentSize * currentSize) {
-        // L'ultimo numero: completa il livello
-        setGameStarted(false);
-        setIsCompleted(true);
-        handleLevelComplete();
-      } else {
-        setCurrentNumber(prev => prev + 1);
+        if (number === currentSize * currentSize) {
+          // L'ultimo numero: completa il livello
+          setGameStarted(false);
+          setIsCompleted(true);
+          handleLevelComplete();
+        } else {
+          setCurrentNumber((prev) => prev + 1);
+        }
       }
-    }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, handleLevelComplete, playNeurofeedback]);
+    },
+    [
+      gameStarted,
+      isCompleted,
+      currentNumber,
+      currentSize,
+      handleLevelComplete,
+      playNeurofeedback,
+    ]
+  );
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">

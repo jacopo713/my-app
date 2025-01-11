@@ -274,7 +274,6 @@ export default function TestPage() {
                         <h3 className="font-bold">Tabella di Schulte</h3>
                       </div>
                       <p>Punteggio: {results.schulte.score}</p>
-                      <p>Precisione: {results.schulte.accuracy}%</p>
                       <p>Tempo Medio: {results.schulte.averageTime}s</p>
                       <p>Percentile: {results.schulte.percentile}°</p>
                     </div>
@@ -285,7 +284,7 @@ export default function TestPage() {
                         <ActivitySquare className="w-6 h-6 text-purple-500" />
                         <h3 className="font-bold">Test del Ritmo</h3>
                       </div>
-                      <p>Precisione: {results.rhythm.precision}%</p>
+                      <p>Precisione: {/* Eventuale rimosso */}</p>
                       <p>Livello Raggiunto: {results.rhythm.level}</p>
                     </div>
                   )}
@@ -349,7 +348,6 @@ export default function TestPage() {
                   wpm: 300,
                   evaluation: "Eccellente",
                   level: 3,
-                  precision: 95,
                   gridSizes: [3, 4, 5],
                   completionTimes: [10, 15, 20]
                 };
@@ -401,7 +399,6 @@ export default function TestPage() {
                     break;
                   case "rhythm":
                     setResults(prev => ({ ...prev, rhythm: { 
-                      precision: mockResult.precision,
                       level: mockResult.level 
                     }}));
                     break;
