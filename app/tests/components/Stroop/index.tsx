@@ -45,14 +45,13 @@ const Timer = memo(({ value }: { value: number }) => {
     </div>
   );
 });
-
 Timer.displayName = "Timer";
 
 // Componente Statistics ottimizzato
 const Statistics = memo(({ responses }: { responses: Response[] }) => {
   const stats = useMemo(() => ({
     totalResponses: responses.length,
-    correctResponses: responses.filter(r => r.correct).length,
+    correctResponses: responses.filter((r) => r.correct).length,
   }), [responses]);
 
   return (
@@ -63,7 +62,6 @@ const Statistics = memo(({ responses }: { responses: Response[] }) => {
     </div>
   );
 });
-
 Statistics.displayName = "Statistics";
 
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
@@ -77,7 +75,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
-  // Ref per tenere traccia delle responses aggiornate
+  // Ref per mantenere le responses aggiornate
   const responsesRef = useRef<Response[]>([]);
   useEffect(() => {
     responsesRef.current = responses;
@@ -108,36 +106,40 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
-  // Calcola i risultati usando responsesRef.current per avere i dati aggiornati
+  // Calcola i risultati sulla base delle risposte aggiornate
   const calculateResults = useCallback(() => {
     const currentResponses = responsesRef.current;
-    const correct = currentResponses.filter((r) => r.correct).length;
-    const accuracy = currentResponses.length > 0 ? correct / currentResponses.length : 0;
+    const correct = currentResponses.filter(r => r.correct).length;
+    const total = currentResponses.length;
+    
+    // Score: totale risposte corrette
+    const score = correct;
+    
+    // Percentile: percentuale di risposte corrette
+    const percentile = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-    // Calcolo del punteggio basato sull'accuratezza, con un massimo di 1000 punti
-    const score = Math.round(accuracy * 1000);
+    // Calcola il tempo medio di reazione per gli stimoli incongruenti e congruenti
+    const incongruentResponses = currentResponses.filter(r => r.stimulus.type === "incongruent");
+    const congruentResponses = currentResponses.filter(r => r.stimulus.type === "congruent");
 
-    // Percentile è 100 se il punteggio è 1000, altrimenti è proporzionale
-    const percentile = Math.round((score / 1000) * 100);
+    const incongruentAvg = incongruentResponses.length > 0
+      ? incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length
+      : 0;
+    const congruentAvg = congruentResponses.length > 0
+      ? congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length
+      : 0;
 
-    // Calcolo del tempo di interferenza
-    const incongruentResponses = currentResponses.filter((r) => r.stimulus.type === "incongruent");
-    const congruentResponses = currentResponses.filter((r) => r.stimulus.type === "congruent");
-
-    const interferenceScore =
-      incongruentResponses.length > 0 && congruentResponses.length > 0
-        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
-          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
-        : 0;
+    // Interference: differenza tra tempo medio incongruenti e congruenti
+    const interferenceScore = incongruentAvg - congruentAvg;
 
     return {
-      score, // Punteggio massimo 1000
-      percentile, // Percentile massimo 100
-      interferenceScore, // Tempo di interferenza
+      score,
+      percentile,
+      interferenceScore,
     };
   }, []);
 
-  // Gestione timer ottimizzata
+  // Timer
   useEffect(() => {
     if (!isRunning) return;
     
@@ -163,13 +165,11 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     }, 1000);
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isRunning, timer, onComplete, calculateResults]);
 
-  // Gestione dello stimolo iniziale
+  // Stimolo iniziale
   useEffect(() => {
     if (isRunning && !currentStimulus) {
       const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
@@ -178,7 +178,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     }
   }, [isRunning, currentStimulus, generateStimulus]);
 
-  // Gestione della risposta ottimizzata
+  // Gestione della risposta
   const handleResponse = useCallback(
     (selectedColor: ColorKey) => {
       if (!currentStimulus || !isRunning || !responseStartTimeRef.current) return;
@@ -195,10 +195,9 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         Math.random() < 0.5 ? "congruent" : "incongruent"
       );
 
-      // Aggiorniamo tutti gli stati in una singola operazione batch
+      // Aggiorniamo risposte, stimolo e tempo in un'unica operazione batch
       setResponses(prev => {
         const newResponses = [...prev, response];
-        // Aggiorniamo lo stimolo e il tempo di risposta
         setCurrentStimulus(newStimulus);
         responseStartTimeRef.current = Date.now();
         return newResponses;
