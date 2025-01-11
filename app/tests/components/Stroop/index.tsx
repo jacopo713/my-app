@@ -51,7 +51,7 @@ Timer.displayName = "Timer";
 const Statistics = memo(({ responses }: { responses: Response[] }) => {
   const stats = useMemo(() => ({
     totalResponses: responses.length,
-    correctResponses: responses.filter((r) => r.correct).length,
+    correctResponses: responses.filter(r => r.correct).length,
   }), [responses]);
 
   return (
@@ -69,7 +69,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
-  
+
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
 
@@ -86,7 +86,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     (type: "congruent" | "incongruent"): Stimulus => {
       const wordIndex = Math.floor(Math.random() * colors.length);
       const word = colors[wordIndex];
-      let colorIndex;
+      let colorIndex: number;
 
       if (type === "congruent") {
         colorIndex = wordIndex;
@@ -106,21 +106,20 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
-  // Impostiamo il numero massimo di risposte corrette per il 100° percentile
+  // Impostiamo il numero massimo di risposte corrette (oltre il quale 1000 punti/100% vengono assegnati)
   const MAX_CORRECT = 112;
 
-  // Calcola i risultati basandosi esclusivamente sul numero di risposte corrette
+  // Calcola i risultati basandosi sul numero di risposte corrette normalizzato su MAX_CORRECT
   const calculateResults = useCallback(() => {
     const currentResponses = responsesRef.current;
     const correct = currentResponses.filter(r => r.correct).length;
-    
-    // Score: numero assoluto di risposte corrette
-    const score = correct;
-    
-    // Percentile: percentuale di risposte corrette rispetto a MAX_CORRECT
+
+    // Score normalizzato su 1000: se correct === MAX_CORRECT allora score = 1000
+    const score = MAX_CORRECT > 0 ? Math.round((correct / MAX_CORRECT) * 1000) : 0;
+    // Percentile normalizzato su 100: se correct === MAX_CORRECT allora percentile = 100
     const percentile = MAX_CORRECT > 0 ? Math.round((correct / MAX_CORRECT) * 100) : 0;
 
-    // Calcola il tempo medio di reazione per gli stimoli incongruenti e congruenti
+    // Calcola il tempo medio di reazione per stimoli incongruenti e congruenti
     const incongruentResponses = currentResponses.filter(r => r.stimulus.type === "incongruent");
     const congruentResponses = currentResponses.filter(r => r.stimulus.type === "congruent");
 
@@ -144,23 +143,19 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   // Timer
   useEffect(() => {
     if (!isRunning) return;
-    
+
     const startTime = Date.now();
     const originalTimer = timer;
-    
+
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const newValue = originalTimer - elapsed;
-      
+
       if (newValue <= 0) {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
+        if (timerRef.current) clearInterval(timerRef.current);
         setIsRunning(false);
         setTimer(0);
-        if (onComplete) {
-          onComplete(calculateResults());
-        }
+        if (onComplete) onComplete(calculateResults());
       } else {
         setTimer(newValue);
       }
@@ -192,12 +187,12 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      // Generiamo il nuovo stimolo
+      // Genera il nuovo stimolo
       const newStimulus = generateStimulus(
         Math.random() < 0.5 ? "congruent" : "incongruent"
       );
 
-      // Aggiorniamo risposte, stimolo e tempo in un'unica operazione batch
+      // Aggiorna risposte, stimolo e tempo (batch)
       setResponses(prev => {
         const newResponses = [...prev, response];
         setCurrentStimulus(newStimulus);
