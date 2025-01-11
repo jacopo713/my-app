@@ -29,7 +29,7 @@ interface FinalResult {
   evaluation: string;
 }
 
-interface ShortTermMemoryTestProps {
+export interface ShortTermMemoryTestProps {
   onComplete: (result: FinalResult) => void;
 }
 
@@ -401,7 +401,6 @@ const ShortTermMemoryTest: React.FC<ShortTermMemoryTestProps> = ({ onComplete })
       )}
     </div>
   );
-
 };
 
 export default ShortTermMemoryTest;
