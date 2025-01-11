@@ -58,7 +58,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
-  const prevResponsesLength = useRef(0);
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
