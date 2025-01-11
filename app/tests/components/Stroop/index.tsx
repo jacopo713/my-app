@@ -24,19 +24,10 @@ interface Response {
   reactionTime: number;
 }
 
-interface Stats {
-  totalResponses: number;
-  correctResponses: number;
-}
-
 interface StroopResults {
   score: number;
-  accuracy: number;
-  averageReactionTime: number;
-  totalResponses: number;
-  correctResponses: number;
+  percentile: number;
   interferenceScore: number;
-  responsesPerMinute: string;
 }
 
 // Componente Timer ottimizzato
@@ -59,7 +50,7 @@ Timer.displayName = "Timer";
 
 // Componente Statistics ottimizzato
 const Statistics = memo(({ responses }: { responses: Response[] }) => {
-  const stats: Stats = useMemo(() => ({
+  const stats = useMemo(() => ({
     totalResponses: responses.length,
     correctResponses: responses.filter(r => r.correct).length,
   }), [responses]);
@@ -81,7 +72,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   
-  // Sostituiamo useState con useRef per responseStartTime
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
 
@@ -148,11 +138,14 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const calculateResults = useCallback(() => {
     const correct = responses.filter((r) => r.correct).length;
     const accuracy = responses.length > 0 ? correct / responses.length : 0;
-    const avgTime =
-      responses.length > 0
-        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length
-        : 0;
 
+    // Calcolo del punteggio basato sull'accuratezza, con un massimo di 1000 punti
+    const score = Math.round(accuracy * 1000);
+
+    // Percentile è 100 se il punteggio è 1000, altrimenti è proporzionale
+    const percentile = Math.round((score / 1000) * 100);
+
+    // Calcolo del tempo di interferenza
     const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
     const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
 
@@ -163,13 +156,9 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         : 0;
 
     return {
-      score: Math.round(accuracy * 100),
-      accuracy,
-      averageReactionTime: avgTime,
-      totalResponses: responses.length,
-      correctResponses: correct,
-      interferenceScore,
-      responsesPerMinute: responses.length.toFixed(1),
+      score, // Punteggio massimo 1000
+      percentile, // Percentile massimo 100
+      interferenceScore, // Tempo di interferenza
     };
   }, [responses]);
 
@@ -253,4 +242,3 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 };
 
 export default StroopTest;
-
