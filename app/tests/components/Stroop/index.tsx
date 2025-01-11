@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Brain } from "lucide-react";
 
@@ -57,7 +56,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   // Costanti e riferimenti
   const colors = useMemo(() => ["rosso", "blu", "verde", "arancione"] as const, []);
-  const startTimeRef = useState(() => Date.now())[0];
 
   /**
    * Genera un nuovo stimolo per il test
