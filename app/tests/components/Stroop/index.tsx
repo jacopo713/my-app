@@ -220,4 +220,4 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   );
 };
 
-export default StdroopTest;
+export default StroopTest;
