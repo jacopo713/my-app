@@ -19,8 +19,18 @@ interface LevelResult {
   size: number;
 }
 
+interface NeurofeedbackParams {
+  duration: number;
+  interval: number;
+  maxGain: number;
+  startFreq: number;
+  endFreq: number;
+  rampType: 'linear';
+  fadeOut: number;
+}
+
 export default function SchulteTable({ onComplete }: SchulteTableProps) {
-  // Gestione stati principali
+  // Sistema Stati Base
   const [numbers, setNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
@@ -29,16 +39,28 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   const [showInstructions, setShowInstructions] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
   const [levelResults, setLevelResults] = useState<LevelResult[]>([]);
+  const [lastFeedbackTime, setLastFeedbackTime] = useState(0);
 
-  // Gestione audio
+  // Gestione Audio Context
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Configurazione base
+  // Parametri Base
   const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
-  // Inizializzazione audio
+  // Parametri Neurofeedback Ottimizzati
+  const neurofeedbackParams: NeurofeedbackParams = {
+    duration: 0.08,    // 80ms - rispetta tempi elaborazione neurale
+    interval: 0.5,     // 500ms tra feedback
+    maxGain: 0.04,     // Volume minimo efficace
+    startFreq: 440,    // A4 naturale
+    endFreq: 420,      // Variazione minima
+    rampType: 'linear',
+    fadeOut: 0.05      // Declino graduale
+  };
+
+  // Inizializzazione Audio Context
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const AudioContextConstructor = (window.AudioContext || 
@@ -50,42 +72,55 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     };
   }, []);
 
-  // Sistema audio ottimizzato
-  const playFeedbackSound = useCallback(() => {
+  // Sistema Neurofeedback Ottimizzato
+  const playNeurofeedback = useCallback(() => {
     if (!audioContextRef.current) return;
 
-    // Oscillatore principale
+    const currentTime = Date.now();
+    if (currentTime - lastFeedbackTime < neurofeedbackParams.interval * 1000) {
+      return; // Previene sovrastimolazione
+    }
+    setLastFeedbackTime(currentTime);
+
     const oscillator = audioContextRef.current.createOscillator();
+    const gainNode = audioContextRef.current.createGain();
+    const filter = audioContextRef.current.createBiquadFilter();
+
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(800, audioContextRef.current.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      400,
-      audioContextRef.current.currentTime + 0.15
+    oscillator.frequency.setValueAtTime(
+      neurofeedbackParams.startFreq,
+      audioContextRef.current.currentTime
+    );
+    oscillator.frequency.linearRampToValueAtTime(
+      neurofeedbackParams.endFreq,
+      audioContextRef.current.currentTime + neurofeedbackParams.duration
     );
 
-    // Controllo volume
-    const gainNode = audioContextRef.current.createGain();
     gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.15, audioContextRef.current.currentTime + 0.02);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContextRef.current.currentTime + 0.15);
+    gainNode.gain.linearRampToValueAtTime(
+      neurofeedbackParams.maxGain,
+      audioContextRef.current.currentTime + neurofeedbackParams.duration * 0.2
+    );
+    gainNode.gain.linearRampToValueAtTime(
+      0,
+      audioContextRef.current.currentTime + neurofeedbackParams.duration
+    );
 
-    // Filtro per ammorbidire il suono
-    const filter = audioContextRef.current.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1500;
-    filter.Q.value = 0.7;
+    filter.type = 'bandpass';
+    filter.frequency.value = (neurofeedbackParams.startFreq + neurofeedbackParams.endFreq) / 2;
+    filter.Q.value = 0.3;
 
-    // Collegamenti audio
     oscillator.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
 
-    // Avvio e arresto
     oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(audioContextRef.current.currentTime + 0.15);
-  }, []);
+    oscillator.stop(
+      audioContextRef.current.currentTime + neurofeedbackParams.duration
+    );
+  }, [lastFeedbackTime, neurofeedbackParams]);
 
-  // Generazione numeri casuali
+  // Generazione Numeri
   const generateNumbers = useCallback(() => {
     const totalNumbers = currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
@@ -96,14 +131,14 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return nums;
   }, [currentSize]);
 
-  // Inizializzazione griglia
+  // Inizializzazione Griglia
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
     }
   }, [gameStarted, generateNumbers]);
 
-  // Gestione timer
+  // Gestione Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameStarted && !isCompleted) {
@@ -114,14 +149,14 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
-  // Formattazione tempo
+  // Formattazione Tempo
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Avvio livello
+  // Avvio Livello
   const startNextLevel = useCallback(() => {
     setCurrentNumber(1);
     setTimer(0);
@@ -130,12 +165,12 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Gestione click sui numeri
+  // Gestione Click Numeri
   const handleNumberClick = useCallback((number: number) => {
     if (!gameStarted || isCompleted) return;
 
     if (number === currentNumber) {
-      playFeedbackSound();
+      playNeurofeedback();
 
       if (number === currentSize * currentSize) {
         const currentResult = { time: timer, size: currentSize };
@@ -169,7 +204,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playFeedbackSound]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNeurofeedback]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
