@@ -19,12 +19,8 @@ interface LevelResult {
   size: number;
 }
 
-interface AudioContextType extends AudioContext {
-  webkitAudioContext?: AudioContext;
-}
-
 export default function SchulteTable({ onComplete }: SchulteTableProps) {
-  // Gestione stati del gioco
+  // Stati del gioco
   const [numbers, setNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
@@ -37,25 +33,25 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   // Gestione audio
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Configurazione del gioco
+  // Configurazione base
   const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
-  // Inizializzazione del contesto audio
+  // Inizializzazione audio con type safety
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
+      type WebAudioContext = typeof window extends { AudioContext: infer T } ? T : never;
+      const AudioContextConstructor: { new(): AudioContext } = 
+        (window.AudioContext || window.webkitAudioContext) as { new(): AudioContext };
       audioContextRef.current = new AudioContextConstructor();
     }
     return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      audioContextRef.current?.close();
     };
   }, []);
 
-  // Generazione numeri casuali
+  // Generazione numeri
   const generateNumbers = useCallback(() => {
     const totalNumbers = currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
@@ -66,7 +62,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return nums;
   }, [currentSize]);
 
-  // Inizializzazione numeri all'avvio del gioco
+  // Inizializzazione griglia
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
@@ -84,7 +80,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
-  // Gestione effetto sonoro
+  // Effetto sonoro
   const playSwishSound = useCallback(() => {
     if (!audioContextRef.current) return;
 
@@ -111,14 +107,14 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     oscillator.stop(audioContextRef.current.currentTime + 0.1);
   }, []);
 
-  // Formattazione del tempo
+  // Formattazione tempo
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Gestione avvio livello
+  // Avvio livello
   const startNextLevel = useCallback(() => {
     setCurrentNumber(1);
     setTimer(0);
@@ -127,7 +123,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Gestione click sui numeri
+  // Gestione click
   const handleNumberClick = useCallback((number: number) => {
     if (!gameStarted || isCompleted) return;
 
