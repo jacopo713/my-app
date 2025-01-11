@@ -146,7 +146,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, timer, onComplete, calculateResults]);
+  }, [isRunning, onComplete, calculateResults]);
 
   useEffect(() => {
     if (isRunning && !currentStimulus) {
@@ -169,13 +169,13 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
+      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
+
       setResponses(prev => [...prev, response]);
       setStats(prev => ({
         correct: prev.correct + (correct ? 1 : 0),
         total: prev.total + 1
       }));
-
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
       setCurrentStimulus(newStimulus);
       responseStartTimeRef.current = Date.now();
     },
@@ -189,13 +189,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
           <Brain className="w-6 h-6" />
           <h2 className="text-xl font-bold">Test di Stroop</h2>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm">
-            Corrette: {stats.correct}/{stats.total} 
-            ({stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0}%)
-          </div>
-          <Timer value={timer} />
-        </div>
+        <Timer value={timer} />
       </div>
 
       {currentStimulus && isRunning && (
@@ -220,6 +214,11 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
                 {color.toUpperCase()}
               </button>
             ))}
+          </div>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Risposte corrette: {stats.correct}/{stats.total} 
+            ({stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0}%)
           </div>
         </>
       )}
