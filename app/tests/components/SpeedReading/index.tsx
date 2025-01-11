@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 
 // Esporta l'interfaccia
 export interface SpeedReadingTrainerProps {
-  onComplete?: (results: { wpm: number; accuracy: number; score: number }) => void;
+  onComplete?: (results: { wpm: number; percentile: number }) => void;
 }
 
 // Componente ottimizzato per le statistiche con centramento
@@ -34,8 +34,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [cycleCount, setCycleCount] = useState(0);
-  const [wpm, setWpm] = useState(100); // Modificato da 50 a 100 WPM iniziali
-  const [score, setScore] = useState(0);
+  const [wpm, setWpm] = useState(100); // WPM iniziali
   const [feedback, setFeedback] = useState('');
   const [usedPositions, setUsedPositions] = useState<number[]>([]);
 
@@ -52,7 +51,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   }, [WORDS]);
 
   const getRandomUnusedPosition = useCallback(() => {
-    const availablePositions = Array.from({length: 9}, (_, i) => i)
+    const availablePositions = Array.from({ length: 9 }, (_, i) => i)
       .filter(pos => !usedPositions.includes(pos));
     const randomIndex = Math.floor(Math.random() * availablePositions.length);
     return availablePositions[randomIndex];
@@ -60,6 +59,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
 
   const showNextWord = useCallback(() => {
     if (usedPositions.length >= 9) {
+      // Dopo aver mostrato tutte le parole, prepariamo la domanda
       setCurrentPosition(-1);
       setShowingQuestion(true);
       const lastWord = currentSequence[8];
@@ -87,21 +87,21 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
 
   const handleAnswer = useCallback((selectedWord: string) => {
     const isCorrect = selectedWord === correctAnswer;
-    const newScore = isCorrect ? score + 1 : score;
+    // Aggiorna i WPM: aumentiamo di 50 se corretto, altrimenti diminuiamo di 50
     const newWpm = isCorrect ? Math.min(1000, wpm + 50) : Math.max(50, wpm - 50);
     const newCycleCount = cycleCount + 1;
     
-    setScore(newScore);
     setWpm(newWpm);
     setFeedback(isCorrect ? 'Corretto! 🎉' : `Sbagliato! La parola era: ${correctAnswer}`);
     
     if (newCycleCount >= 20) {
       setIsStarted(false);
-      setFeedback(`Test completato! Punteggio: ${newScore}/20`);
+      setFeedback(`Test completato! WPM massimi: ${newWpm}`);
+      // Calcola il percentile: normalizzato su 100, 1000 WPM = 100°
+      const percentile = Math.round((newWpm / 1000) * 100);
       onComplete?.({
         wpm: newWpm,
-        accuracy: (newScore / 20) * 100,
-        score: newScore,
+        percentile,
       });
     } else {
       setCycleCount(newCycleCount);
@@ -110,14 +110,13 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
       setUsedPositions([]); // Reset delle posizioni usate
       setCurrentSequence(generateSequence());
     }
-  }, [correctAnswer, cycleCount, generateSequence, onComplete, score, wpm]);
+  }, [correctAnswer, cycleCount, generateSequence, onComplete, wpm]);
 
   const startTraining = useCallback(() => {
     const initialSequence = generateSequence();
     setIsStarted(true);
     setCycleCount(0);
-    setWpm(100); // Modificato da 50 a 100 WPM iniziali
-    setScore(0);
+    setWpm(100);
     setCurrentPosition(-1);
     setCurrentSequence(initialSequence);
     setShowingQuestion(false);
@@ -211,3 +210,4 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
 };
 
 export default SpeedReadingTrainer;
+
