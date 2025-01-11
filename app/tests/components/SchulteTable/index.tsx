@@ -20,7 +20,7 @@ interface LevelResult {
 }
 
 export default function SchulteTable({ onComplete }: SchulteTableProps) {
-  // Stati principali del gioco
+  // Gestione stati principali
   const [numbers, setNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
@@ -38,7 +38,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
-  // Inizializzazione audio con type safety
+  // Inizializzazione audio
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const AudioContextConstructor = (window.AudioContext || 
@@ -48,6 +48,51 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => {
       audioContextRef.current?.close();
     };
+  }, []);
+
+  // Generazione suono naturale
+  const playNaturalSound = useCallback(() => {
+    if (!audioContextRef.current) return;
+
+    // Creazione nodi audio
+    const whiteNoise = audioContextRef.current.createBufferSource();
+    const noiseBuffer = audioContextRef.current.createBuffer(
+      1, 
+      audioContextRef.current.sampleRate * 1, 
+      audioContextRef.current.sampleRate
+    );
+    const outputData = noiseBuffer.getChannelData(0);
+    
+    // Generazione rumore bianco
+    for (let i = 0; i < noiseBuffer.length; i++) {
+      outputData[i] = Math.random() * 2 - 1;
+    }
+    
+    whiteNoise.buffer = noiseBuffer;
+
+    // Configurazione filtro
+    const bandpass = audioContextRef.current.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.value = 1000;
+    bandpass.Q.value = 1;
+
+    // Configurazione volume
+    const gainNode = audioContextRef.current.createGain();
+    gainNode.gain.value = 0.01;
+    
+    // Configurazione inviluppo
+    gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContextRef.current.currentTime + 0.3);
+
+    // Collegamenti audio
+    whiteNoise.connect(bandpass);
+    bandpass.connect(gainNode);
+    gainNode.connect(audioContextRef.current.destination);
+
+    // Avvio e arresto
+    whiteNoise.start();
+    whiteNoise.stop(audioContextRef.current.currentTime + 0.3);
   }, []);
 
   // Generazione numeri casuali
@@ -79,33 +124,6 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
-  // Effetto sonoro
-  const playSwishSound = useCallback(() => {
-    if (!audioContextRef.current) return;
-
-    const oscillator = audioContextRef.current.createOscillator();
-    const gainNode = audioContextRef.current.createGain();
-
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(400, audioContextRef.current.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      200,
-      audioContextRef.current.currentTime + 0.1
-    );
-
-    gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContextRef.current.currentTime + 0.1
-    );
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContextRef.current.destination);
-
-    oscillator.start();
-    oscillator.stop(audioContextRef.current.currentTime + 0.1);
-  }, []);
-
   // Formattazione tempo
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -127,7 +145,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     if (!gameStarted || isCompleted) return;
 
     if (number === currentNumber) {
-      playSwishSound();
+      playNaturalSound();
 
       if (number === currentSize * currentSize) {
         const currentResult = { time: timer, size: currentSize };
@@ -161,7 +179,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playSwishSound]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNaturalSound]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
