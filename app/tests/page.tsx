@@ -13,9 +13,8 @@ import {
   RhythmTest 
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import TestInstructions from './TestInstructions';
-
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
+import { testInstructions, type TestPhase } from './data/istruzioni';
+import TestInstructions from './components/istruzioni';
 
 interface TestResults {
   raven: {
@@ -60,7 +59,6 @@ interface TestResults {
 }
 
 export default function TestPage() {
-  // Stati principali
   const [phase, setPhase] = useState<TestPhase>("intro");
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<TestResults>({
@@ -75,18 +73,15 @@ export default function TestPage() {
   const [progress, setProgress] = useState(0);
   const router = useRouter();
 
-  // Sequenza delle fasi del test
   const phases: TestPhase[] = [
     "intro", "raven", "eyehand", "stroop", 
     "speedreading", "memory", "schulte", "rhythm", "results"
   ];
 
-  // Reset dello stato testStarted al cambio di fase
   useEffect(() => {
     setTestStarted(false);
   }, [phase]);
 
-  // Handler per il completamento dei test
   const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
     setResults(prev => ({
       ...prev,
@@ -153,7 +148,6 @@ export default function TestPage() {
     setPhase("results");
   };
 
-  // Rendering condizionale delle fasi
   const renderCurrentPhase = () => {
     const renderTest = () => {
       switch (phase) {
@@ -214,8 +208,26 @@ export default function TestPage() {
           return (
             <div className="max-w-4xl mx-auto px-4">
               <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Risultati del Test</h2>
-                {/* Visualizzazione risultati */}
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                  Risultati del Test
+                </h2>
+                <div className="space-y-6">
+                  {/* Visualizzazione dei risultati */}
+                  {results.raven && (
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="w-6 h-6 text-blue-500" />
+                        <h3 className="font-bold">Ragionamento Astratto</h3>
+                      </div>
+                      <p>Punteggio: {results.raven.score}</p>
+                      <p>Precisione: {results.raven.accuracy}%</p>
+                      {results.raven.percentile && (
+                        <p>Percentile: {results.raven.percentile}°</p>
+                      )}
+                    </div>
+                  )}
+                  {/* Aggiungi sezioni per gli altri risultati... */}
+                </div>
                 <button
                   onClick={() => router.push('/dashboard')}
                   className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg 
@@ -242,11 +254,9 @@ export default function TestPage() {
     );
   };
 
-  // Rendering principale
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 py-8">
-        {/* Barra di progresso */}
         <div className="max-w-4xl mx-auto px-4 mb-8">
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
@@ -255,11 +265,8 @@ export default function TestPage() {
             />
           </div>
         </div>
-
-        {/* Contenuto principale */}
         {renderCurrentPhase()}
         
-        {/* Pulsante di debug */}
         <div className="fixed bottom-4 right-4 z-50">
           <button
             onClick={() => {
@@ -269,7 +276,6 @@ export default function TestPage() {
                 setPhase(nextPhase);
                 setProgress(Math.min((currentIndex + 1) * 15, 100));
 
-                // Mock results
                 const mockResult = {
                   score: 85,
                   accuracy: 90,
@@ -286,7 +292,6 @@ export default function TestPage() {
                   completionTimes: [10, 15, 20]
                 };
 
-                // Aggiornamento risultati in base alla fase
                 switch(phase) {
                   case "raven":
                     setResults(prev => ({ ...prev, raven: { 
@@ -311,7 +316,36 @@ export default function TestPage() {
                       responsesPerMinute: mockResult.responsesPerMinute
                     }}));
                     break;
-                  // ... altri casi per le fasi rimanenti
+                  case "speedreading":
+                    setResults(prev => ({ ...prev, speedReading: { 
+                      wpm: mockResult.wpm, 
+                      accuracy: mockResult.accuracy, 
+                      score: mockResult.score 
+                    }}));
+                    break;
+                  case "memory":
+                    setResults(prev => ({ ...prev, memory: { 
+                      score: mockResult.score,
+                      percentile: mockResult.percentile,
+                      evaluation: mockResult.evaluation 
+                    }}));
+                    break;
+                  case "schulte":
+                    setResults(prev => ({ ...prev, schulte: { 
+                      score: mockResult.score,
+                      accuracy: mockResult.accuracy,
+                      averageTime: mockResult.averageDeviation,
+                      gridSizes: mockResult.gridSizes,
+                      completionTimes: mockResult.completionTimes,
+                      percentile: mockResult.percentile
+                    }}));
+                    break;
+                  case "rhythm":
+                    setResults(prev => ({ ...prev, rhythm: { 
+                      precision: mockResult.precision,
+                      level: mockResult.level 
+                    }}));
+                    break;
                 }
               }
             }}
