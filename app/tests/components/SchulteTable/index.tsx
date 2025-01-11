@@ -164,8 +164,8 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            {/* Timer e livello più vicini alla griglia */}
-            <div className={`flex justify-between items-center w-full ${isMobile && testLevel === 2 ? "mb-0" : "mb-2"}`}>
+            {/* Timer e livello */}
+            <div className="flex justify-between items-center w-full mb-2">
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-gray-600" />
                 <span className="font-mono text-lg text-gray-800">
@@ -177,11 +177,12 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
               </div>
             </div>
 
-            {/* Griglia con adattamento dinamico su mobile */}
+            {/* Griglia */}
             <div
-              className="grid gap-1 w-full"
+              className="grid w-full"
               style={{
                 gridTemplateColumns: `repeat(${isMobile && testLevel === 2 ? 4 : currentSize}, minmax(0, 1fr))`,
+                gap: "0px", // Nessun gap tra le celle
               }}
             >
               {numbers.map((number, index) => (
@@ -194,10 +195,10 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                     transition-colors duration-200
                     ${
                       number < currentNumber
-                        ? "bg-green-100 text-green-700 border-2 border-green-500"
-                        : "bg-white hover:bg-gray-100 border-2 border-gray-200"
+                        ? "bg-green-100 text-green-700 border border-green-500"
+                        : "bg-white hover:bg-gray-100 border border-gray-200"
                     }
-                    ${!gameStarted && "cursor-not-allowed opacity-50"}
+                    ${!gameStarted ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                   `}
                   disabled={!gameStarted || isCompleted}
                 >
@@ -217,3 +218,6 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     </div>
   );
 }
+
+export default SchulteTable;
+
