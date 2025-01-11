@@ -43,7 +43,6 @@ interface TestResults {
   } | null;
   schulte: {
     score: number;
-    accuracy: number;
     averageTime: number;
     gridSizes: number[];
     completionTimes: number[];
@@ -131,7 +130,7 @@ export default function TestPage() {
     setPhase("schulte");
   };
 
-  const handleSchulteComplete = (schulteResults: { score: number; accuracy: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
+  const handleSchulteComplete = (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
     setResults(prev => ({
       ...prev,
       schulte: schulteResults
@@ -183,8 +182,7 @@ export default function TestPage() {
                 </div>
                 <button
                   onClick={() => setPhase("raven")}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg 
-                           hover:bg-blue-700 transition-colors font-medium"
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Inizia il Test
                 </button>
@@ -209,9 +207,7 @@ export default function TestPage() {
           return (
             <div className="max-w-4xl mx-auto px-4">
               <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                  Risultati del Test
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Risultati del Test</h2>
                 <div className="space-y-6">
                   {results.raven && (
                     <div className="p-4 bg-blue-50 rounded-lg">
@@ -220,9 +216,7 @@ export default function TestPage() {
                         <h3 className="font-bold">Ragionamento Astratto</h3>
                       </div>
                       <p>Punteggio: {Math.round(results.raven.score)}/1000</p>
-                      {results.raven.percentile && (
-                        <p>Percentile: {results.raven.percentile}°</p>
-                      )}
+                      {results.raven.percentile && <p>Percentile: {results.raven.percentile}°</p>}
                     </div>
                   )}
                   {results.eyeHand && (
@@ -284,15 +278,13 @@ export default function TestPage() {
                         <ActivitySquare className="w-6 h-6 text-purple-500" />
                         <h3 className="font-bold">Test del Ritmo</h3>
                       </div>
-                      <p>Precisione: {/* Eventuale rimosso */}</p>
                       <p>Livello Raggiunto: {results.rhythm.level}</p>
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg 
-                           hover:bg-blue-700 transition-colors font-medium"
+                  className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Torna alla Dashboard
                 </button>
@@ -305,10 +297,7 @@ export default function TestPage() {
     return (
       <div className="max-w-4xl mx-auto px-4">
         {!testStarted && phase !== "intro" && phase !== "results" && (
-          <TestInstructions 
-            phase={phase}
-            onStart={() => setTestStarted(true)}
-          />
+          <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
         )}
         {(testStarted || phase === "intro" || phase === "results") && renderTest()}
       </div>
@@ -388,10 +377,10 @@ export default function TestPage() {
                     }}));
                     break;
                   case "schulte":
+                    // Non includo "accuracy" per SchulteTable
                     setResults(prev => ({ ...prev, schulte: { 
                       score: mockResult.score,
-                      accuracy: mockResult.accuracy,
-                      averageTime: mockResult.averageDeviation,
+                      averageTime: mockResult.averageDeviation, 
                       gridSizes: mockResult.gridSizes,
                       completionTimes: mockResult.completionTimes,
                       percentile: mockResult.percentile
@@ -399,15 +388,14 @@ export default function TestPage() {
                     break;
                   case "rhythm":
                     setResults(prev => ({ ...prev, rhythm: { 
+                      precision: mockResult.precision, // se lo vuoi mantenere per RhythmTest
                       level: mockResult.level 
                     }}));
                     break;
                 }
               }
             }}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg 
-                     hover:bg-red-700 transition-colors font-medium
-                     flex items-center gap-2"
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
           >
             <span className="text-sm">Salta alla Fase Successiva →</span>
           </button>
