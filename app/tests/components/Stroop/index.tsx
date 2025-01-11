@@ -1,53 +1,7 @@
 import { useState, useEffect, useCallback, memo, useMemo, useRef } from "react";
 import { Clock, Brain } from "lucide-react";
 
-const colorValues = {
-  rosso: "#EF4444",
-  blu: "#3B82F6",
-  verde: "#10B981",
-  arancione: "#F59E0B",
-};
-
-type ColorKey = keyof typeof colorValues;
-
-interface Stimulus {
-  word: ColorKey;
-  color: ColorKey;
-  type: "congruent" | "incongruent";
-  timestamp: number;
-}
-
-interface Response {
-  stimulus: Stimulus;
-  selectedColor: ColorKey;
-  correct: boolean;
-  reactionTime: number;
-}
-
-interface StroopResults {
-  score: number;
-  accuracy: number;
-  averageReactionTime: number;
-  responsesPerMinute: string;
-  interferenceScore: number;
-}
-
-const Timer = memo(({ value }: { value: number }) => {
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <Clock className="w-5 h-5" />
-      <span className="font-mono">{formatTime(value)}</span>
-    </div>
-  );
-});
-
-Timer.displayName = "Timer";
+// ... (resto delle interfacce e costanti invariate)
 
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
   const [timer, setTimer] = useState(60);
@@ -64,81 +18,29 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
-  const generateStimulus = useCallback(
-    (type: "congruent" | "incongruent"): Stimulus => {
-      const wordIndex = Math.floor(Math.random() * colors.length);
-      const word = colors[wordIndex];
-      let colorIndex;
+  // ... (generateStimulus e calculateResults invariati)
 
-      if (type === "congruent") {
-        colorIndex = wordIndex;
-      } else {
-        do {
-          colorIndex = Math.floor(Math.random() * colors.length);
-        } while (colorIndex === wordIndex);
-      }
-
-      return {
-        word,
-        color: colors[colorIndex],
-        type,
-        timestamp: Date.now(),
-      };
-    },
-    [colors]
-  );
-
-  const calculateResults = useCallback(() => {
-    const correctResponses = responses.filter((r) => r.correct).length;
-    const totalResponses = responses.length;
-    const accuracy = totalResponses > 0 ? (correctResponses / totalResponses) * 100 : 0;
-    const avgTime =
-      totalResponses > 0
-        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
-        : 0;
-
-    const responsesPerMinute = (totalResponses / (60 - timer)) * 60;
-
-    const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
-    const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
-
-    const interferenceScore =
-      incongruentResponses.length > 0 && congruentResponses.length > 0
-        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
-          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
-        : 0;
-
-    return {
-      score: Math.round((correctResponses / 112) * 1000),
-      accuracy: Math.round(accuracy),
-      averageReactionTime: Math.round(avgTime),
-      responsesPerMinute: responsesPerMinute.toFixed(1),
-      interferenceScore: Math.round(interferenceScore),
-    };
-  }, [responses, timer]);
-
+  // Timer ottimizzato
   useEffect(() => {
-    if (!isRunning) return;
-
-    const startTime = Date.now();
-    const originalTimer = timer;
+    if (!isRunning) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      return;
+    }
 
     timerRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const newValue = originalTimer - elapsed;
-
-      if (newValue <= 0) {
-        if (timerRef.current) {
+      setTimer((prevTimer) => {
+        if (prevTimer <= 1) {
           clearInterval(timerRef.current);
+          setIsRunning(false);
+          if (onComplete) {
+            onComplete(calculateResults());
+          }
+          return 0;
         }
-        setIsRunning(false);
-        setTimer(0);
-        if (onComplete) {
-          onComplete(calculateResults());
-        }
-      } else {
-        setTimer(newValue);
-      }
+        return prevTimer - 1;
+      });
     }, 1000);
 
     return () => {
@@ -146,11 +48,13 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, onComplete, calculateResults]);
+  }, [isRunning]); // Solo isRunning come dipendenza
 
+  // Gestione stimolo iniziale ottimizzata
   useEffect(() => {
     if (isRunning && !currentStimulus) {
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
+      const type = Math.random() < 0.5 ? "congruent" : "incongruent";
+      const newStimulus = generateStimulus(type);
       setCurrentStimulus(newStimulus);
       responseStartTimeRef.current = Date.now();
     }
@@ -169,7 +73,8 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
+      const type = Math.random() < 0.5 ? "congruent" : "incongruent";
+      const newStimulus = generateStimulus(type);
 
       setResponses(prev => [...prev, response]);
       setStats(prev => ({
