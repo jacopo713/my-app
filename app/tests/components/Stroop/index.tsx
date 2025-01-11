@@ -26,10 +26,10 @@ interface Response {
 
 interface StroopResults {
   score: number;
-  accuracy: number; // Cambiato da string a number
-  averageReactionTime: number; // Cambiato da string a number
-  responsesPerMinute: string;
-  interferenceScore: string;
+  accuracy: number; // Precisione come numero
+  averageReactionTime: number; // Tempo medio come numero
+  responsesPerMinute: string; // Risposte al minuto come stringa
+  interferenceScore: number; // Punteggio di interferenza come numero
 }
 
 // Componente Timer ottimizzato
@@ -111,7 +111,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       accuracy: (correctResponses / totalResponses) * 100, // Precisione come numero
       averageReactionTime: avgTime, // Tempo medio come numero
       responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
-      interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
+      interferenceScore: interferenceScore, // Punteggio di interferenza come numero
     };
   }, [responses, timer]);
 
@@ -145,7 +145,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, timer, onComplete, calculateResults]); // Aggiunto calculateResults alle dipendenze
+  }, [isRunning, timer, onComplete, calculateResults]);
 
   // Gestione dello stimolo iniziale
   useEffect(() => {
