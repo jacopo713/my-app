@@ -86,6 +86,35 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
+  // Calcola i risultati
+  const calculateResults = useCallback(() => {
+    const correctResponses = responses.filter((r) => r.correct).length;
+    const totalResponses = responses.length;
+    const avgTime =
+      totalResponses > 0
+        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
+        : 0;
+
+    const responsesPerMinute = (totalResponses / (60 - timer)) * 60;
+
+    const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
+    const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
+
+    const interferenceScore =
+      incongruentResponses.length > 0 && congruentResponses.length > 0
+        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
+          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
+        : 0;
+
+    return {
+      score: Math.round((correctResponses / 112) * 100), // Punteggio basato su 112 risposte corrette
+      accuracy: (correctResponses / totalResponses) * 100, // Precisione come numero
+      averageReactionTime: avgTime, // Tempo medio come numero
+      responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
+      interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
+    };
+  }, [responses, timer]);
+
   // Gestione timer
   useEffect(() => {
     if (!isRunning) return;
@@ -117,35 +146,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       }
     };
   }, [isRunning, timer, onComplete, calculateResults]); // Aggiunto calculateResults alle dipendenze
-
-  // Calcola i risultati
-  const calculateResults = useCallback(() => {
-    const correctResponses = responses.filter((r) => r.correct).length;
-    const totalResponses = responses.length;
-    const avgTime =
-      totalResponses > 0
-        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
-        : 0;
-
-    const responsesPerMinute = (totalResponses / (60 - timer)) * 60;
-
-    const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
-    const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
-
-    const interferenceScore =
-      incongruentResponses.length > 0 && congruentResponses.length > 0
-        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
-          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
-        : 0;
-
-    return {
-      score: Math.round((correctResponses / 112) * 100), // Punteggio basato su 112 risposte corrette
-      accuracy: (correctResponses / totalResponses) * 100, // Precisione come numero
-      averageReactionTime: avgTime, // Tempo medio come numero
-      responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
-      interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
-    };
-  }, [responses, timer]);
 
   // Gestione dello stimolo iniziale
   useEffect(() => {
