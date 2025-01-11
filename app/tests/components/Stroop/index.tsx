@@ -58,6 +58,7 @@ const Statistics = memo(({ responses }: { responses: Response[] }) => {
 Statistics.displayName = "Statistics";
 
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
+  console.log('Rendering StroopTest component...');
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
@@ -75,9 +76,10 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     if (type === "congruent") {
       colorIndex = wordIndex;
     } else {
-      do {
-        colorIndex = Math.floor(Math.random() * colors.length);
-      } while (colorIndex === wordIndex);
+      const possibleIndices = colors
+        .map((_, index) => index)
+        .filter(index => index !== wordIndex);
+      colorIndex = possibleIndices[Math.floor(Math.random() * possibleIndices.length)];
     }
 
     return {
@@ -129,6 +131,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   useEffect(() => {
     if (isRunning && timer > 0) {
       const interval = setInterval(() => {
+        console.log('Timer tick:', timer);
         setTimer((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
@@ -144,7 +147,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
       return () => clearInterval(interval);
     }
-  }, [isRunning, timer, onComplete, calculateResults]); // Aggiungi calculateResults qui
+  }, [isRunning, timer, onComplete, calculateResults]);
 
   // Inizializza il primo stimolo
   useEffect(() => {
@@ -155,6 +158,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   // Gestione della risposta
   const handleResponse = useCallback((selectedColor: ColorKey) => {
+    console.log('Handling response...');
     if (!currentStimulus || !isRunning || !responseStartTime) return;
 
     const response: Response = {
@@ -166,6 +170,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     setResponses(prev => [...prev, response]);
     generateNextStimulus();
+    console.log('Response handled.');
   }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
 
   // Formattazione del tempo
