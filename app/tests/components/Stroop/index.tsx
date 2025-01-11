@@ -24,19 +24,12 @@ interface Response {
   reactionTime: number;
 }
 
-interface Stats {
-  totalResponses: number;
-  correctResponses: number;
-}
-
 interface StroopResults {
   score: number;
-  accuracy: number;
-  averageReactionTime: number;
-  totalResponses: number;
-  correctResponses: number;
-  interferenceScore: number;
+  accuracy: string;
+  averageReactionTime: string;
   responsesPerMinute: string;
+  interferenceScore: string;
 }
 
 // Componente Timer ottimizzato
@@ -57,30 +50,12 @@ const Timer = memo(({ value }: { value: number }) => {
 
 Timer.displayName = "Timer";
 
-// Componente Statistics ottimizzato
-const Statistics = memo(({ responses }: { responses: Response[] }) => {
-  const stats: Stats = useMemo(() => ({
-    totalResponses: responses.length,
-    correctResponses: responses.filter(r => r.correct).length,
-  }), [responses]);
-
-  return (
-    <div className="mt-6 text-sm text-gray-600">
-      <div className="transition-all duration-200 ease-in-out">
-        Risposte: {stats.totalResponses} | Corrette: {stats.correctResponses}
-      </div>
-    </div>
-  );
-});
-
-Statistics.displayName = "Statistics";
-
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
-  
+
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
 
@@ -111,17 +86,17 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     [colors]
   );
 
-  // Gestione timer ottimizzata
+  // Gestione timer
   useEffect(() => {
     if (!isRunning) return;
-    
+
     const startTime = Date.now();
     const originalTimer = timer;
-    
+
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const newValue = originalTimer - elapsed;
-      
+
       if (newValue <= 0) {
         if (timerRef.current) {
           clearInterval(timerRef.current);
@@ -145,13 +120,16 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   // Calcola i risultati
   const calculateResults = useCallback(() => {
-    const correct = responses.filter((r) => r.correct).length;
-    const accuracy = responses.length > 0 ? correct / responses.length : 0;
+    const correctResponses = responses.filter((r) => r.correct).length;
+    const totalResponses = responses.length;
     const avgTime =
-      responses.length > 0
-        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length
+      totalResponses > 0
+        ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
         : 0;
 
+    const responsesPerMinute = (totalResponses / (60 - timer)) * 60;
+
+    // Calcolo del punteggio di interferenza
     const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
     const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
 
@@ -162,13 +140,11 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         : 0;
 
     return {
-      score: Math.round(accuracy * 100),
-      accuracy,
-      averageReactionTime: avgTime,
-      totalResponses: responses.length,
-      correctResponses: correct,
-      interferenceScore,
-      responsesPerMinute: (responses.length / (60 - timer) * 60).toFixed(1),
+      score: Math.round((correctResponses / 112) * 100), // Punteggio basato su 112 risposte corrette
+      accuracy: ((correctResponses / totalResponses) * 100).toFixed(2) + "%", // Precisione formattata
+      averageReactionTime: avgTime.toFixed(1) + "ms", // Tempo di reazione medio formattato
+      responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
+      interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
     };
   }, [responses, timer]);
 
@@ -181,7 +157,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     }
   }, [isRunning, currentStimulus, generateStimulus]);
 
-  // Gestione della risposta ottimizzata
+  // Gestione della risposta
   const handleResponse = useCallback(
     (selectedColor: ColorKey) => {
       if (!currentStimulus || !isRunning || !responseStartTimeRef.current) return;
@@ -193,11 +169,9 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      const newStimulus = generateStimulus(
-        Math.random() < 0.5 ? "congruent" : "incongruent"
-      );
+      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
 
-      setResponses(prev => {
+      setResponses((prev) => {
         const newResponses = [...prev, response];
         setCurrentStimulus(newStimulus);
         responseStartTimeRef.current = Date.now();
@@ -242,8 +216,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
           </div>
         </>
       )}
-
-      <Statistics responses={responses} />
     </div>
   );
 };
