@@ -26,10 +26,10 @@ interface Response {
 
 interface StroopResults {
   score: number;
-  accuracy: number; // Precisione come numero
-  averageReactionTime: number; // Tempo medio come numero
-  responsesPerMinute: string; // Risposte al minuto come stringa
-  interferenceScore: number; // Punteggio di interferenza come numero
+  accuracy: number;
+  averageReactionTime: number;
+  responsesPerMinute: string;
+  interferenceScore: number;
 }
 
 // Componente Timer ottimizzato
@@ -58,6 +58,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
+  const prevResponsesLength = useRef(0);
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
@@ -90,7 +91,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const calculateResults = useCallback(() => {
     const correctResponses = responses.filter((r) => r.correct).length;
     const totalResponses = responses.length;
-    const accuracy = totalResponses > 0 ? (correctResponses / totalResponses) * 100 : 0; // Calcola l'accuracy
+    const accuracy = totalResponses > 0 ? (correctResponses / totalResponses) * 100 : 0;
     const avgTime =
       totalResponses > 0
         ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
@@ -128,9 +129,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       const newValue = originalTimer - elapsed;
 
       if (newValue <= 0) {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
+        clearInterval(timerRef.current);
         setIsRunning(false);
         setTimer(0);
         if (onComplete) {
@@ -141,11 +140,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       }
     }, 1000);
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
+    return () => clearInterval(timerRef.current);
   }, [isRunning, timer, onComplete, calculateResults]);
 
   // Gestione dello stimolo iniziale
@@ -169,14 +164,14 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
+      setResponses((prev) => [...prev, response]);
 
-      setResponses((prev) => {
-        const newResponses = [...prev, response];
+      // Genera un nuovo stimolo in modo non bloccante
+      setTimeout(() => {
+        const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
         setCurrentStimulus(newStimulus);
         responseStartTimeRef.current = Date.now();
-        return newResponses;
-      });
+      }, 0);
     },
     [currentStimulus, isRunning, generateStimulus]
   );
