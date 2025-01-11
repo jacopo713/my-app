@@ -57,8 +57,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [isRunning, setIsRunning] = useState(true);
 
   const responseStartTimeRef = useRef<number | null>(null);
-  const timerRef = useRef<number | null>(null);
-  const prevResponsesLength = useRef(0);
+  const timerRef = useRef<NodeJS.Timeout>();
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
@@ -124,11 +123,12 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     const startTime = Date.now();
     const originalTimer = timer;
 
-    const animateTimer = () => {
+    timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const newValue = originalTimer - elapsed;
 
       if (newValue <= 0) {
+        clearInterval(timerRef.current);
         setIsRunning(false);
         setTimer(0);
         if (onComplete) {
@@ -137,17 +137,9 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       } else {
         setTimer(newValue);
       }
+    }, 1000);
 
-      timerRef.current = requestAnimationFrame(animateTimer);
-    };
-
-    timerRef.current = requestAnimationFrame(animateTimer);
-
-    return () => {
-      if (timerRef.current) {
-        cancelAnimationFrame(timerRef.current);
-      }
-    };
+    return () => clearInterval(timerRef.current);
   }, [isRunning, timer, onComplete, calculateResults]);
 
   // Gestione dello stimolo iniziale
@@ -174,11 +166,11 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       setResponses((prev) => [...prev, response]);
 
       // Genera un nuovo stimolo in modo non bloccante
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
         setCurrentStimulus(newStimulus);
         responseStartTimeRef.current = Date.now();
-      });
+      }, 0);
     },
     [currentStimulus, isRunning, generateStimulus]
   );
