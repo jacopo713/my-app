@@ -2,13 +2,15 @@ import RavenTest from './Raven';
 import EyeHandTest from './EyeHand';
 import StroopTest from './Stroop';
 import SpeedReadingTrainer from './SpeedReading';
-import ShortTermMemoryTest from './ShortTermMemoryTest'; // Importa il nuovo componente
+import ShortTermMemoryTest, { ShortTermMemoryTestProps } from './ShortTermMemoryTest';
+import SchulteTable, { SchulteTableProps } from './SchulteTable'; // Importa il nuovo componente
 
 // Export interfaces
 export type { RavenTestProps } from './Raven';
 export type { EyeHandTestProps } from './EyeHand';
 export type { SpeedReadingTrainerProps } from './SpeedReading';
-export type { ShortTermMemoryTestProps } from './ShortTermMemoryTest'; // Esporta l'interfaccia del nuovo componente
+export type { ShortTermMemoryTestProps } from './ShortTermMemoryTest';
+export type { SchulteTableProps }; // Esporta l'interfaccia del nuovo componente
 
 // Export components
 export {
@@ -16,5 +18,6 @@ export {
   EyeHandTest,
   StroopTest,
   SpeedReadingTrainer,
-  ShortTermMemoryTest, // Esporta il nuovo componente
+  ShortTermMemoryTest,
+  SchulteTable, // Esporta il nuovo componente
 };

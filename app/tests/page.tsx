@@ -3,11 +3,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
-import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest } from './components';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock } from 'lucide-react';
+import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest, SchulteTable } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "results";
 
 interface TestResults {
   raven: {
@@ -37,6 +37,14 @@ interface TestResults {
     percentile: number;
     evaluation: string;
   } | null;
+  schulte: {
+    score: number;
+    accuracy: number;
+    averageTime: number;
+    gridSizes: number[];
+    completionTimes: number[];
+    percentile: number;
+  } | null;
 }
 
 export default function TestPage() {
@@ -46,7 +54,8 @@ export default function TestPage() {
     eyeHand: null,
     stroop: null,
     speedReading: null,
-    memory: null
+    memory: null,
+    schulte: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -100,6 +109,22 @@ export default function TestPage() {
     setResults(prev => ({
       ...prev,
       memory: memoryResults
+    }));
+    setProgress(90);
+    setPhase("schulte");
+  };
+
+  const handleSchulteComplete = (schulteResults: {
+    score: number;
+    accuracy: number;
+    averageTime: number;
+    gridSizes: number[];
+    completionTimes: number[];
+    percentile: number;
+  }) => {
+    setResults(prev => ({
+      ...prev,
+      schulte: schulteResults
     }));
     setProgress(100);
     setPhase("results");
@@ -162,6 +187,9 @@ export default function TestPage() {
       case "memory":
         return <ShortTermMemoryTest onComplete={handleMemoryComplete} />;
 
+      case "schulte":
+        return <SchulteTable onComplete={handleSchulteComplete} />;
+
       case "results":
         return (
           <div className="max-w-4xl mx-auto px-4">
@@ -223,6 +251,20 @@ export default function TestPage() {
                     <p>Punteggio: {results.memory.score}</p>
                     <p>Percentile: {results.memory.percentile}°</p>
                     <p>Valutazione: {results.memory.evaluation}</p>
+                  </div>
+                )}
+                {results.schulte && (
+                  <div className="p-4 bg-indigo-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="w-6 h-6 text-indigo-500" />
+                      <h3 className="font-bold">Tabella di Schulte</h3>
+                    </div>
+                    <p>Punteggio: {results.schulte.score}</p>
+                    <p>Precisione: {results.schulte.accuracy}%</p>
+                    <p>Tempo Medio: {results.schulte.averageTime.toFixed(1)}s</p>
+                    <p>Dimensioni Griglie: {results.schulte.gridSizes.join(", ")}</p>
+                    <p>Tempi di Completamento: {results.schulte.completionTimes.join(", ")}s</p>
+                    <p>Percentile: {results.schulte.percentile}°</p>
                   </div>
                 )}
               </div>
