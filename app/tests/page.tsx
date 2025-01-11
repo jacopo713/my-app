@@ -7,63 +7,49 @@ import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
 import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest, SchulteTable, RhythmTest } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-interface RavenResult {
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
+
+interface TestResults {
+  raven: {
     score: number;
     accuracy: number;
-    percentile: number;
-}
-
-interface EyeHandResult {
+    percentile?: number;
+  } | null;
+  eyeHand: {
     score: number;
     accuracy: number;
     averageDeviation: number;
-}
-
-interface StroopResult {
+  } | null;
+  stroop: {
     score: number;
     accuracy: number;
     averageReactionTime: number;
     interferenceScore: number;
     responsesPerMinute: string;
-}
-
-interface SpeedReadingResult {
+  } | null;
+  speedReading: {
     wpm: number;
     accuracy: number;
     score: number;
-}
-
-interface MemoryResult {
+  } | null;
+  memory: {
     score: number;
     percentile: number;
     evaluation: string;
-}
-
-interface SchulteResult {
+  } | null;
+  schulte: {
     score: number;
     accuracy: number;
     averageTime: number;
     gridSizes: number[];
     completionTimes: number[];
     percentile: number;
-}
-
-interface RhythmResult {
+  } | null;
+  rhythm: {
     precision: number;
     level: number;
+  } | null;
 }
-
-interface TestResults {
-  raven: RavenResult | null;
-  eyeHand: EyeHandResult | null;
-  stroop: StroopResult | null;
-  speedReading: SpeedReadingResult | null;
-  memory: MemoryResult | null;
-  schulte: SchulteResult | null;
-  rhythm: RhythmResult | null;
-}
-
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
 
 export default function TestPage() {
   const [phase, setPhase] = useState<TestPhase>("intro");
@@ -84,82 +70,68 @@ export default function TestPage() {
     "speedreading", "memory", "schulte", "rhythm", "results"
   ];
 
-  const moveToNextPhase = () => {
-    const currentIndex = phases.indexOf(phase);
-    if (currentIndex < phases.length - 1) {
-      const nextPhase = phases[currentIndex + 1];
-      setPhase(nextPhase);
-      setProgress(Math.min((currentIndex + 1) * 15, 100));
-      
-      // Mock results for testing
-      const mockResults = {
-        raven: { score: 85, accuracy: 90, percentile: 75 },
-        eyeHand: { score: 85, accuracy: 90, averageDeviation: 5 },
-        stroop: {
-          score: 85,
-          accuracy: 90,
-          averageReactionTime: 450,
-          interferenceScore: 100,
-          responsesPerMinute: "45"
-        },
-        speedReading: { wpm: 300, accuracy: 90, score: 85 },
-        memory: { score: 85, percentile: 75, evaluation: "Eccellente" },
-        schulte: {
-          score: 85,
-          accuracy: 90,
-          averageTime: 15,
-          gridSizes: [3, 4, 5],
-          completionTimes: [10, 15, 20],
-          percentile: 75
-        },
-        rhythm: { precision: 95, level: 3 }
-      };
-
-      setResults(prev => ({
-        ...prev,
-        [phase]: mockResults[phase as keyof typeof mockResults]
-      }));
-    }
-  };
-
-  const handleRavenComplete = (ravenResults: RavenResult) => {
-    setResults(prev => ({ ...prev, raven: ravenResults }));
+  const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
+    setResults(prev => ({
+      ...prev,
+      raven: {
+        ...ravenResults,
+        percentile: Math.round((ravenResults.score / 1000) * 100)
+      }
+    }));
     setProgress(25);
     setPhase("eyehand");
   };
 
-  const handleEyeHandComplete = (eyeHandResults: EyeHandResult) => {
-    setResults(prev => ({ ...prev, eyeHand: eyeHandResults }));
+  const handleEyeHandComplete = (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
+    setResults(prev => ({
+      ...prev,
+      eyeHand: eyeHandResults
+    }));
     setProgress(50);
     setPhase("stroop");
   };
 
-  const handleStroopComplete = (stroopResults: StroopResult) => {
-    setResults(prev => ({ ...prev, stroop: stroopResults }));
+  const handleStroopComplete = (stroopResults: { score: number; accuracy: number; averageReactionTime: number; interferenceScore: number; responsesPerMinute: string }) => {
+    setResults(prev => ({
+      ...prev,
+      stroop: stroopResults
+    }));
     setProgress(75);
     setPhase("speedreading");
   };
 
-  const handleSpeedReadingComplete = (speedReadingResults: SpeedReadingResult) => {
-    setResults(prev => ({ ...prev, speedReading: speedReadingResults }));
+  const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; accuracy: number; score: number }) => {
+    setResults(prev => ({
+      ...prev,
+      speedReading: speedReadingResults
+    }));
     setProgress(85);
     setPhase("memory");
   };
 
-  const handleMemoryComplete = (memoryResults: MemoryResult) => {
-    setResults(prev => ({ ...prev, memory: memoryResults }));
+  const handleMemoryComplete = (memoryResults: { score: number; percentile: number; evaluation: string }) => {
+    setResults(prev => ({
+      ...prev,
+      memory: memoryResults
+    }));
     setProgress(90);
     setPhase("schulte");
   };
 
-  const handleSchulteComplete = (schulteResults: SchulteResult) => {
-    setResults(prev => ({ ...prev, schulte: schulteResults }));
+  const handleSchulteComplete = (schulteResults: { score: number; accuracy: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
+    setResults(prev => ({
+      ...prev,
+      schulte: schulteResults
+    }));
     setProgress(95);
     setPhase("rhythm");
   };
 
-  const handleRhythmComplete = (rhythmResults: RhythmResult) => {
-    setResults(prev => ({ ...prev, rhythm: rhythmResults }));
+  const handleRhythmComplete = (rhythmResults: { precision: number; level: number }) => {
+    setResults(prev => ({
+      ...prev,
+      rhythm: rhythmResults
+    }));
     setProgress(100);
     setPhase("results");
   };
@@ -306,15 +278,64 @@ export default function TestPage() {
         </div>
         {renderCurrentPhase()}
         
-        {/* Debug button - always visible */}
+        {/* Pulsante di debug per avanzare rapidamente */}
         <div className="fixed bottom-4 right-4 z-50">
           <button
-            onClick={moveToNextPhase}
+            onClick={() => {
+              const currentIndex = phases.indexOf(phase);
+              if (currentIndex < phases.length - 1) {
+                const nextPhase = phases[currentIndex + 1];
+                setPhase(nextPhase);
+                setProgress(Math.min((currentIndex + 1) * 15, 100));
+
+                // Risultati mock per test
+                const mockResult = {
+                  score: 85,
+                  accuracy: 90,
+                  percentile: 75,
+                  averageDeviation: 5,
+                  averageReactionTime: 450,
+                  interferenceScore: 100,
+                  responsesPerMinute: "45",
+                  wpm: 300,
+                  evaluation: "Eccellente",
+                  level: 3,
+                  precision: 95,
+                  gridSizes: [3, 4, 5],
+                  completionTimes: [10, 15, 20]
+                };
+
+                // Aggiorna i risultati in base alla fase corrente
+                switch(phase) {
+                  case "raven":
+                    setResults(prev => ({ ...prev, raven: { score: mockResult.score, accuracy: mockResult.accuracy, percentile: mockResult.percentile } }));
+                    break;
+                  case "eyehand":
+                    setResults(prev => ({ ...prev, eyeHand: { score: mockResult.score, accuracy: mockResult.accuracy, averageDeviation: mockResult.averageDeviation } }));
+                    break;
+                  case "stroop":
+                    setResults(prev => ({ ...prev, stroop: { score: mockResult.score, accuracy: mockResult.accuracy, averageReactionTime: mockResult.averageReactionTime, interferenceScore: mockResult.interferenceScore, responsesPerMinute: mockResult.responsesPerMinute } }));
+                    break;
+                  case "speedreading":
+                    setResults(prev => ({ ...prev, speedReading: { wpm: mockResult.wpm, accuracy: mockResult.accuracy, score: mockResult.score } }));
+                    break;
+                  case "memory":
+                    setResults(prev => ({ ...prev, memory: { score: mockResult.score, percentile: mockResult.percentile, evaluation: mockResult.evaluation } }));
+                    break;
+                  case "schulte":
+                    setResults(prev => ({ ...prev, schulte: { score: mockResult.score, accuracy: mockResult.accuracy, averageTime: mockResult.averageDeviation, gridSizes: mockResult.gridSizes, completionTimes: mockResult.completionTimes, percentile: mockResult.percentile } }));
+                    break;
+                  case "rhythm":
+                    setResults(prev => ({ ...prev, rhythm: { precision: mockResult.precision, level: mockResult.level } }));
+                    break;
+                }
+              }
+            }}
             className="bg-red-600 text-white px-4 py-2 rounded-lg 
                      hover:bg-red-700 transition-colors font-medium
                      flex items-center gap-2"
           >
-            <span className="text-sm">Skip to Next Phase →</span>
+            <span className="text-sm">Salta alla Fase Successiva →</span>
           </button>
         </div>
       </div>
