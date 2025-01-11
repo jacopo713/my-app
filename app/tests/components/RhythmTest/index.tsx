@@ -13,10 +13,10 @@ interface Note {
 const MELODIES: Note[][] = [
   // Livello 1: Melodia base
   [
-    { note: 440, duration: 500, gain: 0.3 },    // A4
-    { note: 523.25, duration: 500, gain: 0.3 }, // C5
-    { note: 659.25, duration: 500, gain: 0.3 }, // E5
-    { note: 783.99, duration: 500, gain: 0.3 }, // G5
+    { note: 440, duration: 500, gain: 0.3 },
+    { note: 523.25, duration: 500, gain: 0.3 },
+    { note: 659.25, duration: 500, gain: 0.3 },
+    { note: 783.99, duration: 500, gain: 0.3 },
   ],
   // Livello 2: Melodia con ritmo più complesso
   [
@@ -29,10 +29,10 @@ const MELODIES: Note[][] = [
   // Livello 3: Melodia con pause
   [
     { note: 440, duration: 300, gain: 0.3 },
-    { note: 0, duration: 200 },  // Pausa
+    { note: 0, duration: 200 },
     { note: 523.25, duration: 300, gain: 0.3 },
     { note: 659.25, duration: 400, gain: 0.3 },
-    { note: 0, duration: 200 },  // Pausa
+    { note: 0, duration: 200 },
     { note: 783.99, duration: 300, gain: 0.3 },
   ],
   // Livello 4: Melodia con ritmo accelerato e variazioni
@@ -85,9 +85,7 @@ const ATTACK_TIME = 0.05;
 const RELEASE_TIME = 0.05;
 const DEFAULT_GAIN = 0.3;
 
-// Componente RhythmTest
 const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
-  // Stati del componente
   const [audioResources, setAudioResources] = useState<AudioResources | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [phase, setPhase] = useState<'start' | 'listen' | 'replay' | 'results'>('start');
@@ -96,7 +94,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [currentLevel, setCurrentLevel] = useState(0);
   const [precisions, setPrecisions] = useState<number[]>([]);
 
-  // Refs per gestione timing
   const startTimeRef = useRef<number | null>(null);
   const audioCleanupRef = useRef<(() => void) | null>(null);
 
@@ -106,7 +103,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
   // Inizializzazione del contesto audio
   const initAudioContext = useCallback((): AudioResources => {
-    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    // Per evitare errori, usiamo il cast su window per ottenere webkitAudioContext se presente
+    const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
     const context = new AudioContextConstructor();
     const masterGain = context.createGain();
     masterGain.connect(context.destination);
@@ -118,13 +116,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     };
   }, []);
 
-  // Imposta e memorizza le risorse audio
   const setupAudioResources = useCallback(() => {
     const resources = initAudioContext();
     return resources;
   }, [initAudioContext]);
 
-  // Inizializzazione Audio Context e memorizzazione in state
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const resources = setupAudioResources();
@@ -133,9 +129,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     return () => {
       cleanupAudio();
     };
-  }, [setupAudioResources, cleanupAudio]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Pulizia delle risorse audio
   const cleanupAudio = useCallback(() => {
     if (audioResources) {
       audioResources.oscillators.forEach((osc: OscillatorNode) => {
@@ -156,7 +152,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [audioResources]);
 
-  // Riproduzione della melodia
   const playMelody = useCallback(async (isDemo: boolean = false) => {
     cleanupAudio();
     const resources = audioResources || setupAudioResources();
@@ -179,7 +174,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(note, startTime);
 
-      // Configurazione ADSR
       gainNode.gain.setValueAtTime(0, startTime);
       gainNode.gain.linearRampToValueAtTime(gain, startTime + ATTACK_TIME);
       gainNode.gain.linearRampToValueAtTime(gain, startTime + (duration / 1000) - RELEASE_TIME);
@@ -194,7 +188,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       osc.start(startTime);
       osc.stop(startTime + duration / 1000);
 
-      // Effetto visivo
       setTimeout(() => {
         setPulseScale(1.3);
         setTimeout(() => setPulseScale(1), 100);
@@ -220,7 +213,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [audioResources, cleanupAudio, currentMelody, setupAudioResources, totalDuration]);
 
-  // Gestione degli eventi
   const startDemo = useCallback(() => {
     setPhase('listen');
     playMelody(true);
@@ -231,9 +223,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
-    const maxDeviation = totalDuration * 0.3; // Deviation massima accettabile (30%)
+    const maxDeviation = totalDuration * 0.3;
 
-    // Calcola la precisione utilizzando una scala non lineare
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
@@ -246,7 +237,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     cleanupAudio();
 
     if (isLastLevel) {
-      onComplete({
+      onComplete({ 
         precision: averagePrecision,
         level: currentLevel
       });
