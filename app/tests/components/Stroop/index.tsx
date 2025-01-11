@@ -54,33 +54,39 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
+  const [stats, setStats] = useState({
+    correct: 0,
+    total: 0,
+  });
 
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
-  const generateStimulus = useCallback((): Stimulus => {
-    const wordIndex = Math.floor(Math.random() * colors.length);
-    const word = colors[wordIndex];
-    let colorIndex;
-    const type = Math.random() < 0.5 ? "congruent" : "incongruent";
+  const generateStimulus = useCallback(
+    (type: "congruent" | "incongruent"): Stimulus => {
+      const wordIndex = Math.floor(Math.random() * colors.length);
+      const word = colors[wordIndex];
+      let colorIndex;
 
-    if (type === "congruent") {
-      colorIndex = wordIndex;
-    } else {
-      do {
-        colorIndex = Math.floor(Math.random() * colors.length);
-      } while (colorIndex === wordIndex);
-    }
+      if (type === "congruent") {
+        colorIndex = wordIndex;
+      } else {
+        do {
+          colorIndex = Math.floor(Math.random() * colors.length);
+        } while (colorIndex === wordIndex);
+      }
 
-    return {
-      word,
-      color: colors[colorIndex],
-      type,
-      timestamp: Date.now(),
-    };
-  }, [colors]);
+      return {
+        word,
+        color: colors[colorIndex],
+        type,
+        timestamp: Date.now(),
+      };
+    },
+    [colors]
+  );
 
   const calculateResults = useCallback(() => {
     const correctResponses = responses.filter((r) => r.correct).length;
@@ -114,32 +120,37 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   useEffect(() => {
     if (!isRunning) return;
 
-    const tick = () => {
-      setTimer((prevTimer) => {
-        if (prevTimer <= 1) {
-          clearInterval(timerRef.current);
-          setIsRunning(false);
-          if (onComplete) {
-            onComplete(calculateResults());
-          }
-          return 0;
-        }
-        return prevTimer - 1;
-      });
-    };
+    const startTime = Date.now();
+    const originalTimer = timer;
 
-    timerRef.current = setInterval(tick, 1000);
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const newValue = originalTimer - elapsed;
+
+      if (newValue <= 0) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        setIsRunning(false);
+        setTimer(0);
+        if (onComplete) {
+          onComplete(calculateResults());
+        }
+      } else {
+        setTimer(newValue);
+      }
+    }, 1000);
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, calculateResults, onComplete]);
+  }, [isRunning, timer, onComplete, calculateResults]);
 
   useEffect(() => {
     if (isRunning && !currentStimulus) {
-      const newStimulus = generateStimulus();
+      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
       setCurrentStimulus(newStimulus);
       responseStartTimeRef.current = Date.now();
     }
@@ -149,16 +160,22 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     (selectedColor: ColorKey) => {
       if (!currentStimulus || !isRunning || !responseStartTimeRef.current) return;
 
+      const correct = selectedColor === currentStimulus.color;
+      
       const response: Response = {
         stimulus: currentStimulus,
         selectedColor,
-        correct: selectedColor === currentStimulus.color,
+        correct,
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      setResponses((prev) => [...prev, response]);
-      
-      const newStimulus = generateStimulus();
+      setResponses(prev => [...prev, response]);
+      setStats(prev => ({
+        correct: prev.correct + (correct ? 1 : 0),
+        total: prev.total + 1
+      }));
+
+      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
       setCurrentStimulus(newStimulus);
       responseStartTimeRef.current = Date.now();
     },
@@ -172,7 +189,13 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
           <Brain className="w-6 h-6" />
           <h2 className="text-xl font-bold">Test di Stroop</h2>
         </div>
-        <Timer value={timer} />
+        <div className="flex items-center gap-4">
+          <div className="text-sm">
+            Corrette: {stats.correct}/{stats.total} 
+            ({stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0}%)
+          </div>
+          <Timer value={timer} />
+        </div>
       </div>
 
       {currentStimulus && isRunning && (
