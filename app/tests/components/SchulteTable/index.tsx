@@ -114,7 +114,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     [gameStarted, isCompleted, currentNumber, currentSize, handleLevelComplete, isMobile, testLevel]
   );
 
-  // Funzione per formafttare il tempo in minuti e secondi
+  // Funzione per formattare il tempo in minuti e secondi
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -218,6 +218,4 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     </div>
   );
 }
-
-export default SchulteTable;
 
