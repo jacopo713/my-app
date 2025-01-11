@@ -3,11 +3,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock } from 'lucide-react';
-import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest, SchulteTable } from './components';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Music } from 'lucide-react';
+import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest, SchulteTable, RhythmTest } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
 
 interface TestResults {
   raven: {
@@ -45,6 +45,10 @@ interface TestResults {
     completionTimes: number[];
     percentile: number;
   } | null;
+  rhythm: {
+    precision: number;
+    level: number;
+  } | null;
 }
 
 export default function TestPage() {
@@ -55,7 +59,8 @@ export default function TestPage() {
     stroop: null,
     speedReading: null,
     memory: null,
-    schulte: null
+    schulte: null,
+    rhythm: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -126,6 +131,15 @@ export default function TestPage() {
       ...prev,
       schulte: schulteResults
     }));
+    setProgress(95);
+    setPhase("rhythm");
+  };
+
+  const handleRhythmComplete = (rhythmResults: { precision: number; level: number }) => {
+    setResults(prev => ({
+      ...prev,
+      rhythm: rhythmResults
+    }));
     setProgress(100);
     setPhase("results");
   };
@@ -189,6 +203,9 @@ export default function TestPage() {
 
       case "schulte":
         return <SchulteTable onComplete={handleSchulteComplete} />;
+
+      case "rhythm":
+        return <RhythmTest onComplete={handleRhythmComplete} />;
 
       case "results":
         return (
@@ -265,6 +282,16 @@ export default function TestPage() {
                     <p>Dimensioni Griglie: {results.schulte.gridSizes.join(", ")}</p>
                     <p>Tempi di Completamento: {results.schulte.completionTimes.join(", ")}s</p>
                     <p>Percentile: {results.schulte.percentile}°</p>
+                  </div>
+                )}
+                {results.rhythm && (
+                  <div className="p-4 bg-indigo-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Music className="w-6 h-6 text-indigo-500" />
+                      <h3 className="font-bold">Test del Ritmo</h3>
+                    </div>
+                    <p>Precisione: {results.rhythm.precision.toFixed(1)}%</p>
+                    <p>Livello Completato: {results.rhythm.level + 1}</p>
                   </div>
                 )}
               </div>
