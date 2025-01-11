@@ -169,7 +169,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" | "incongruent");
+      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
 
       setResponses((prev) => {
         const newResponses = [...prev, response];
