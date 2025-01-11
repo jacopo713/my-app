@@ -248,16 +248,16 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
     const isCorrect = answers[idx].isCorrect;
     if (isCorrect) {
-      setScore(prev => prev + 1);
+      setScore(prev => prev + 1); // Incrementa il punteggio di 1 per ogni risposta corretta
     }
 
     setTimeout(() => {
       if (level < 13) {
         setLevel(prev => prev + 1);
       } else {
-        const finalScore = score + (isCorrect ? 1 : 0);
-        const percentile = computePercentile(finalScore);
+        const finalScore = score + (isCorrect ? 1 : 0); // Punteggio finale (0-13)
         const ravenScore = (finalScore / 13) * 1000; // Punteggio su 1000
+        const percentile = (finalScore / 13) * 100; // Percentile (0-100)
         onComplete({
           score: ravenScore, // Punteggio su 1000
           accuracy: percentile, // Percentile

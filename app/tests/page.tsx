@@ -87,7 +87,7 @@ export default function TestPage() {
       ...prev,
       raven: {
         ...ravenResults,
-        percentile: Math.round((ravenResults.score / 13) * 100) // Calcolo del percentile
+        percentile: Math.round(ravenResults.accuracy) // Arrotonda il percentile
       }
     }));
     setProgress(25);
@@ -99,7 +99,7 @@ export default function TestPage() {
       ...prev,
       eyeHand: {
         ...eyeHandResults,
-        accuracy: Math.round(eyeHandResults.accuracy) // Arrotondamento della precisione
+        accuracy: Math.round(eyeHandResults.accuracy) // Arrotonda la precisione
       }
     }));
     setProgress(50);
@@ -221,7 +221,7 @@ export default function TestPage() {
                         <Brain className="w-6 h-6 text-blue-500" />
                         <h3 className="font-bold">Ragionamento Astratto</h3>
                       </div>
-                      <p>Punteggio: {Math.round((results.raven.score / 13) * 1000)}/1000</p>
+                      <p>Punteggio: {Math.round(results.raven.score)}/1000</p>
                       {results.raven.percentile && (
                         <p>Percentile: {results.raven.percentile}°</p>
                       )}
