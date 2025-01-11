@@ -50,49 +50,39 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     };
   }, []);
 
-  // Generazione suono naturale
-  const playNaturalSound = useCallback(() => {
+  // Sistema audio ottimizzato
+  const playFeedbackSound = useCallback(() => {
     if (!audioContextRef.current) return;
 
-    // Creazione nodi audio
-    const whiteNoise = audioContextRef.current.createBufferSource();
-    const noiseBuffer = audioContextRef.current.createBuffer(
-      1, 
-      audioContextRef.current.sampleRate * 1, 
-      audioContextRef.current.sampleRate
+    // Oscillatore principale
+    const oscillator = audioContextRef.current.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioContextRef.current.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      400,
+      audioContextRef.current.currentTime + 0.15
     );
-    const outputData = noiseBuffer.getChannelData(0);
-    
-    // Generazione rumore bianco
-    for (let i = 0; i < noiseBuffer.length; i++) {
-      outputData[i] = Math.random() * 2 - 1;
-    }
-    
-    whiteNoise.buffer = noiseBuffer;
 
-    // Configurazione filtro
-    const bandpass = audioContextRef.current.createBiquadFilter();
-    bandpass.type = 'bandpass';
-    bandpass.frequency.value = 1000;
-    bandpass.Q.value = 1;
-
-    // Configurazione volume
+    // Controllo volume
     const gainNode = audioContextRef.current.createGain();
-    gainNode.gain.value = 0.01;
-    
-    // Configurazione inviluppo
     gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContextRef.current.currentTime + 0.3);
+    gainNode.gain.linearRampToValueAtTime(0.15, audioContextRef.current.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContextRef.current.currentTime + 0.15);
+
+    // Filtro per ammorbidire il suono
+    const filter = audioContextRef.current.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1500;
+    filter.Q.value = 0.7;
 
     // Collegamenti audio
-    whiteNoise.connect(bandpass);
-    bandpass.connect(gainNode);
+    oscillator.connect(filter);
+    filter.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
 
     // Avvio e arresto
-    whiteNoise.start();
-    whiteNoise.stop(audioContextRef.current.currentTime + 0.3);
+    oscillator.start(audioContextRef.current.currentTime);
+    oscillator.stop(audioContextRef.current.currentTime + 0.15);
   }, []);
 
   // Generazione numeri casuali
@@ -145,7 +135,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     if (!gameStarted || isCompleted) return;
 
     if (number === currentNumber) {
-      playNaturalSound();
+      playFeedbackSound();
 
       if (number === currentSize * currentSize) {
         const currentResult = { time: timer, size: currentSize };
@@ -179,7 +169,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNaturalSound]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playFeedbackSound]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
