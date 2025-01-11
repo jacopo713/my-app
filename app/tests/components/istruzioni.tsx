@@ -1,7 +1,5 @@
-// app/tests/components/istruzioni.tsx
-
-import { TestPhase } from '../data/istruzioni';
-import { testInstructions } from '../data/istruzioni';
+import { TestPhase } from '../TestInstructions';
+import { testInstructions } from '../TestInstructions';
 
 interface TestInstructionsProps {
   phase: TestPhase;

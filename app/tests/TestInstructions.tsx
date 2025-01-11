@@ -1,5 +1,3 @@
-// app/tests/data/istruzioni.ts
-
 export interface TestInstructions {
   title: string;
   description: string;
@@ -19,7 +17,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     tips: ["Assicurati di essere in un ambiente tranquillo", "Fai una pausa se necessario"],
     duration: "45-60 minuti totali"
   },
-
   raven: {
     title: "Test delle Matrici Progressive",
     description: "Valuta la tua capacità di ragionamento logico e la comprensione di pattern visivi.",
@@ -37,7 +34,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "15-20 minuti",
     difficulty: "medio"
   },
-
   eyehand: {
     title: "Test di Coordinazione Occhio-Mano",
     description: "Misura la tua precisione nel controllo del mouse e la coordinazione visivo-motoria.",
@@ -55,7 +51,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "5-7 minuti",
     difficulty: "facile"
   },
-
   stroop: {
     title: "Test di Stroop",
     description: "Valuta la tua capacità di gestire l'interferenza cognitiva e l'attenzione selettiva.",
@@ -73,7 +68,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "5 minuti",
     difficulty: "medio"
   },
-
   speedreading: {
     title: "Test di Lettura Veloce",
     description: "Misura la tua velocità di lettura e comprensione del testo.",
@@ -91,7 +85,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "10 minuti",
     difficulty: "medio"
   },
-
   memory: {
     title: "Test di Memoria a Breve Termine",
     description: "Valuta la tua capacità di memorizzare e ricordare informazioni.",
@@ -109,7 +102,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "7-10 minuti",
     difficulty: "difficile"
   },
-
   schulte: {
     title: "Tabella di Schulte",
     description: "Migliora la velocità di lettura e l'ampiezza del campo visivo.",
@@ -127,7 +119,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "3-5 minuti",
     difficulty: "medio"
   },
-
   rhythm: {
     title: "Test del Ritmo",
     description: "Valuta la tua capacità di percepire e riprodurre sequenze ritmiche.",
@@ -145,7 +136,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "5 minuti",
     difficulty: "medio"
   },
-
   results: {
     title: "Risultati dei Test",
     description: "Visualizzazione e interpretazione dei risultati ottenuti.",
@@ -162,4 +152,3 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "N/A"
   }
 };
-export default TestInstructions;
