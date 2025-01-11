@@ -5,15 +5,14 @@ import EyeHandTest from './EyeHand';
 import StroopTest from './Stroop';
 import SpeedReadingTrainer from './SpeedReading';
 import ShortTermMemoryTest from './ShortTermMemoryTest';
-import SchulteTable, { SchulteTableProps } from './SchulteTable';
-import RhythmTest, { RhythmTestProps } from './RhythmTest'; // Importa il nuovo componente
+import SchulteTable from './SchulteTable';
+import RhythmTest from './RhythmTest'; // Importa il nuovo componente
 
 // Export interfaces
 export type { RavenTestProps } from './Raven';
 export type { EyeHandTestProps } from './EyeHand';
 export type { SpeedReadingTrainerProps } from './SpeedReading';
-export type { SchulteTableProps };
-export type { RhythmTestProps }; // Esporta l'interfaccia del nuovo componente
+
 
 // Export components
 export {
