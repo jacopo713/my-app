@@ -1,12 +1,8 @@
-// app/tests/components/Raven/index.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Brain, Scale } from 'lucide-react';
 
-/** ------------------------
- * 1) CONFIG E TIPI GLOBALI
- * ------------------------**/
 interface ShapeProps {
   type: string; // 'circle' | 'square' | 'triangle' | 'diamond'
   rotation?: number;
@@ -20,22 +16,18 @@ interface Answer extends ShapeProps {
   isCorrect: boolean;
 }
 
-// Esporta RavenTestProps correttamente
 export interface RavenTestProps {
   onComplete: (results: { score: number; accuracy: number }) => void;
 }
 
-/** Semplifichiamo la “complessità” per avere incrementi più graduali,
-    evitando di rendere i pattern troppo difficili già al 6º livello. */
 interface Complexity {
-  shapes: number;     // quante forme diverse usare
-  rotations: number;  // quante rotazioni distinct
-  colors: number;     // quante varianti colore
-  opacities: number;  // quante varianti di opacità
-  scales: number;     // quante varianti di scala
+  shapes: number;
+  rotations: number;
+  colors: number;
+  opacities: number;
+  scales: number;
 }
 
-// Ad esempio, rendiamo i livelli 1..13 più lineari.
 const complexityMatrix: Record<number, Complexity> = {
   1: { shapes: 2, rotations: 1, colors: 1, opacities: 1, scales: 1 },
   2: { shapes: 2, rotations: 2, colors: 1, opacities: 1, scales: 1 },
@@ -52,20 +44,14 @@ const complexityMatrix: Record<number, Complexity> = {
   13: { shapes: 4, rotations: 10, colors: 5, opacities: 5, scales: 4 },
 };
 
-// Config “globale” per le forme
 const systemConfig = {
   shapes: ['circle', 'square', 'triangle', 'diamond'],
-  // Riduciamo un po’ la lista di rotazioni per abbassare la difficoltà
-  rotations: [0, 30, 45, 60, 90, 120, 180, 270], 
+  rotations: [0, 30, 45, 60, 90, 120, 180, 270],
   colors: ['#2563eb', '#dc2626', '#059669', '#6b21a8', '#0f766e'],
-  opacities: [1, 0.8, 0.6, 0.4], 
+  opacities: [1, 0.8, 0.6, 0.4],
   scales: [0.6, 0.8, 1, 1.2],
 };
 
-/** ------------------------
- * 2) FUNZIONI GLOBALI
- * ------------------------**/
-// a) Rotazione “visiva”
 function normalizeVisualRotation(shape: string, rotation: number): number {
   switch (shape) {
     case 'circle':
@@ -79,6 +65,7 @@ function normalizeVisualRotation(shape: string, rotation: number): number {
       return rotation;
   }
 }
+
 function areVisuallyIdentical(a: ShapeProps, b: ShapeProps): boolean {
   if (a.type !== b.type) return false;
   if (a.color !== b.color) return false;
@@ -91,7 +78,6 @@ function areVisuallyIdentical(a: ShapeProps, b: ShapeProps): boolean {
   return normA === normB;
 }
 
-// b) Creiamo un singolo Answer
 function createRandomAnswer(
   shapes: string[],
   rotations: number[],
@@ -110,7 +96,6 @@ function createRandomAnswer(
   };
 }
 
-/** Genera la matrice 3x3 (lasciando [2,2] vuota se vuoi) */
 function generatePattern(level: number): Array<Array<ShapeProps | null>> {
   const c = complexityMatrix[level];
   const newMatrix = Array(3)
@@ -119,8 +104,7 @@ function generatePattern(level: number): Array<Array<ShapeProps | null>> {
 
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
-      if (i === 2 && j === 2) continue; 
-      // Esempio di logica semplificata
+      if (i === 2 && j === 2) continue;
       newMatrix[i][j] = {
         type: systemConfig.shapes[(i + j) % c.shapes],
         rotation: systemConfig.rotations[((i + j) * 2) % c.rotations],
@@ -133,7 +117,6 @@ function generatePattern(level: number): Array<Array<ShapeProps | null>> {
   return newMatrix;
 }
 
-/** Ritorna la cella [2,2] come risposta corretta, se nulla */
 function getCorrectAnswer(matrix: Array<Array<ShapeProps | null>>, level: number): ShapeProps {
   const c = complexityMatrix[level];
   if (!matrix[2][2]) {
@@ -148,7 +131,6 @@ function getCorrectAnswer(matrix: Array<Array<ShapeProps | null>>, level: number
   return matrix[2][2] as ShapeProps;
 }
 
-/** Genera 1 corretta + 3 distrattori (4 totali) */
 function generateAnswers(correct: ShapeProps, level: number): Answer[] {
   const c = complexityMatrix[level];
   const allAnswers: Answer[] = [{ ...correct, isCorrect: true }];
@@ -164,7 +146,6 @@ function generateAnswers(correct: ShapeProps, level: number): Answer[] {
       false
     );
 
-    // Distorsione minima se < livello 10, per differenziarlo
     if (level < 10) {
       newAnswer.rotation = ((newAnswer.rotation ?? 0) + 30) % 360;
     }
@@ -183,9 +164,6 @@ function generateAnswers(correct: ShapeProps, level: number): Answer[] {
   return finalAnswers.sort(() => Math.random() - 0.5);
 }
 
-/** ------------------------
- * 3) SHAPE COMPONENT (UI)
- * ------------------------**/
 const ShapeComponent: React.FC<ShapeProps> = ({
   type,
   rotation = 0,
@@ -239,9 +217,6 @@ const ShapeComponent: React.FC<ShapeProps> = ({
   );
 };
 
-/** ------------------------
- * 4) COMPONENTE PRINCIPALE
- * ------------------------**/
 const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   const [level, setLevel] = useState(1);
   const [matrix, setMatrix] = useState<Array<Array<ShapeProps | null>>>([]);
@@ -250,8 +225,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
   const [score, setScore] = useState(0);
   const [isAnswerSelected, setIsAnswerSelected] = useState(false);
 
-  // Funzione “lineare” per calcolare percentile
-  // 13/13 => 100%, 6.5/13 => 50%, ecc.
   function computePercentile(finalScore: number) {
     return (finalScore / 13) * 100;
   }
@@ -283,11 +256,11 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         setLevel(prev => prev + 1);
       } else {
         const finalScore = score + (isCorrect ? 1 : 0);
-        // Calcoliamo la percentile “lineare”
         const percentile = computePercentile(finalScore);
+        const ravenScore = (finalScore / 13) * 1000; // Punteggio su 1000
         onComplete({
-          score: finalScore,
-          accuracy: percentile, // Puoi chiamarlo “accuracy” o “percentile”
+          score: ravenScore, // Punteggio su 1000
+          accuracy: percentile, // Percentile
         });
       }
     }, 800);
@@ -295,7 +268,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-xl shadow-lg">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-6">
         <div className="flex items-center gap-2 mb-4 md:mb-0">
           <Brain className="w-6 h-6 text-blue-600" />
@@ -312,7 +284,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      {/* GRIGLIA 3x3 */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         {matrix.map((row, i) =>
           row.map((cell, j) => (
@@ -330,7 +301,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         )}
       </div>
 
-      {/* 4 RISPOSTE */}
       <div className="mt-8">
         <h3 className="text-lg font-medium mb-4">Possibili soluzioni:</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -365,7 +335,6 @@ const RavenTest: React.FC<RavenTestProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      {/* Info per i livelli alti */}
       {level > 10 && (
         <div className="mt-4 p-3 bg-purple-50 rounded-lg">
           <p className="text-sm text-purple-800 font-medium">

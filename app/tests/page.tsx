@@ -221,7 +221,7 @@ export default function TestPage() {
                         <Brain className="w-6 h-6 text-blue-500" />
                         <h3 className="font-bold">Ragionamento Astratto</h3>
                       </div>
-                      <p>Punteggio: {results.raven.score}/13</p>
+                      <p>Punteggio: {Math.round((results.raven.score / 13) * 1000)}/1000</p>
                       {results.raven.percentile && (
                         <p>Percentile: {results.raven.percentile}°</p>
                       )}
@@ -234,7 +234,7 @@ export default function TestPage() {
                         <h3 className="font-bold">Coordinazione Visiva</h3>
                       </div>
                       <p>Punteggio: {Math.round(results.eyeHand.score)}</p>
-                      <p>Percentile: {results.eyeHand.accuracy}°</p>
+                      <p>Percentile: {Math.round(results.eyeHand.accuracy)}°</p>
                     </div>
                   )}
                   {results.stroop && (
