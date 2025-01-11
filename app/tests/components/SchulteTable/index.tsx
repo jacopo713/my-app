@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Clock } from "lucide-react";
 
 interface SchulteTableProps {
@@ -30,32 +30,46 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [levelResults, setLevelResults] = useState<LevelResult[]>([]);
 
-  // Configurazione della griglia
+  // Riferimento al contesto audio
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Configurazione del gioco
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  // Dimensioni uniformi per tutti i dispositivi
-  const sizes = [2, 4, 6];
+  const sizes = [2, 4, 6];  // Uniformato per tutti i dispositivi
   const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
+  // Inizializzazione del contesto audio
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
   // Generazione dei numeri casuali
   const generateNumbers = useCallback(() => {
-    const totalNumbers = isMobile && testLevel === 2 ? 4 * 6 : currentSize * currentSize;
+    const totalNumbers = currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [nums[i], nums[j]] = [nums[j], nums[i]];
     }
     return nums;
-  }, [currentSize, isMobile, testLevel]);
+  }, [currentSize]);
 
-  // Inizializzazione dei numeri quando il gioco inizia
+  // Effetto per la generazione dei numeri all'avvio del gioco
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
     }
   }, [gameStarted, generateNumbers]);
 
-  // Gestione del timer
+  // Gestione del timer di gioco
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameStarted && !isCompleted) {
@@ -66,6 +80,33 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
+  // Funzione per il feedback sonoro
+  const playSwishSound = useCallback(() => {
+    if (!audioContextRef.current) return;
+
+    const oscillator = audioContextRef.current.createOscillator();
+    const gainNode = audioContextRef.current.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(400, audioContextRef.current.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      200,
+      audioContextRef.current.currentTime + 0.1
+    );
+
+    gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContextRef.current.currentTime + 0.1
+    );
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContextRef.current.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContextRef.current.currentTime + 0.1);
+  }, []);
+
   // Formattazione del tempo
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -73,7 +114,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Avvio del livello successivo
+  // Gestione dell'avvio del livello
   const startNextLevel = useCallback(() => {
     setCurrentNumber(1);
     setTimer(0);
@@ -87,7 +128,9 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     if (!gameStarted || isCompleted) return;
 
     if (number === currentNumber) {
-      if (number === (isMobile && testLevel === 2 ? 24 : currentSize * currentSize)) {
+      playSwishSound();
+
+      if (number === currentSize * currentSize) {
         const currentResult = { time: timer, size: currentSize };
         setLevelResults(prev => [...prev, currentResult]);
         setGameStarted(false);
@@ -107,7 +150,6 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
             percentile: Math.round((normalizedScore / 1000) * 100)
           });
         } else {
-          // Transizione automatica al livello successivo dopo 2 secondi
           setTimeout(() => {
             setTestLevel(prev => prev + 1);
             setCurrentNumber(1);
@@ -120,7 +162,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, isMobile, onComplete]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playSwishSound]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
@@ -157,15 +199,15 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                 </span>
               </div>
               <div className="text-gray-600">
-                Livello {testLevel + 1}/3 ({isMobile && testLevel === 2 ? "4x6" : `${currentSize}x${currentSize}`})
+                Livello {testLevel + 1}/3 ({currentSize}x{currentSize})
               </div>
             </div>
 
-            <div className="w-11/12 mx-auto"> {/* Aumentata dimensione dal 70% al 90% */}
+            <div className="w-11/12 mx-auto">
               <div
                 className="grid w-full"
                 style={{
-                  gridTemplateColumns: `repeat(${isMobile && testLevel === 2 ? 4 : currentSize}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(${currentSize}, minmax(0, 1fr))`,
                   gap: "1px",
                 }}
               >
