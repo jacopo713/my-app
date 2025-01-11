@@ -21,12 +21,11 @@ const Statistics = memo(({ cycleCount, wpm }: { cycleCount: number; wpm: number 
 Statistics.displayName = 'Statistics';
 
 const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete }) => {
-  // Usa useMemo per memorizzare l'array WORDS
   const WORDS = useMemo(() => [
     "ETERNAMENTE", "TRAPPOLA", "SCRITTA", "MESCOLATE", 
     "CAMICETTA", "ACCAPPATOIO", "EDITTO", "PIACERE",
     "SOSTANZA", "BELLEZZA", "ARMONIA", "SERENITÀ"
-  ], []); // L'array di dipendenze è vuoto, quindi WORDS non cambierà mai
+  ], []);
 
   const [isStarted, setIsStarted] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(-1);
@@ -35,24 +34,32 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [cycleCount, setCycleCount] = useState(0);
-  const [wpm, setWpm] = useState(100); // Cambiato da 50 a 100
+  const [wpm, setWpm] = useState(100); // Modificato da 50 a 100 WPM iniziali
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [usedPositions, setUsedPositions] = useState<number[]>([]);
 
   const generateSequence = useCallback(() => {
     const shuffled = [...WORDS].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 9);
-  }, [WORDS]); // Aggiunto WORDS come dipendenza
+  }, [WORDS]);
 
   const generateOptions = useCallback((correct: string): string[] => {
     const otherWords = WORDS.filter(w => w !== correct);
     const shuffledOthers = otherWords.sort(() => Math.random() - 0.5).slice(0, 3);
     const allOptions = [...shuffledOthers, correct];
     return allOptions.sort(() => Math.random() - 0.5);
-  }, [WORDS]); // Aggiunto WORDS come dipendenza
+  }, [WORDS]);
+
+  const getRandomUnusedPosition = useCallback(() => {
+    const availablePositions = Array.from({length: 9}, (_, i) => i)
+      .filter(pos => !usedPositions.includes(pos));
+    const randomIndex = Math.floor(Math.random() * availablePositions.length);
+    return availablePositions[randomIndex];
+  }, [usedPositions]);
 
   const showNextWord = useCallback(() => {
-    if (currentPosition >= 8) {
+    if (usedPositions.length >= 9) {
       setCurrentPosition(-1);
       setShowingQuestion(true);
       const lastWord = currentSequence[8];
@@ -61,20 +68,10 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
       return;
     }
 
-    // Seleziona una posizione casuale tra quelle rimanenti
-    const availablePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(pos => !currentSequence[pos]);
-    if (availablePositions.length === 0) {
-      setCurrentPosition(-1);
-      setShowingQuestion(true);
-      const lastWord = currentSequence[8];
-      setCorrectAnswer(lastWord);
-      setOptions(generateOptions(lastWord));
-      return;
-    }
-
-    const randomPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)];
-    setCurrentPosition(randomPosition);
-  }, [currentPosition, currentSequence, generateOptions]);
+    const newPosition = getRandomUnusedPosition();
+    setCurrentPosition(newPosition);
+    setUsedPositions(prev => [...prev, newPosition]);
+  }, [usedPositions, currentSequence, generateOptions, getRandomUnusedPosition]);
 
   useEffect(() => {
     if (!isStarted || showingQuestion || currentSequence.length === 0) return;
@@ -110,6 +107,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
       setCycleCount(newCycleCount);
       setShowingQuestion(false);
       setCurrentPosition(-1);
+      setUsedPositions([]); // Reset delle posizioni usate
       setCurrentSequence(generateSequence());
     }
   }, [correctAnswer, cycleCount, generateSequence, onComplete, score, wpm]);
@@ -118,13 +116,14 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
     const initialSequence = generateSequence();
     setIsStarted(true);
     setCycleCount(0);
-    setWpm(100); // Cambiato da 50 a 100
+    setWpm(100); // Modificato da 50 a 100 WPM iniziali
     setScore(0);
     setCurrentPosition(-1);
     setCurrentSequence(initialSequence);
     setShowingQuestion(false);
     setFeedback('');
     setCorrectAnswer('');
+    setUsedPositions([]); // Reset delle posizioni usate
   }, [generateSequence]);
 
   return (
@@ -149,7 +148,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
                             className={`text-xl font-bold transition-all duration-200 
                               ${position === currentPosition ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                           >
-                            {position === currentPosition ? currentSequence[position] : ''}
+                            {position === currentPosition ? currentSequence[usedPositions.length - 1] : ''}
                           </span>
                         </div>
                       </div>
