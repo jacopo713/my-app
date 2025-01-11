@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
 import { 
@@ -34,8 +34,7 @@ interface TestResults {
   } | null;
   speedReading: {
     wpm: number;
-    accuracy: number;
-    score: number;
+    percentile: number;
   } | null;
   memory: {
     score: number;
@@ -113,7 +112,8 @@ export default function TestPage() {
     setPhase("speedreading");
   };
 
-  const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; accuracy: number; score: number }) => {
+  // Modifica per SpeedReading: ora riceve wpm e percentile
+  const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; percentile: number }) => {
     setResults(prev => ({
       ...prev,
       speedReading: speedReadingResults
@@ -253,8 +253,7 @@ export default function TestPage() {
                         <h3 className="font-bold">Lettura Veloce</h3>
                       </div>
                       <p>Parole al Minuto: {results.speedReading.wpm}</p>
-                      <p>Precisione: {results.speedReading.accuracy}%</p>
-                      <p>Punteggio: {results.speedReading.score}</p>
+                      <p>Percentile: {results.speedReading.percentile}°</p>
                     </div>
                   )}
                   {results.memory && (
@@ -380,8 +379,7 @@ export default function TestPage() {
                   case "speedreading":
                     setResults(prev => ({ ...prev, speedReading: { 
                       wpm: mockResult.wpm, 
-                      accuracy: mockResult.accuracy, 
-                      score: mockResult.score 
+                      percentile: mockResult.percentile
                     }}));
                     break;
                   case "memory":
@@ -421,3 +419,4 @@ export default function TestPage() {
     </ProtectedRoute>
   );
 }
+
