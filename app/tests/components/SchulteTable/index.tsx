@@ -139,7 +139,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         minHeight: "calc(100vh - 64px)", // Sottrae l'altezza della navbar (64px)
       }}
     >
-      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4">
         {showInstructions ? (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-800">
@@ -179,7 +179,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
 
             {/* Griglia con adattamento dinamico su mobile */}
             <div
-              className="grid gap-1.5 w-full"
+              className="grid gap-1 w-full"
               style={{
                 gridTemplateColumns: `repeat(${isMobile && testLevel === 2 ? 4 : currentSize}, minmax(0, 1fr))`,
               }}
@@ -189,8 +189,8 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                   key={index}
                   onClick={() => handleNumberClick(number)}
                   className={`
-                    w-full aspect-square flex items-center justify-center
-                    text-base sm:text-lg font-bold rounded-lg
+                    w-12 h-12 flex items-center justify-center
+                    text-sm sm:text-base font-bold rounded-lg
                     transition-colors duration-200
                     ${
                       number < currentNumber
