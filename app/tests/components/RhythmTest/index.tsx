@@ -101,11 +101,12 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const totalDuration = currentMelody.reduce((acc, { duration }) => acc + duration, 0);
   const isLastLevel = currentLevel === MELODIES.length - 1;
 
-  // Inizializzazione del contesto audio, usando un cast per ottenere webkitAudioContext
+  // Inizializzazione del contesto audio
   const initAudioContext = useCallback((): AudioResources => {
+    // Ripristiniamo il sistema audio come in origine: usiamo il cast su window per webkitAudioContext
     const AudioContextConstructor: typeof AudioContext =
       window.AudioContext ||
-      ((window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+      ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext);
     const context = new AudioContextConstructor();
     const masterGain = context.createGain();
     masterGain.connect(context.destination);
