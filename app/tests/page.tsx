@@ -4,10 +4,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
-import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer } from './components';
+import { RavenTest, EyeHandTest, StroopTest, SpeedReadingTrainer, ShortTermMemoryTest } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "results";
+type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "results";
 
 interface TestResults {
   raven: {
@@ -32,6 +32,11 @@ interface TestResults {
     accuracy: number;
     score: number;
   } | null;
+  memory: {
+    score: number;
+    percentile: number;
+    evaluation: string;
+  } | null;
 }
 
 export default function TestPage() {
@@ -40,7 +45,8 @@ export default function TestPage() {
     raven: null,
     eyeHand: null,
     stroop: null,
-    speedReading: null
+    speedReading: null,
+    memory: null
   });
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -85,6 +91,15 @@ export default function TestPage() {
     setResults(prev => ({
       ...prev,
       speedReading: speedReadingResults
+    }));
+    setProgress(85);
+    setPhase("memory");
+  };
+
+  const handleMemoryComplete = (memoryResults: { score: number; percentile: number; evaluation: string }) => {
+    setResults(prev => ({
+      ...prev,
+      memory: memoryResults
     }));
     setProgress(100);
     setPhase("results");
@@ -144,6 +159,9 @@ export default function TestPage() {
       case "speedreading":
         return <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />;
 
+      case "memory":
+        return <ShortTermMemoryTest onComplete={handleMemoryComplete} />;
+
       case "results":
         return (
           <div className="max-w-4xl mx-auto px-4">
@@ -194,6 +212,17 @@ export default function TestPage() {
                     <p>Velocità: {results.speedReading.wpm} WPM</p>
                     <p>Precisione: {results.speedReading.accuracy}%</p>
                     <p>Punteggio: {results.speedReading.score}</p>
+                  </div>
+                )}
+                {results.memory && (
+                  <div className="p-4 bg-indigo-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className="w-6 h-6 text-indigo-500" />
+                      <h3 className="font-bold">Memoria a Breve Termine</h3>
+                    </div>
+                    <p>Punteggio: {results.memory.score}</p>
+                    <p>Percentile: {results.memory.percentile}°</p>
+                    <p>Valutazione: {results.memory.evaluation}</p>
                   </div>
                 )}
               </div>
