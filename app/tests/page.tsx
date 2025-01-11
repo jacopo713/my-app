@@ -29,10 +29,8 @@ interface TestResults {
   } | null;
   stroop: {
     score: number;
-    accuracy: number;
-    averageReactionTime: number;
+    percentile: number;
     interferenceScore: number;
-    responsesPerMinute: string;
   } | null;
   speedReading: {
     wpm: number;
@@ -106,7 +104,7 @@ export default function TestPage() {
     setPhase("stroop");
   };
 
-  const handleStroopComplete = (stroopResults: { score: number; accuracy: number; averageReactionTime: number; interferenceScore: number; responsesPerMinute: string }) => {
+  const handleStroopComplete = (stroopResults: { score: number; percentile: number; interferenceScore: number }) => {
     setResults(prev => ({
       ...prev,
       stroop: stroopResults
@@ -244,10 +242,8 @@ export default function TestPage() {
                         <h3 className="font-bold">Interferenza Cognitiva</h3>
                       </div>
                       <p>Punteggio: {results.stroop.score}</p>
-                      <p>Precisione: {results.stroop.accuracy}%</p>
-                      <p>Tempo di Reazione Medio: {results.stroop.averageReactionTime}ms</p>
+                      <p>Percentile: {results.stroop.percentile}°</p>
                       <p>Punteggio di Interferenza: {results.stroop.interferenceScore}</p>
-                      <p>Risposte al Minuto: {results.stroop.responsesPerMinute}</p>
                     </div>
                   )}
                   {results.speedReading && (
@@ -377,10 +373,8 @@ export default function TestPage() {
                   case "stroop":
                     setResults(prev => ({ ...prev, stroop: { 
                       score: mockResult.score,
-                      accuracy: mockResult.accuracy,
-                      averageReactionTime: mockResult.averageReactionTime,
-                      interferenceScore: mockResult.interferenceScore,
-                      responsesPerMinute: mockResult.responsesPerMinute
+                      percentile: mockResult.percentile,
+                      interferenceScore: mockResult.interferenceScore
                     }}));
                     break;
                   case "speedreading":
