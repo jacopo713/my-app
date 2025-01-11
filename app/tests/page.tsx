@@ -87,7 +87,7 @@ export default function TestPage() {
       ...prev,
       raven: {
         ...ravenResults,
-        percentile: Math.round((ravenResults.score / 1000) * 100)
+        percentile: Math.round((ravenResults.score / 13) * 100) // Calcolo del percentile
       }
     }));
     setProgress(25);
@@ -97,7 +97,10 @@ export default function TestPage() {
   const handleEyeHandComplete = (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
     setResults(prev => ({
       ...prev,
-      eyeHand: eyeHandResults
+      eyeHand: {
+        ...eyeHandResults,
+        accuracy: Math.round(eyeHandResults.accuracy) // Arrotondamento della precisione
+      }
     }));
     setProgress(50);
     setPhase("stroop");
@@ -218,8 +221,7 @@ export default function TestPage() {
                         <Brain className="w-6 h-6 text-blue-500" />
                         <h3 className="font-bold">Ragionamento Astratto</h3>
                       </div>
-                      <p>Punteggio: {results.raven.score}</p>
-                      <p>Precisione: {results.raven.accuracy}%</p>
+                      <p>Punteggio: {results.raven.score}/13</p>
                       {results.raven.percentile && (
                         <p>Percentile: {results.raven.percentile}°</p>
                       )}
@@ -231,9 +233,8 @@ export default function TestPage() {
                         <Eye className="w-6 h-6 text-green-500" />
                         <h3 className="font-bold">Coordinazione Visiva</h3>
                       </div>
-                      <p>Punteggio: {results.eyeHand.score}</p>
-                      <p>Precisione: {results.eyeHand.accuracy}%</p>
-                      <p>Deviazione Media: {results.eyeHand.averageDeviation}</p>
+                      <p>Punteggio: {Math.round(results.eyeHand.score)}</p>
+                      <p>Percentile: {results.eyeHand.accuracy}°</p>
                     </div>
                   )}
                   {results.stroop && (
