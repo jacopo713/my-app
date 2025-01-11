@@ -1,60 +1,90 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Brain } from "lucide-react";
 
-// ... (interfaces e types invariati)
+const colorValues = {
+  rosso: "#EF4444",
+  blu: "#3B82F6",
+  verde: "#10B981",
+  arancione: "#F59E0B",
+};
+
+type ColorKey = keyof typeof colorValues;
+
+interface Stimulus {
+  word: ColorKey;
+  color: ColorKey;
+  type: "congruent" | "incongruent";
+  timestamp: number;
+}
+
+interface Response {
+  stimulus: Stimulus;
+  selectedColor: ColorKey;
+  correct: boolean;
+  reactionTime: number;
+}
+
+interface StroopResults {
+  score: number;
+  accuracy: number;
+  averageReactionTime: number;
+  responsesPerMinute: string;
+  interferenceScore: number;
+}
 
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
-  const [isRunning, setIsRunning] = useState(true);
   const [stats, setStats] = useState({
     correct: 0,
     total: 0,
   });
 
-  const responseStartTimeRef = useRef<number | null>(null);
-  const timerRef = useRef<NodeJS.Timeout>();
   const colors = useMemo(() => ["rosso", "blu", "verde", "arancione"] as const, []);
+  const startTimeRef = useState(() => Date.now())[0];
 
-  // Timer completamente isolato
+  const calculateResults = useCallback(() => {
+    if (responses.length === 0) return null;
+
+    const avgTime = responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length;
+    const incongruentResponses = responses.filter(r => r.stimulus.type === "incongruent");
+    const congruentResponses = responses.filter(r => r.stimulus.type === "congruent");
+
+    const interferenceScore = 
+      (incongruentResponses.length > 0 && congruentResponses.length > 0)
+        ? (incongruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / incongruentResponses.length) -
+          (congruentResponses.reduce((acc, r) => acc + r.reactionTime, 0) / congruentResponses.length)
+        : 0;
+
+    return {
+      score: Math.round((stats.correct / 112) * 1000),
+      accuracy: Math.round((stats.correct / stats.total) * 100),
+      averageReactionTime: Math.round(avgTime),
+      responsesPerMinute: ((stats.total / 60) * 60).toFixed(1),
+      interferenceScore: Math.round(interferenceScore)
+    };
+  }, [responses, stats.correct, stats.total]);
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsRunning(false);
-          
-          // Calcolo risultati solo alla fine
-          if (onComplete) {
-            const results = {
-              score: Math.round((stats.correct / 112) * 1000),
-              accuracy: Math.round((stats.correct / stats.total) * 100),
-              averageReactionTime: Math.round(
-                responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length
-              ),
-              responsesPerMinute: ((stats.total / 60) * 60).toFixed(1),
-              interferenceScore: Math.round(
-                responses.filter(r => r.stimulus.type === "incongruent")
-                  .reduce((acc, r) => acc + r.reactionTime, 0) / 
-                responses.filter(r => r.stimulus.type === "incongruent").length -
-                responses.filter(r => r.stimulus.type === "congruent")
-                  .reduce((acc, r) => acc + r.reactionTime, 0) / 
-                responses.filter(r => r.stimulus.type === "congruent").length
-              ),
-            };
-            onComplete(results);
-          }
-          return 0;
+      const elapsed = Math.floor((Date.now() - startTimeRef) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      
+      setTimer(remaining);
+      
+      if (remaining === 0) {
+        clearInterval(interval);
+        const results = calculateResults();
+        if (results && onComplete) {
+          onComplete(results);
         }
-        return prev - 1;
-      });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []); // Nessuna dipendenza per il timer
+  }, [startTimeRef, onComplete, calculateResults]);
 
-  // Generazione stimolo semplificata
   const generateStimulus = useCallback(() => {
     const wordIndex = Math.floor(Math.random() * colors.length);
     const word = colors[wordIndex];
@@ -71,35 +101,30 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     };
   }, [colors]);
 
-  // Gestione stimolo iniziale
   useEffect(() => {
-    if (!currentStimulus) {
+    if (!currentStimulus && timer > 0) {
       setCurrentStimulus(generateStimulus());
-      responseStartTimeRef.current = Date.now();
     }
-  }, [currentStimulus, generateStimulus]);
+  }, [currentStimulus, timer, generateStimulus]);
 
-  // Gestione risposta semplificata
   const handleResponse = useCallback((selectedColor: ColorKey) => {
-    if (!currentStimulus || !responseStartTimeRef.current) return;
+    if (!currentStimulus || timer <= 0) return;
 
     const correct = selectedColor === currentStimulus.color;
-    
-    setResponses(prev => [...prev, {
+    const response: Response = {
       stimulus: currentStimulus,
       selectedColor,
       correct,
-      reactionTime: Date.now() - responseStartTimeRef.current,
-    }]);
+      reactionTime: Date.now() - currentStimulus.timestamp,
+    };
 
+    setResponses(prev => [...prev, response]);
     setStats(prev => ({
       correct: prev.correct + (correct ? 1 : 0),
       total: prev.total + 1
     }));
-
     setCurrentStimulus(generateStimulus());
-    responseStartTimeRef.current = Date.now();
-  }, [currentStimulus, generateStimulus]);
+  }, [currentStimulus, timer, generateStimulus]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -107,7 +132,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Rendering semplificato
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
       <div className="flex justify-between items-center mb-6">
