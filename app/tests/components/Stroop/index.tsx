@@ -32,7 +32,6 @@ interface StroopResults {
   interferenceScore: number;
 }
 
-// Componente Timer ottimizzato
 const Timer = memo(({ value }: { value: number }) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -61,32 +60,28 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
   const colors: ColorKey[] = useMemo(() => ["rosso", "blu", "verde", "arancione"], []);
 
-  // Genera un singolo stimolo
-  const generateStimulus = useCallback(
-    (type: "congruent" | "incongruent"): Stimulus => {
-      const wordIndex = Math.floor(Math.random() * colors.length);
-      const word = colors[wordIndex];
-      let colorIndex;
+  const generateStimulus = useCallback((): Stimulus => {
+    const wordIndex = Math.floor(Math.random() * colors.length);
+    const word = colors[wordIndex];
+    let colorIndex;
+    const type = Math.random() < 0.5 ? "congruent" : "incongruent";
 
-      if (type === "congruent") {
-        colorIndex = wordIndex;
-      } else {
-        do {
-          colorIndex = Math.floor(Math.random() * colors.length);
-        } while (colorIndex === wordIndex);
-      }
+    if (type === "congruent") {
+      colorIndex = wordIndex;
+    } else {
+      do {
+        colorIndex = Math.floor(Math.random() * colors.length);
+      } while (colorIndex === wordIndex);
+    }
 
-      return {
-        word,
-        color: colors[colorIndex],
-        type,
-        timestamp: Date.now(),
-      };
-    },
-    [colors]
-  );
+    return {
+      word,
+      color: colors[colorIndex],
+      type,
+      timestamp: Date.now(),
+    };
+  }, [colors]);
 
-  // Calcola i risultati
   const calculateResults = useCallback(() => {
     const correctResponses = responses.filter((r) => r.correct).length;
     const totalResponses = responses.length;
@@ -108,50 +103,48 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         : 0;
 
     return {
-      score: Math.round((correctResponses / 112) * 1000), // Punteggio basato su 112 risposte corrette (massimo 1000)
-      accuracy: Math.round(accuracy), // Precisione in percentuale
-      averageReactionTime: avgTime, // Tempo medio come numero
-      responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
-      interferenceScore: interferenceScore, // Punteggio di interferenza come numero
+      score: Math.round((correctResponses / 112) * 1000),
+      accuracy: Math.round(accuracy),
+      averageReactionTime: Math.round(avgTime),
+      responsesPerMinute: responsesPerMinute.toFixed(1),
+      interferenceScore: Math.round(interferenceScore),
     };
   }, [responses, timer]);
 
-  // Gestione timer
   useEffect(() => {
     if (!isRunning) return;
 
-    const startTime = Date.now();
-    const originalTimer = timer;
-
-    timerRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const newValue = originalTimer - elapsed;
-
-      if (newValue <= 0) {
-        clearInterval(timerRef.current);
-        setIsRunning(false);
-        setTimer(0);
-        if (onComplete) {
-          onComplete(calculateResults());
+    const tick = () => {
+      setTimer((prevTimer) => {
+        if (prevTimer <= 1) {
+          clearInterval(timerRef.current);
+          setIsRunning(false);
+          if (onComplete) {
+            onComplete(calculateResults());
+          }
+          return 0;
         }
-      } else {
-        setTimer(newValue);
+        return prevTimer - 1;
+      });
+    };
+
+    timerRef.current = setInterval(tick, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
-    }, 1000);
+    };
+  }, [isRunning, calculateResults, onComplete]);
 
-    return () => clearInterval(timerRef.current);
-  }, [isRunning, timer, onComplete, calculateResults]);
-
-  // Gestione dello stimolo iniziale
   useEffect(() => {
     if (isRunning && !currentStimulus) {
-      const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
+      const newStimulus = generateStimulus();
       setCurrentStimulus(newStimulus);
       responseStartTimeRef.current = Date.now();
     }
   }, [isRunning, currentStimulus, generateStimulus]);
 
-  // Gestione della risposta
   const handleResponse = useCallback(
     (selectedColor: ColorKey) => {
       if (!currentStimulus || !isRunning || !responseStartTimeRef.current) return;
@@ -164,13 +157,10 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       };
 
       setResponses((prev) => [...prev, response]);
-
-      // Genera un nuovo stimolo in modo non bloccante
-      setTimeout(() => {
-        const newStimulus = generateStimulus(Math.random() < 0.5 ? "congruent" : "incongruent");
-        setCurrentStimulus(newStimulus);
-        responseStartTimeRef.current = Date.now();
-      }, 0);
+      
+      const newStimulus = generateStimulus();
+      setCurrentStimulus(newStimulus);
+      responseStartTimeRef.current = Date.now();
     },
     [currentStimulus, isRunning, generateStimulus]
   );
