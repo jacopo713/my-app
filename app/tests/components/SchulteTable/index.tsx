@@ -20,7 +20,7 @@ interface LevelResult {
 }
 
 export default function SchulteTable({ onComplete }: SchulteTableProps) {
-  // Stati del gioco
+  // Stati principali del gioco
   const [numbers, setNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
@@ -41,9 +41,8 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   // Inizializzazione audio con type safety
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      type WebAudioContext = typeof window extends { AudioContext: infer T } ? T : never;
-      const AudioContextConstructor: { new(): AudioContext } = 
-        (window.AudioContext || window.webkitAudioContext) as { new(): AudioContext };
+      const AudioContextConstructor = (window.AudioContext || 
+        window.webkitAudioContext) as typeof AudioContext;
       audioContextRef.current = new AudioContextConstructor();
     }
     return () => {
@@ -51,7 +50,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     };
   }, []);
 
-  // Generazione numeri
+  // Generazione numeri casuali
   const generateNumbers = useCallback(() => {
     const totalNumbers = currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
@@ -123,7 +122,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Gestione click
+  // Gestione click sui numeri
   const handleNumberClick = useCallback((number: number) => {
     if (!gameStarted || isCompleted) return;
 
