@@ -83,7 +83,7 @@ export default function TestPage() {
       ...prev,
       raven: {
         ...ravenResults,
-        percentile: Math.round(ravenResults.accuracy) // Arrotonda il percentile
+        percentile: Math.round(ravenResults.accuracy)
       }
     }));
     setProgress(25);
@@ -95,7 +95,7 @@ export default function TestPage() {
       ...prev,
       eyeHand: {
         ...eyeHandResults,
-        accuracy: Math.round(eyeHandResults.accuracy) // Arrotonda la precisione
+        accuracy: Math.round(eyeHandResults.accuracy)
       }
     }));
     setProgress(50);
@@ -111,7 +111,7 @@ export default function TestPage() {
     setPhase("speedreading");
   };
 
-  // Modifica per SpeedReading: ora riceve wpm e percentile
+  // Per SpeedReading: ora riceve wpm e percentile
   const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; percentile: number }) => {
     setResults(prev => ({
       ...prev,
@@ -130,6 +130,7 @@ export default function TestPage() {
     setPhase("schulte");
   };
 
+  // handleSchulteComplete: il campo 'accuracy' non è presente
   const handleSchulteComplete = (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
     setResults(prev => ({
       ...prev,
@@ -139,6 +140,7 @@ export default function TestPage() {
     setPhase("rhythm");
   };
 
+  // Per il test del Ritmo vogliamo mantenere precision e level
   const handleRhythmComplete = (rhythmResults: { precision: number; level: number }) => {
     setResults(prev => ({
       ...prev,
@@ -278,6 +280,7 @@ export default function TestPage() {
                         <ActivitySquare className="w-6 h-6 text-purple-500" />
                         <h3 className="font-bold">Test del Ritmo</h3>
                       </div>
+                      <p>Precisione: {results.rhythm.precision}%</p>
                       <p>Livello Raggiunto: {results.rhythm.level}</p>
                     </div>
                   )}
@@ -297,7 +300,10 @@ export default function TestPage() {
     return (
       <div className="max-w-4xl mx-auto px-4">
         {!testStarted && phase !== "intro" && phase !== "results" && (
-          <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          <TestInstructions 
+            phase={phase}
+            onStart={() => setTestStarted(true)}
+          />
         )}
         {(testStarted || phase === "intro" || phase === "results") && renderTest()}
       </div>
@@ -338,7 +344,8 @@ export default function TestPage() {
                   evaluation: "Eccellente",
                   level: 3,
                   gridSizes: [3, 4, 5],
-                  completionTimes: [10, 15, 20]
+                  completionTimes: [10, 15, 20],
+                  precision: 95
                 };
 
                 switch(phase) {
@@ -377,10 +384,9 @@ export default function TestPage() {
                     }}));
                     break;
                   case "schulte":
-                    // Non includo "accuracy" per SchulteTable
                     setResults(prev => ({ ...prev, schulte: { 
                       score: mockResult.score,
-                      averageTime: mockResult.averageDeviation, 
+                      averageTime: mockResult.averageDeviation,
                       gridSizes: mockResult.gridSizes,
                       completionTimes: mockResult.completionTimes,
                       percentile: mockResult.percentile
@@ -388,7 +394,7 @@ export default function TestPage() {
                     break;
                   case "rhythm":
                     setResults(prev => ({ ...prev, rhythm: { 
-                      precision: mockResult.precision, // se lo vuoi mantenere per RhythmTest
+                      precision: mockResult.precision,
                       level: mockResult.level 
                     }}));
                     break;
