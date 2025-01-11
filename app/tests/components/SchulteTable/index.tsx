@@ -32,7 +32,8 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
 
   // Configurazione della griglia
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const sizes = isMobile ? [2, 4, 6] : [2, 4, 6];
+  // Dimensioni uniformi per tutti i dispositivi
+  const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
@@ -160,7 +161,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
               </div>
             </div>
 
-            <div className="w-9/12 mx-auto">
+            <div className="w-11/12 mx-auto"> {/* Aumentata dimensione dal 70% al 90% */}
               <div
                 className="grid w-full"
                 style={{
@@ -174,7 +175,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                     onClick={() => handleNumberClick(number)}
                     className={`
                       aspect-square flex items-center justify-center
-                      text-xs sm:text-sm font-bold rounded-lg
+                      text-sm sm:text-base lg:text-lg font-bold rounded-lg
                       transition-colors duration-200
                       ${
                         number < currentNumber
