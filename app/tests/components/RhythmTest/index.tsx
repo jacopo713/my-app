@@ -220,8 +220,6 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [cleanupAudio, isLastLevel]);
 
-  // Rimozione della funzione resetTest in quanto non necessaria per un test valutativo
-
   // Cleanup al dismount
   useEffect(() => {
     return () => {
@@ -312,13 +310,13 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       </div>
 
       <div className="mt-4 text-center text-sm text-gray-600">
-        {phase === 'listen' && "Ascolta attentamente la melodia"}
-        {phase === 'replay' && !isPlaying && "Riproduci la melodia quando sei pronto"}
-        {phase === 'replay' && isPlaying && "Ferma quando pensi che la melodia dovrebbe finire"}
+        {phase === 'listen' && &quot;Ascolta attentamente la melodia&quot;}
+        {phase === 'replay' && !isPlaying && &quot;Riproduci la melodia quando sei pronto&quot;}
+        {phase === 'replay' && isPlaying && &quot;Ferma quando pensi che la melodia dovrebbe finire&quot;}
         {phase === 'results' && (
           isLastLevel 
-            ? "Test completato! Hai superato tutti i livelli!" 
-            : "Livello completato! Prosegui al successivo"
+            ? &quot;Test completato! Hai superato tutti i livelli!&quot; 
+            : &quot;Livello completato! Prosegui al successivo&quot;
         )}
       </div>
 
@@ -326,8 +324,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         <h3 className="font-semibold mb-2">Istruzioni:</h3>
         <ul className="list-disc pl-5 space-y-1">
           <li>Ascolta attentamente la melodia di esempio</li>
-          <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
-          <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
+          <li>Quando sei pronto, premi &quot;Riproduci&quot; per iniziare la tua riproduzione</li>
+          <li>Premi &quot;Stop&quot; quando pensi che la melodia dovrebbe terminare</li>
           <li>La tua precisione sarà calcolata in base alla differenza temporale</li>
           <li>Completa tutti i livelli per migliorare il tuo punteggio finale</li>
         </ul>
