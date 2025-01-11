@@ -13,7 +13,7 @@ import {
   RhythmTest 
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { type TestPhase } from './TestInstructions'; // Modifica qui
+import { type TestPhase } from './TestInstructions';
 import TestInstructions from './components/istruzioni';
 
 interface TestResults {
@@ -212,7 +212,6 @@ export default function TestPage() {
                   Risultati del Test
                 </h2>
                 <div className="space-y-6">
-                  {/* Visualizzazione dei risultati */}
                   {results.raven && (
                     <div className="p-4 bg-blue-50 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
@@ -226,7 +225,74 @@ export default function TestPage() {
                       )}
                     </div>
                   )}
-                  {/* Aggiungi sezioni per gli altri risultati... */}
+                  {results.eyeHand && (
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Eye className="w-6 h-6 text-green-500" />
+                        <h3 className="font-bold">Coordinazione Visiva</h3>
+                      </div>
+                      <p>Punteggio: {results.eyeHand.score}</p>
+                      <p>Precisione: {results.eyeHand.accuracy}%</p>
+                      <p>Deviazione Media: {results.eyeHand.averageDeviation}</p>
+                    </div>
+                  )}
+                  {results.stroop && (
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ActivitySquare className="w-6 h-6 text-purple-500" />
+                        <h3 className="font-bold">Interferenza Cognitiva</h3>
+                      </div>
+                      <p>Punteggio: {results.stroop.score}</p>
+                      <p>Precisione: {results.stroop.accuracy}%</p>
+                      <p>Tempo di Reazione Medio: {results.stroop.averageReactionTime}ms</p>
+                      <p>Punteggio di Interferenza: {results.stroop.interferenceScore}</p>
+                      <p>Risposte al Minuto: {results.stroop.responsesPerMinute}</p>
+                    </div>
+                  )}
+                  {results.speedReading && (
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-6 h-6 text-orange-500" />
+                        <h3 className="font-bold">Lettura Veloce</h3>
+                      </div>
+                      <p>Parole al Minuto: {results.speedReading.wpm}</p>
+                      <p>Precisione: {results.speedReading.accuracy}%</p>
+                      <p>Punteggio: {results.speedReading.score}</p>
+                    </div>
+                  )}
+                  {results.memory && (
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="w-6 h-6 text-blue-500" />
+                        <h3 className="font-bold">Memoria a Breve Termine</h3>
+                      </div>
+                      <p>Punteggio: {results.memory.score}</p>
+                      <p>Percentile: {results.memory.percentile}°</p>
+                      <p>Valutazione: {results.memory.evaluation}</p>
+                    </div>
+                  )}
+                  {results.schulte && (
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Eye className="w-6 h-6 text-green-500" />
+                        <h3 className="font-bold">Tabella di Schulte</h3>
+                      </div>
+                      <p>Punteggio: {results.schulte.score}</p>
+                      <p>Precisione: {results.schulte.accuracy}%</p>
+                      <p>Tempo Medio: {results.schulte.averageTime}s</p>
+                      <p>Percentile: {results.schulte.percentile}°</p>
+                    </div>
+                  )}
+                  {results.rhythm && (
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ActivitySquare className="w-6 h-6 text-purple-500" />
+                        <h3 className="font-bold">Test del Ritmo</h3>
+                      </div>
+                      <p>Precisione: {results.rhythm.precision}%</p>
+                      <p>Livello Raggiunto: {results.rhythm.level}</p>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => router.push('/dashboard')}
