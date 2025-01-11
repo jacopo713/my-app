@@ -81,7 +81,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   
-  // Sostituiamo useState con useRef per responseStartTime
   const responseStartTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout>();
 
@@ -142,7 +141,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning]);
+  }, [isRunning, timer, onComplete]);
 
   // Calcola i risultati
   const calculateResults = useCallback(() => {
@@ -169,9 +168,9 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
       totalResponses: responses.length,
       correctResponses: correct,
       interferenceScore,
-      responsesPerMinute: responses.length.toFixed(1),
+      responsesPerMinute: (responses.length / (60 - timer) * 60).toFixed(1),
     };
-  }, [responses]);
+  }, [responses, timer]);
 
   // Gestione dello stimolo iniziale
   useEffect(() => {
@@ -194,15 +193,12 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         reactionTime: Date.now() - responseStartTimeRef.current,
       };
 
-      // Generiamo il nuovo stimolo
       const newStimulus = generateStimulus(
         Math.random() < 0.5 ? "congruent" : "incongruent"
       );
 
-      // Aggiorniamo tutti gli stati in una singola operazione batch
       setResponses(prev => {
         const newResponses = [...prev, response];
-        // Aggiorniamo lo stimolo e il tempo di risposta
         setCurrentStimulus(newStimulus);
         responseStartTimeRef.current = Date.now();
         return newResponses;
