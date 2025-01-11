@@ -47,13 +47,15 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   // Parametri base
   const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
-  const maxTimePerLevel = 300; // Tempo massimo per livello in secondi
+  // maxTimePerLevel non viene più usato, perché ora consideriamo il tempo totale per tutto il test.
+  // Impostiamo il tempo ideale per l'intero test
+  const idealTotalTime = 150; // secondi
 
   // Parametri Neurofeedback Ottimizzati
   const neurofeedbackParams: NeurofeedbackParams = {
     duration: 0.08,    // 80ms
     interval: 0.5,     // 500ms tra feedback
-    maxGain: 0.04,     // gain minimo efficace
+    maxGain: 0.04,     // Volume minimo efficace
     startFreq: 440,    // Frequenza di partenza (A4)
     endFreq: 420,      // Frequenza di arrivo
     rampType: 'linear',
@@ -162,27 +164,24 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Funzione per calcolare i risultati finali
-  // Utilizziamo la formula: normalizedScore = (1 - averageTime / maxTimePerLevel) * 1000
-  // Se l'averageTime è 150, il punteggio sarà 500, che corrisponde al 50° percentile.
+  // Gestione del completamento di un livello
   const handleLevelComplete = useCallback(() => {
     console.log("Livello completato:", currentSize, "x", currentSize);
     const currentResult = { time: timer, size: currentSize };
     setLevelResults(prev => [...prev, currentResult]);
 
     if (testLevel === sizes.length - 1) {
-      // Fine del test
+      // Fine del test: calcoliamo il tempo totale impiegato in tutti i livelli
       const updatedResults = [...levelResults, currentResult];
-      const averageTime =
-        updatedResults.reduce((acc, curr) => acc + curr.time, 0) / updatedResults.length;
-      const normalizedScore = Math.round((1 - averageTime / maxTimePerLevel) * 1000);
-      // Calcola il percentile in modo lineare (score massimo 1000 corrisponde al 100° percentile)
+      const totalTime = updatedResults.reduce((acc, curr) => acc + curr.time, 0);
+      // Calcola il punteggio normalizzato; se il tempo totale ideale è 150 secondi, allora:
+      const normalizedScore = Math.round(Math.max(0, (1 - totalTime / idealTotalTime)) * 1000);
       const percentile = Math.round((normalizedScore / 1000) * 100);
 
       onComplete({
         score: normalizedScore,
         accuracy: 100,
-        averageTime,
+        averageTime: totalTime,
         gridSizes: updatedResults.map(r => r.size),
         completionTimes: updatedResults.map(r => r.time),
         percentile
@@ -197,7 +196,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setTimer(0);
       }, 2000);
     }
-  }, [timer, currentSize, testLevel, levelResults, sizes.length, maxTimePerLevel, onComplete]);
+  }, [timer, currentSize, testLevel, levelResults, sizes.length, idealTotalTime, onComplete]);
 
   // Gestione del clic sui numeri
   const handleNumberClick = useCallback((number: number) => {
@@ -207,7 +206,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
       playNeurofeedback();
 
       if (number === currentSize * currentSize) {
-        // Se si clicca l'ultimo numero, completa il livello
+        // L'ultimo numero: completa il livello
         setGameStarted(false);
         setIsCompleted(true);
         handleLevelComplete();
@@ -215,7 +214,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNeurofeedback, handleLevelComplete]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, handleLevelComplete, playNeurofeedback]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
