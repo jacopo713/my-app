@@ -31,7 +31,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
 
   // Dimensioni delle griglie per PC e telefono
   const sizesPC = [2, 4, 6]; // PC: 2x2, 4x4, 6x6
-  const sizesMobile = [2, 4, 9]; // Telefono: 2x2, 4x4, 4x9
+  const sizesMobile = [2, 4, 6]; // Telefono: 2x2, 4x4, 4x9
   const isMobile = window.innerWidth <= 768; // Rileva se è un dispositivo mobile
 
   // Usa le dimensioni corrette in base al dispositivo
@@ -40,7 +40,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   const maxTimePerLevel = 300;
 
   const generateNumbers = useCallback((): number[] => {
-    const totalNumbers = isMobile && testLevel === 2 ? 4 * 9 : currentSize * currentSize;
+    const totalNumbers = isMobile && testLevel === 2 ? 4 * 6 : currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
