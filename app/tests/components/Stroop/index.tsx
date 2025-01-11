@@ -27,7 +27,7 @@ interface Response {
 interface StroopResults {
   score: number;
   accuracy: number; // Cambiato da string a number
-  averageReactionTime: string;
+  averageReactionTime: number; // Cambiato da string a number
   responsesPerMinute: string;
   interferenceScore: string;
 }
@@ -116,7 +116,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
         clearInterval(timerRef.current);
       }
     };
-  }, [isRunning, timer, onComplete]);
+  }, [isRunning, timer, onComplete, calculateResults]); // Aggiunto calculateResults alle dipendenze
 
   // Calcola i risultati
   const calculateResults = useCallback(() => {
@@ -141,7 +141,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     return {
       score: Math.round((correctResponses / 112) * 100), // Punteggio basato su 112 risposte corrette
       accuracy: (correctResponses / totalResponses) * 100, // Precisione come numero
-      averageReactionTime: avgTime.toFixed(1) + "ms", // Tempo medio formattato
+      averageReactionTime: avgTime, // Tempo medio come numero
       responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
       interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
     };
