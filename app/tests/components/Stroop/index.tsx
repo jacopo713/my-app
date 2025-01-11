@@ -1,19 +1,24 @@
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Brain } from "lucide-react";
 
+/**
+ * Definizione delle costanti e dei tipi
+ */
 const colorValues = {
   rosso: "#EF4444",
   blu: "#3B82F6",
   verde: "#10B981",
   arancione: "#F59E0B",
-};
+} as const;
 
 type ColorKey = keyof typeof colorValues;
+type StroopType = "congruent" | "incongruent";
 
 interface Stimulus {
   word: ColorKey;
   color: ColorKey;
-  type: "congruent" | "incongruent";
+  type: StroopType;
   timestamp: number;
 }
 
@@ -32,19 +37,51 @@ interface StroopResults {
   interferenceScore: number;
 }
 
+interface StroopStats {
+  correct: number;
+  total: number;
+}
+
+/**
+ * Componente principale del Test di Stroop
+ */
 const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
+  // Gestione degli stati
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<StroopStats>({
     correct: 0,
     total: 0,
   });
 
+  // Costanti e riferimenti
   const colors = useMemo(() => ["rosso", "blu", "verde", "arancione"] as const, []);
   const startTimeRef = useState(() => Date.now())[0];
 
-  const calculateResults = useCallback(() => {
+  /**
+   * Genera un nuovo stimolo per il test
+   */
+  const generateStimulus = useCallback((): Stimulus => {
+    const wordIndex = Math.floor(Math.random() * colors.length);
+    const word = colors[wordIndex];
+    const type: StroopType = Math.random() < 0.5 ? "congruent" : "incongruent";
+    const colorIndex = type === "congruent" 
+      ? wordIndex 
+      : (wordIndex + 1 + Math.floor(Math.random() * (colors.length - 1))) % colors.length;
+
+    return {
+      word,
+      color: colors[colorIndex],
+      type,
+      timestamp: Date.now(),
+    };
+  }, [colors]);
+
+  /**
+   * Calcola i risultati finali del test
+   */
+  const calculateResults = useCallback((): StroopResults | null => {
     if (responses.length === 0) return null;
 
     const avgTime = responses.reduce((acc, r) => acc + r.reactionTime, 0) / responses.length;
@@ -66,47 +103,40 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     };
   }, [responses, stats.correct, stats.total]);
 
+  /**
+   * Gestione del timer e completamento del test
+   */
   useEffect(() => {
     const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef) / 1000);
-      const remaining = Math.max(0, 60 - elapsed);
-      
-      setTimer(remaining);
-      
-      if (remaining === 0) {
-        clearInterval(interval);
-        const results = calculateResults();
-        if (results && onComplete) {
-          onComplete(results);
+      setTimer(prevTimer => {
+        const newTimer = prevTimer - 1;
+        if (newTimer <= 0) {
+          clearInterval(interval);
+          const results = calculateResults();
+          if (results && onComplete) {
+            onComplete(results);
+          }
+          return 0;
         }
-      }
+        return newTimer;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTimeRef, onComplete, calculateResults]);
+  }, [calculateResults, onComplete]);
 
-  const generateStimulus = useCallback(() => {
-    const wordIndex = Math.floor(Math.random() * colors.length);
-    const word = colors[wordIndex];
-    const type = Math.random() < 0.5 ? "congruent" : "incongruent";
-    const colorIndex = type === "congruent" 
-      ? wordIndex 
-      : (wordIndex + 1 + Math.floor(Math.random() * (colors.length - 1))) % colors.length;
-
-    return {
-      word,
-      color: colors[colorIndex],
-      type,
-      timestamp: Date.now(),
-    };
-  }, [colors]);
-
+  /**
+   * Inizializzazione dello stimolo
+   */
   useEffect(() => {
     if (!currentStimulus && timer > 0) {
       setCurrentStimulus(generateStimulus());
     }
   }, [currentStimulus, timer, generateStimulus]);
 
+  /**
+   * Gestione della risposta dell'utente
+   */
   const handleResponse = useCallback((selectedColor: ColorKey) => {
     if (!currentStimulus || timer <= 0) return;
 
@@ -126,12 +156,18 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
     setCurrentStimulus(generateStimulus());
   }, [currentStimulus, timer, generateStimulus]);
 
+  /**
+   * Formattazione del tempo per la visualizzazione
+   */
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  /**
+   * Rendering del componente
+   */
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
       <div className="flex justify-between items-center mb-6">
