@@ -2,26 +2,12 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  updateProfile, 
-  GoogleAuthProvider, 
-  signInWithPopup,
-  fetchSignInMethodsForEmail,
-  AuthError,
-  UserCredential
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
-import { doc, setDoc, getDoc, DocumentReference } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-interface UserData {
-  email: string | null;
-  displayName: string | null;
-  provider: string;
-}
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -29,23 +15,6 @@ export default function RegisterForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const checkExistingAccount = async (email: string): Promise<boolean> => {
-    try {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (methods.length > 0) {
-        const methodsList = methods.join(', ');
-        throw new Error(`An account already exists with this email. Please sign in using: ${methodsList}`);
-      }
-      return false;
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('An account already exists')) {
-        throw err;
-      }
-      console.error('Error checking existing account:', err);
-      return false;
-    }
-  };
 
   const handleRegularSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,17 +25,25 @@ export default function RegisterForm() {
     await handleRegistration('google');
   };
 
-  const createOrUpdateUserDoc = async (
-    userId: string, 
-    userData: UserData
-  ): Promise<DocumentReference> => {
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
+  const handleRegistration = async (provider: 'email' | 'google', credentials?: { email: string; password: string; name: string }) => {
+    setLoading(true);
+    try {
+      let userCredential;
+      
+      if (provider === 'google') {
+        const googleProvider = new GoogleAuthProvider();
+        userCredential = await signInWithPopup(auth, googleProvider);
+      } else {
+        if (!credentials) throw new Error('Credentials required for email signup');
+        userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+        await updateProfile(userCredential.user, {
+          displayName: credentials.name
+        });
+      }
 
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        email: userData.email,
-        displayName: userData.displayName,
+      const userData = {
+        email: userCredential.user.email,
+        displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
         subscriptionStatus: 'payment_required',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -76,78 +53,10 @@ export default function RegisterForm() {
         isActive: true,
         paymentMethod: null,
         billingDetails: null,
-        authProvider: userData.provider
-      });
-    } else {
-      await setDoc(userRef, {
-        lastLoginAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        authProvider: userData.provider
-      }, { merge: true });
-    }
+        authProvider: provider
+      };
 
-    return userRef;
-  };
-
-  const handleRegistration = async (
-    provider: 'email' | 'google',
-    credentials?: { email: string; password: string; name: string }
-  ) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      let userCredential: UserCredential;
-      let userData: UserData;
-
-      if (provider === 'google') {
-        const googleProvider = new GoogleAuthProvider();
-        try {
-          userCredential = await signInWithPopup(auth, googleProvider);
-        } catch (err) {
-          const error = err as AuthError;
-          if (error.code === 'auth/account-exists-with-different-credential') {
-            const email = error.customData?.email;
-            if (email) {
-              const methods = await fetchSignInMethodsForEmail(auth, email);
-              throw new Error(`This email is already registered. Please sign in using: ${methods.join(', ')}`);
-            }
-          }
-          throw err;
-        }
-
-        userData = {
-          email: userCredential.user.email,
-          displayName: userCredential.user.displayName,
-          provider: 'google.com'
-        };
-      } else {
-        if (!credentials) throw new Error('Credentials required for email signup');
-        
-        await checkExistingAccount(credentials.email);
-        
-        userCredential = await createUserWithEmailAndPassword(
-          auth, 
-          credentials.email, 
-          credentials.password
-        );
-        
-        await updateProfile(userCredential.user, {
-          displayName: credentials.name
-        });
-
-        userData = {
-          email: credentials.email,
-          displayName: credentials.name,
-          provider: 'password'
-        };
-      }
-
-      await createOrUpdateUserDoc(
-        userCredential.user.uid,
-        userData
-      );
-
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
       const idToken = await userCredential.user.getIdToken();
 
       const response = await fetch('/api/create-checkout-session', {
@@ -157,14 +66,14 @@ export default function RegisterForm() {
           'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          email: userData.email,
+          email: userCredential.user.email,
           userId: userCredential.user.uid,
         }),
       });
 
       const data = await response.json();
       
-      if ('error' in data) {
+      if (data.error) {
         throw new Error(data.error);
       }
 
@@ -273,7 +182,6 @@ export default function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              minLength={6}
             />
           </div>
         </div>
@@ -291,3 +199,4 @@ export default function RegisterForm() {
     </div>
   );
 }
+

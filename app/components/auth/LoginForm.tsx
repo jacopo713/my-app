@@ -2,13 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  fetchSignInMethodsForEmail,
-  AuthError
-} from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,17 +15,15 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
     } catch (err) {
-      console.error('Login error:', err);
+      console.error(err);
       setError('Failed to login. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -40,43 +32,14 @@ export default function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setError('');
-    
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
       router.push('/dashboard');
     } catch (err) {
-      console.error('Google login error:', err);
-      
-      if (err instanceof Error && 'code' in err) {
-        const authError = err as AuthError;
-        
-        if (authError.code === 'auth/account-exists-with-different-credential') {
-          try {
-            const email = authError.customData?.email;
-            if (!email) throw new Error('Email not found in error data');
-
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            
-            if (methods.includes('password')) {
-              setError('An account with this email already exists. Please sign in with email and password, then you can link your Google account.');
-            } else if (methods.includes('google.com')) {
-              setError('Please sign in with Google directly.');
-            } else {
-              setError('An account exists with different credentials. Please use your original login method.');
-            }
-          } catch (innerErr) {
-            console.error('Error handling credential conflict:', innerErr);
-            setError('An error occurred while processing your login. Please try again.');
-          }
-        } else {
-          setError('Failed to login with Google.');
-        }
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+      console.error(err);
+      setError('Failed to login with Google.');
     } finally {
       setLoading(false);
     }
@@ -99,13 +62,8 @@ export default function LoginForm() {
         isActive: true,
         paymentMethod: null,
         billingDetails: null,
-        authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
+        authProvider: 'google'
       });
-    } else {
-      await setDoc(userRef, {
-        lastLoginAt: new Date().toISOString(),
-        authProvider: auth.currentUser?.providerData[0]?.providerId || 'unknown'
-      }, { merge: true });
     }
   };
 
@@ -118,6 +76,7 @@ export default function LoginForm() {
         </div>
       )}
       
+      {/* Google Login Button */}
       <button
         type="button"
         onClick={handleGoogleLogin}
@@ -154,7 +113,7 @@ export default function LoginForm() {
         </div>
       </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="rounded-md shadow-sm space-y-4">
           <div>
             <input
@@ -204,3 +163,4 @@ export default function LoginForm() {
     </div>
   );
 }
+
