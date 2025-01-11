@@ -26,7 +26,7 @@ interface Response {
 
 interface StroopResults {
   score: number;
-  accuracy: string;
+  accuracy: number; // Cambiato da string a number
   averageReactionTime: string;
   responsesPerMinute: string;
   interferenceScore: string;
@@ -129,7 +129,6 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     const responsesPerMinute = (totalResponses / (60 - timer)) * 60;
 
-    // Calcolo del punteggio di interferenza
     const incongruentResponses = responses.filter((r) => r.stimulus.type === "incongruent");
     const congruentResponses = responses.filter((r) => r.stimulus.type === "congruent");
 
@@ -141,8 +140,8 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     return {
       score: Math.round((correctResponses / 112) * 100), // Punteggio basato su 112 risposte corrette
-      accuracy: ((correctResponses / totalResponses) * 100).toFixed(2) + "%", // Precisione formattata
-      averageReactionTime: avgTime.toFixed(1) + "ms", // Tempo di reazione medio formattato
+      accuracy: (correctResponses / totalResponses) * 100, // Precisione come numero
+      averageReactionTime: avgTime.toFixed(1) + "ms", // Tempo medio formattato
       responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
       interferenceScore: interferenceScore.toFixed(1) + "ms", // Punteggio di interferenza formattato
     };
