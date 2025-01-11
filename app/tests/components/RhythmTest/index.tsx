@@ -90,6 +90,7 @@ const MELODIES: Note[][] = [
 ];
 
 const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
+  // Stati del componente
   const [audioResources, setAudioResources] = useState<AudioResources | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [phase, setPhase] = useState<'start' | 'listen' | 'replay' | 'results'>('start');
@@ -98,9 +99,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [currentLevel, setCurrentLevel] = useState(0);
   const [precisions, setPrecisions] = useState<number[]>([]);
 
+  // Refs per gestione timing
   const startTimeRef = useRef<number | null>(null);
   const audioCleanupRef = useRef<(() => void) | null>(null);
 
+  // Ottiene la melodia corrente
   const currentMelody = MELODIES[currentLevel];
   const totalDuration = currentMelody.reduce((acc, { duration }) => acc + duration, 0);
   const isLastLevel = currentLevel === MELODIES.length - 1;
@@ -157,11 +160,16 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   }, [audioResources]);
 
   const playMelody = useCallback(async (isDemo: boolean = false) => {
-    cleanupAudio();
-    const resources = audioResources || setupAudioResources();
-    if (!audioResources) setAudioResources(resources);
+    if (!audioResources) return;
 
-    await resources.context.resume();
+    // Riprendi il contesto audio se è in stato "suspended"
+    if (audioResources.context.state === 'suspended') {
+      await audioResources.context.resume();
+    }
+
+    cleanupAudio();
+    const resources = audioResources;
+
     let startTime = resources.context.currentTime;
     const newOscillators: OscillatorNode[] = [];
     const newGains: GainNode[] = [];
@@ -207,16 +215,15 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     startTimeRef.current = performance.now();
 
     if (isDemo) {
-      // Aggiungiamo un buffer di 100ms al totalDuration per far completare la melodia
       const stopTimeout = setTimeout(() => {
         setIsPlaying(false);
         setPhase('replay');
-        // Chiamo cleanupAudio dopo un breve ritardo per lasciare terminare l'audio
-        setTimeout(() => cleanupAudio(), 100);
-      }, totalDuration + 100);
+        cleanupAudio();
+      }, totalDuration);
+
       audioCleanupRef.current = () => clearTimeout(stopTimeout);
     }
-  }, [audioResources, cleanupAudio, currentMelody, setupAudioResources, totalDuration]);
+  }, [audioResources, cleanupAudio, currentMelody, totalDuration]);
 
   const startDemo = useCallback(() => {
     setPhase('listen');
@@ -225,17 +232,22 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
   const stopReplay = useCallback(() => {
     if (!startTimeRef.current || !audioResources) return;
+
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
-    const maxDeviation = totalDuration * 0.3;
+    const maxDeviation = totalDuration * 0.3; // Deviation massima accettabile (30%)
+
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
+
     setPrecisions(prev => [...prev, finalPrecision]);
     const averagePrecision = [...precisions, finalPrecision].reduce((a, b) => a + b, 0) / (precisions.length + 1);
     setPrecision(averagePrecision);
+
     setIsPlaying(false);
     setPhase('results');
     cleanupAudio();
+
     if (isLastLevel) {
       onComplete({ 
         precision: averagePrecision,
@@ -330,7 +342,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           </button>
         )}
 
-        {phase === 'results' && currentLevel < MELODIES.length - 1 && (
+        {phase === 'results' && !isLastLevel && (
           <button
             onClick={nextLevel}
             className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium 
@@ -368,4 +380,3 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 };
 
 export default RhythmTest;
-
