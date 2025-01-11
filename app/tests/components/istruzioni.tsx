@@ -162,5 +162,3 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     duration: "N/A"
   }
 };
-export default TestInstructions;
-
