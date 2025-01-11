@@ -26,7 +26,7 @@ interface Response {
 
 interface StroopResults {
   score: number; // Punteggio su una scala da 0 a 1000
-  percentile: number; // Percentile su una scala da 0 a 100
+  accuracy: number; // Precisione in percentuale
   averageReactionTime: number; // Tempo medio di reazione in millisecondi
   responsesPerMinute: string; // Risposte al minuto formattate
   interferenceScore: number; // Punteggio di interferenza in millisecondi
@@ -90,6 +90,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
   const calculateResults = useCallback(() => {
     const correctResponses = responses.filter((r) => r.correct).length;
     const totalResponses = responses.length;
+    const accuracy = totalResponses > 0 ? (correctResponses / totalResponses) * 100 : 0; // Calcola l'accuracy
     const avgTime =
       totalResponses > 0
         ? responses.reduce((acc, r) => acc + r.reactionTime, 0) / totalResponses
@@ -108,7 +109,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     return {
       score: Math.round((correctResponses / 112) * 1000), // Punteggio basato su 112 risposte corrette (massimo 1000)
-      percentile: Math.round((correctResponses / 112) * 100), // Percentile basato su 112 risposte corrette
+      accuracy: Math.round(accuracy), // Aggiungi l'accuracy
       averageReactionTime: avgTime, // Tempo medio come numero
       responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
       interferenceScore: interferenceScore, // Punteggio di interferenza come numero
