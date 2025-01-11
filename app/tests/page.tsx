@@ -252,7 +252,7 @@ export default function TestPage() {
                         <BookOpen className="w-6 h-6 text-orange-500" />
                         <h3 className="font-bold">Lettura Veloce</h3>
                       </div>
-                      <p>Parole al Minuto: {results.speedReading.wpm}</p>
+                      <p>Punteggio: {results.speedReading.wpm}</p>
                       <p>Percentile: {results.speedReading.percentile}°</p>
                     </div>
                   )}

@@ -40,14 +40,13 @@ const CONFIG = {
   PAUSE_DURATION: 300,
   FEEDBACK_DURATION: 200,
   BASE_SEQUENCE_LENGTH: 3,
+  // Aggiorniamo qui le soglie dei percentile:
   PERCENTILES: [
     { score: 200, percentile: 10 },
     { score: 400, percentile: 25 },
     { score: 600, percentile: 50 },
     { score: 800, percentile: 75 },
-    { score: 1000, percentile: 90 },
-    { score: 1200, percentile: 95 },
-    { score: 1500, percentile: 99 },
+    { score: 1000, percentile: 100 },
   ],
 };
 
@@ -74,13 +73,14 @@ const ShortTermMemoryTest: React.FC<ShortTermMemoryTestProps> = ({ onComplete })
     type: "info",
   });
 
+  // Calcola il percentile usando le nuove soglie
   const calculatePercentile = (score: number): number => {
     for (const item of CONFIG.PERCENTILES) {
       if (score <= item.score) {
         return item.percentile;
       }
     }
-    return 99;
+    return 100;
   };
 
   const getEvaluation = (percentile: number): string => {
@@ -404,3 +404,4 @@ const ShortTermMemoryTest: React.FC<ShortTermMemoryTestProps> = ({ onComplete })
 };
 
 export default ShortTermMemoryTest;
+
