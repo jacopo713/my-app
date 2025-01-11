@@ -109,7 +109,7 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => v
 
     return {
       score: Math.round((correctResponses / 112) * 1000), // Punteggio basato su 112 risposte corrette (massimo 1000)
-      accuracy: Math.round(accuracy), // Aggiungi l'accuracy
+      accuracy: Math.round(accuracy), // Precisione in percentuale
       averageReactionTime: avgTime, // Tempo medio come numero
       responsesPerMinute: responsesPerMinute.toFixed(1), // Risposte al minuto formattate
       interferenceScore: interferenceScore, // Punteggio di interferenza come numero
