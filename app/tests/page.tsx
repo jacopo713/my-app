@@ -13,7 +13,7 @@ import {
   RhythmTest 
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { testInstructions, type TestPhase } from './data/istruzioni';
+import { type TestPhase } from './TestInstructions'; // Modifica qui
 import TestInstructions from './components/istruzioni';
 
 interface TestResults {
