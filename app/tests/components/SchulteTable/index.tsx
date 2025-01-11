@@ -36,44 +36,39 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
 
   // Usa le dimensioni corrette in base al dispositivo
   const sizes = isMobile ? sizesMobile : sizesPC;
-  const currentSize = sizes[testLevel]; // Dimensione corrente
+  const currentSize = sizes[testLevel];
   const maxTimePerLevel = 300;
 
-  // Funzione per generare i numeri in modo casuale
   const generateNumbers = useCallback((): number[] => {
-    const totalNumbers = isMobile && testLevel === 2 ? 4 * 9 : currentSize * currentSize; // 4x9 solo per il terzo livello su telefono
-    const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1); // Genera i numeri da 1 a N
+    const totalNumbers = isMobile && testLevel === 2 ? 4 * 9 : currentSize * currentSize;
+    const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [nums[i], nums[j]] = [nums[j], nums[i]]; // Mescola i numeri
+      [nums[i], nums[j]] = [nums[j], nums[i]];
     }
     return nums;
   }, [currentSize, isMobile, testLevel]);
 
-  // Effetto per rigenerare i numeri quando il livello cambia
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
     }
   }, [testLevel, gameStarted, generateNumbers]);
 
-  // Funzione per avviare il prossimo livello
   const startNextLevel = useCallback(() => {
-    setCurrentNumber(1); // Resetta il numero corrente
-    setTimer(0); // Resetta il timer
-    setGameStarted(true); // Avvia il gioco
-    setShowInstructions(false); // Nasconde le istruzioni
-    setIsCompleted(false); // Resetta lo stato di completamento
+    setCurrentNumber(1);
+    setTimer(0);
+    setGameStarted(true);
+    setShowInstructions(false);
+    setIsCompleted(false);
   }, []);
 
-  // Funzione per gestire il completamento di un livello
   const handleLevelComplete = useCallback(() => {
     console.log("Livello completato:", currentSize, "x", currentSize);
     const currentResult = { time: timer, size: currentSize };
     setLevelResults((prev) => [...prev, currentResult]);
 
     if (testLevel === sizes.length - 1) {
-      // Fine del test
       const updatedResults = [...levelResults, currentResult];
       const averageTime =
         updatedResults.reduce((acc, curr) => acc + curr.time, 0) / updatedResults.length;
@@ -88,25 +83,21 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
         percentile: Math.round((normalizedScore / 1000) * 100),
       });
     } else {
-      // Passa al livello successivo
-      setTestLevel((prev) => prev + 1); // Aggiorna il livello
-      setTimeout(startNextLevel, 1000); // Avvia il prossimo livello dopo 1 secondo
+      setTestLevel((prev) => prev + 1);
+      setTimeout(startNextLevel, 1000);
     }
   }, [timer, currentSize, testLevel, levelResults, sizes.length, startNextLevel, onComplete]);
 
-  // Funzione per gestire il clic sui numeri
   const handleNumberClick = useCallback(
     (number: number) => {
       if (!gameStarted || isCompleted) return;
 
       if (number === currentNumber) {
         if (number === (isMobile && testLevel === 2 ? 36 : currentSize * currentSize)) {
-          // Se l'utente ha cliccato l'ultimo numero, completa il livello
           setGameStarted(false);
           setIsCompleted(true);
           handleLevelComplete();
         } else {
-          // Passa al numero successivo
           setCurrentNumber((prev) => prev + 1);
         }
       }
@@ -114,14 +105,12 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     [gameStarted, isCompleted, currentNumber, currentSize, handleLevelComplete, isMobile, testLevel]
   );
 
-  // Funzione per formattare il tempo in minuti e secondi
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Effetto per gestire il timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameStarted && !isCompleted) {
@@ -136,7 +125,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     <div
       className="flex justify-center items-center bg-gray-50 p-4"
       style={{
-        minHeight: "calc(100vh - 64px)", // Sottrae l'altezza della navbar (64px)
+        minHeight: "calc(100vh - 64px)",
       }}
     >
       <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4">
@@ -164,7 +153,6 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            {/* Timer e livello */}
             <div className="flex justify-between items-center w-full mb-2">
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-gray-600" />
@@ -177,12 +165,12 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
               </div>
             </div>
 
-            {/* Griglia */}
+            {/* Griglia ottimizzata con spaziatura minima */}
             <div
               className="grid w-full"
               style={{
                 gridTemplateColumns: `repeat(${isMobile && testLevel === 2 ? 4 : currentSize}, minmax(0, 1fr))`,
-                gap: "0px", // Nessun gap tra le celle
+                gap: "1px", // Spaziatura minima tra le celle
               }}
             >
               {numbers.map((number, index) => (
@@ -190,7 +178,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                   key={index}
                   onClick={() => handleNumberClick(number)}
                   className={`
-                    w-12 h-12 flex items-center justify-center
+                    aspect-square flex items-center justify-center
                     text-sm sm:text-base font-bold rounded-lg
                     transition-colors duration-200
                     ${
@@ -218,4 +206,3 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     </div>
   );
 }
-
