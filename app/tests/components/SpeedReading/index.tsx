@@ -35,7 +35,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [cycleCount, setCycleCount] = useState(0);
-  const [wpm, setWpm] = useState(50);
+  const [wpm, setWpm] = useState(100); // Cambiato da 50 a 100
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState('');
 
@@ -61,7 +61,19 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
       return;
     }
 
-    setCurrentPosition(prev => prev + 1);
+    // Seleziona una posizione casuale tra quelle rimanenti
+    const availablePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(pos => !currentSequence[pos]);
+    if (availablePositions.length === 0) {
+      setCurrentPosition(-1);
+      setShowingQuestion(true);
+      const lastWord = currentSequence[8];
+      setCorrectAnswer(lastWord);
+      setOptions(generateOptions(lastWord));
+      return;
+    }
+
+    const randomPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+    setCurrentPosition(randomPosition);
   }, [currentPosition, currentSequence, generateOptions]);
 
   useEffect(() => {
@@ -106,7 +118,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
     const initialSequence = generateSequence();
     setIsStarted(true);
     setCycleCount(0);
-    setWpm(50);
+    setWpm(100); // Cambiato da 50 a 100
     setScore(0);
     setCurrentPosition(-1);
     setCurrentSequence(initialSequence);
