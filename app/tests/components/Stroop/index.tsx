@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Clock, Brain } from "lucide-react";
 
 const colorValues = {
@@ -24,6 +24,16 @@ interface Response {
   reactionTime: number;
 }
 
+interface StroopResults {
+  score: number;
+  accuracy: number;
+  averageReactionTime: number;
+  totalResponses: number;
+  correctResponses: number;
+  interferenceScore: number;
+  responsesPerMinute: string;
+}
+
 interface Stats {
   totalResponses: number;
   correctResponses: number;
@@ -47,14 +57,14 @@ const Statistics = memo(({ responses }: { responses: Response[] }) => {
 
 Statistics.displayName = "Statistics";
 
-const StroopTest = ({ onComplete }: { onComplete?: (results: any) => void }) => {
+const StroopTest = ({ onComplete }: { onComplete?: (results: StroopResults) => void }) => {
   const [timer, setTimer] = useState(60);
   const [currentStimulus, setCurrentStimulus] = useState<Stimulus | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   const [responseStartTime, setResponseStartTime] = useState<number | null>(null);
 
-  const colors: ColorKey[] = ["rosso", "blu", "verde", "arancione"];
+  const colors = useMemo(() => ["rosso", "blu", "verde", "arancione"] as const, []);
 
   // Genera un nuovo stimolo
   const generateStimulus = useCallback((type: "congruent" | "incongruent"): Stimulus => {
@@ -87,51 +97,8 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: any) => void }) => 
     setResponseStartTime(Date.now());
   }, [generateStimulus]);
 
-  // Gestione del timer
-  useEffect(() => {
-    if (isRunning && timer > 0) {
-      const interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            setIsRunning(false);
-            if (onComplete) {
-              onComplete(calculateResults());
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isRunning, timer, onComplete]);
-
-  // Inizializza il primo stimolo
-  useEffect(() => {
-    if (isRunning && !currentStimulus) {
-      generateNextStimulus();
-    }
-  }, [isRunning, currentStimulus, generateNextStimulus]);
-
-  // Gestione della risposta
-  const handleResponse = useCallback((selectedColor: ColorKey) => {
-    if (!currentStimulus || !isRunning || !responseStartTime) return;
-
-    const response: Response = {
-      stimulus: currentStimulus,
-      selectedColor,
-      correct: selectedColor === currentStimulus.color,
-      reactionTime: Date.now() - responseStartTime,
-    };
-
-    setResponses(prev => [...prev, response]);
-    generateNextStimulus();
-  }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
-
-  // Calcolo dei risultati (mantenuto dalla versione attuale)
-  const calculateResults = useCallback(() => {
+  // Calcolo dei risultati
+  const calculateResults = useCallback((): StroopResults => {
     const correct = responses.filter((r) => r.correct).length;
     const accuracy = responses.length > 0 ? correct / responses.length : 0;
     const avgTime = responses.length > 0
@@ -157,6 +124,49 @@ const StroopTest = ({ onComplete }: { onComplete?: (results: any) => void }) => 
       responsesPerMinute: responses.length.toFixed(1),
     };
   }, [responses]);
+
+  // Gestione del timer
+  useEffect(() => {
+    if (isRunning && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsRunning(false);
+            if (onComplete) {
+              onComplete(calculateResults());
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isRunning, timer, onComplete, calculateResults]); // Aggiungi calculateResults qui
+
+  // Inizializza il primo stimolo
+  useEffect(() => {
+    if (isRunning && !currentStimulus) {
+      generateNextStimulus();
+    }
+  }, [isRunning, currentStimulus, generateNextStimulus]);
+
+  // Gestione della risposta
+  const handleResponse = useCallback((selectedColor: ColorKey) => {
+    if (!currentStimulus || !isRunning || !responseStartTime) return;
+
+    const response: Response = {
+      stimulus: currentStimulus,
+      selectedColor,
+      correct: selectedColor === currentStimulus.color,
+      reactionTime: Date.now() - responseStartTime,
+    };
+
+    setResponses(prev => [...prev, response]);
+    generateNextStimulus();
+  }, [currentStimulus, isRunning, responseStartTime, generateNextStimulus]);
 
   // Formattazione del tempo
   const formatTime = (seconds: number) => {
