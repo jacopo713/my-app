@@ -30,7 +30,7 @@ interface NeurofeedbackParams {
 }
 
 export default function SchulteTable({ onComplete }: SchulteTableProps) {
-  // Sistema Stati Base
+  // Stati base
   const [numbers, setNumbers] = useState<number[]>([]);
   const [currentNumber, setCurrentNumber] = useState(1);
   const [gameStarted, setGameStarted] = useState(false);
@@ -41,30 +41,29 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
   const [levelResults, setLevelResults] = useState<LevelResult[]>([]);
   const [lastFeedbackTime, setLastFeedbackTime] = useState(0);
 
-  // Gestione Audio Context
+  // Gestione Audio Context per Neurofeedback
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Parametri Base
+  // Parametri base
   const sizes = [2, 4, 6];
   const currentSize = sizes[testLevel];
-  const maxTimePerLevel = 300;
+  const maxTimePerLevel = 300; // Tempo massimo per livello in secondi
 
   // Parametri Neurofeedback Ottimizzati
   const neurofeedbackParams: NeurofeedbackParams = {
-    duration: 0.08,    // 80ms - rispetta tempi elaborazione neurale
+    duration: 0.08,    // 80ms
     interval: 0.5,     // 500ms tra feedback
-    maxGain: 0.04,     // Volume minimo efficace
-    startFreq: 440,    // A4 naturale
-    endFreq: 420,      // Variazione minima
+    maxGain: 0.04,     // gain minimo efficace
+    startFreq: 440,    // Frequenza di partenza (A4)
+    endFreq: 420,      // Frequenza di arrivo
     rampType: 'linear',
-    fadeOut: 0.05      // Declino graduale
+    fadeOut: 0.05      // Fade out graduale
   };
 
   // Inizializzazione Audio Context
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const AudioContextConstructor = (window.AudioContext || 
-        window.webkitAudioContext) as typeof AudioContext;
+      const AudioContextConstructor = (window.AudioContext || window.webkitAudioContext) as typeof AudioContext;
       audioContextRef.current = new AudioContextConstructor();
     }
     return () => {
@@ -72,7 +71,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     };
   }, []);
 
-  // Sistema Neurofeedback Ottimizzato
+  // Sistema Neurofeedback
   const playNeurofeedback = useCallback(() => {
     if (!audioContextRef.current) return;
 
@@ -115,13 +114,11 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     gainNode.connect(audioContextRef.current.destination);
 
     oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(
-      audioContextRef.current.currentTime + neurofeedbackParams.duration
-    );
+    oscillator.stop(audioContextRef.current.currentTime + neurofeedbackParams.duration);
   }, [lastFeedbackTime, neurofeedbackParams]);
 
-  // Generazione Numeri
-  const generateNumbers = useCallback(() => {
+  // Generazione numeri in modo casuale
+  const generateNumbers = useCallback((): number[] => {
     const totalNumbers = currentSize * currentSize;
     const nums = Array.from({ length: totalNumbers }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
@@ -131,14 +128,14 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return nums;
   }, [currentSize]);
 
-  // Inizializzazione Griglia
+  // Inizializza la griglia quando il gioco è attivo
   useEffect(() => {
     if (gameStarted) {
       setNumbers(generateNumbers());
     }
   }, [gameStarted, generateNumbers]);
 
-  // Gestione Timer
+  // Gestione timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameStarted && !isCompleted) {
@@ -149,14 +146,14 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     return () => clearInterval(interval);
   }, [gameStarted, isCompleted]);
 
-  // Formattazione Tempo
+  // Formattazione del tempo in minuti e secondi
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Avvio Livello
+  // Avvio del livello
   const startNextLevel = useCallback(() => {
     setCurrentNumber(1);
     setTimer(0);
@@ -165,7 +162,44 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     setIsCompleted(false);
   }, []);
 
-  // Gestione Click Numeri
+  // Funzione per calcolare i risultati finali
+  // Utilizziamo la formula: normalizedScore = (1 - averageTime / maxTimePerLevel) * 1000
+  // Se l'averageTime è 150, il punteggio sarà 500, che corrisponde al 50° percentile.
+  const handleLevelComplete = useCallback(() => {
+    console.log("Livello completato:", currentSize, "x", currentSize);
+    const currentResult = { time: timer, size: currentSize };
+    setLevelResults(prev => [...prev, currentResult]);
+
+    if (testLevel === sizes.length - 1) {
+      // Fine del test
+      const updatedResults = [...levelResults, currentResult];
+      const averageTime =
+        updatedResults.reduce((acc, curr) => acc + curr.time, 0) / updatedResults.length;
+      const normalizedScore = Math.round((1 - averageTime / maxTimePerLevel) * 1000);
+      // Calcola il percentile in modo lineare (score massimo 1000 corrisponde al 100° percentile)
+      const percentile = Math.round((normalizedScore / 1000) * 100);
+
+      onComplete({
+        score: normalizedScore,
+        accuracy: 100,
+        averageTime,
+        gridSizes: updatedResults.map(r => r.size),
+        completionTimes: updatedResults.map(r => r.time),
+        percentile
+      });
+    } else {
+      // Passa al livello successivo
+      setTimeout(() => {
+        setTestLevel(prev => prev + 1);
+        setCurrentNumber(1);
+        setIsCompleted(false);
+        setGameStarted(true);
+        setTimer(0);
+      }, 2000);
+    }
+  }, [timer, currentSize, testLevel, levelResults, sizes.length, maxTimePerLevel, onComplete]);
+
+  // Gestione del clic sui numeri
   const handleNumberClick = useCallback((number: number) => {
     if (!gameStarted || isCompleted) return;
 
@@ -173,38 +207,15 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
       playNeurofeedback();
 
       if (number === currentSize * currentSize) {
-        const currentResult = { time: timer, size: currentSize };
-        setLevelResults(prev => [...prev, currentResult]);
+        // Se si clicca l'ultimo numero, completa il livello
         setGameStarted(false);
         setIsCompleted(true);
-        
-        if (testLevel === sizes.length - 1) {
-          const updatedResults = [...levelResults, currentResult];
-          const averageTime = updatedResults.reduce((acc, curr) => acc + curr.time, 0) / updatedResults.length;
-          const normalizedScore = Math.round((1 - averageTime / maxTimePerLevel) * 1000);
-          
-          onComplete({
-            score: normalizedScore,
-            accuracy: 100,
-            averageTime,
-            gridSizes: updatedResults.map(r => r.size),
-            completionTimes: updatedResults.map(r => r.time),
-            percentile: Math.round((normalizedScore / 1000) * 100)
-          });
-        } else {
-          setTimeout(() => {
-            setTestLevel(prev => prev + 1);
-            setCurrentNumber(1);
-            setIsCompleted(false);
-            setGameStarted(true);
-            setTimer(0);
-          }, 2000);
-        }
+        handleLevelComplete();
       } else {
         setCurrentNumber(prev => prev + 1);
       }
     }
-  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNeurofeedback]);
+  }, [gameStarted, isCompleted, currentNumber, currentSize, timer, testLevel, levelResults, sizes.length, onComplete, playNeurofeedback, handleLevelComplete]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
@@ -259,7 +270,7 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
                     onClick={() => handleNumberClick(number)}
                     className={`
                       aspect-square flex items-center justify-center
-                      text-sm sm:text-base lg:text-lg font-bold rounded-lg
+                      text-sm sm:text-base font-bold rounded-lg
                       transition-colors duration-200
                       ${
                         number < currentNumber
@@ -287,3 +298,4 @@ export default function SchulteTable({ onComplete }: SchulteTableProps) {
     </div>
   );
 }
+
