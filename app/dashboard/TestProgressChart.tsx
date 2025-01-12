@@ -1,79 +1,16 @@
-'use client';
-
-import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { ComponentType } from 'react';
-
-interface TestResult {
-  score?: number;
-  accuracy?: number;
-  percentile?: number;
-  averageDeviation?: number;
-  interferenceScore?: number;
-  wpm?: number;
-  evaluation?: string;
-  averageTime?: number;
-  gridSizes?: number[];
-  completionTimes?: number[];
-  precision?: number;
-  level?: number;
-  timestamp?: string;
-}
-
-interface TestProgressChartProps {
-  data: TestResult[];
-}
-
-interface TestScoreBarProps {
-  label: string;
-  value: number;
-  maxValue?: number;
-  icon: ComponentType<{ className?: string }>;
-  color: {
-    bg: string;
-    icon: string;
-    bar: string;
-  };
-}
-
-const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: TestScoreBarProps) => {
-  const percentage = (value / maxValue) * 100;
-
-  return (
-    <div className="mb-6">
-      <div className="flex items-center gap-3 mb-2">
-        <div className={`p-2 rounded-lg ${color.bg}`}>
-          <Icon className={`w-5 h-5 ${color.icon}`} />
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-gray-700">{label}</span>
-            <span className="font-semibold text-gray-900">{value}/1000</span>
-          </div>
-          <div className="mt-2 h-3 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${color.bar} transition-all duration-1000 ease-out rounded-full`}
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function TestProgressChart({ data }: TestProgressChartProps) {
   // Define the type for the keys of normalizedData
   type TestId = 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
 
   // Normalizza i dati su una scala da 0 a 1000
   const normalizedData: Record<TestId, number> = {
-    raven: data.find((test) => test.score)?.score || 0,
-    eyeHand: Math.round((data.find((test) => test.accuracy)?.accuracy || 0) / 100 * 1000),
-    stroop: Math.round((data.find((test) => test.percentile)?.percentile || 0) / 100 * 1000),
-    speedReading: Math.round((data.find((test) => test.wpm)?.wpm || 0) / 100 * 1000),
-    memory: data.find((test) => test.score)?.score || 0,
-    schulte: Math.round((data.find((test) => test.percentile)?.percentile || 0) / 100 * 1000),
-    rhythm: Math.round((data.find((test) => test.precision)?.precision || 0) / 100 * 1000),
+    raven: data.find((test) => test.type === 'raven')?.score || 0,
+    eyeHand: Math.round((data.find((test) => test.type === 'eyeHand')?.accuracy || 0) / 100 * 1000),
+    stroop: Math.round((data.find((test) => test.type === 'stroop')?.percentile || 0) / 100 * 1000),
+    speedReading: Math.round((data.find((test) => test.type === 'speedReading')?.wpm || 0) / 100 * 1000),
+    memory: data.find((test) => test.type === 'memory')?.score || 0,
+    schulte: Math.round((data.find((test) => test.type === 'schulte')?.percentile || 0) / 100 * 1000),
+    rhythm: Math.round((data.find((test) => test.type === 'rhythm')?.precision || 0) / 100 * 1000),
   };
 
   const testConfigs = [
@@ -149,9 +86,12 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
     }
   ];
 
+  // Filtra i test per includere solo quelli con dati validi
+  const validTests = testConfigs.filter((test) => normalizedData[test.id] > 0);
+
+  // Calcola il punteggio medio solo sui test con dati validi
   const averageScore = Math.round(
-    Object.values(normalizedData).reduce((acc, curr) => acc + curr, 0) /
-    Object.values(normalizedData).length
+    validTests.reduce((acc, test) => acc + normalizedData[test.id], 0) / validTests.length
   );
 
   return (
@@ -169,7 +109,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
         </div>
       </div>
       <div className="space-y-6 mt-6">
-        {testConfigs.map((test) => (
+        {validTests.map((test) => (
           <TestScoreBar
             key={test.id}
             label={test.label}
