@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen } from 'lucide-react';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown } from 'lucide-react';
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -67,6 +67,7 @@ export default function TestPage() {
     rhythm: null
   });
   const [progress, setProgress] = useState(0);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const router = useRouter();
 
   const phases: TestPhase[] = [
@@ -77,6 +78,17 @@ export default function TestPage() {
   useEffect(() => {
     setTestStarted(false);
   }, [phase]);
+
+  useEffect(() => {
+    const container = document.getElementById('scroll-container');
+    if (container) {
+      const handleScroll = () => {
+        setShowScrollIndicator(container.scrollTop < 50);
+      };
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
     setResults(prev => ({
@@ -111,7 +123,6 @@ export default function TestPage() {
     setPhase("speedreading");
   };
 
-  // Per SpeedReading: ora riceve wpm e percentile
   const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; percentile: number }) => {
     setResults(prev => ({
       ...prev,
@@ -130,7 +141,6 @@ export default function TestPage() {
     setPhase("schulte");
   };
 
-  // handleSchulteComplete: il campo 'accuracy' non è presente
   const handleSchulteComplete = (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
     setResults(prev => ({
       ...prev,
@@ -140,7 +150,6 @@ export default function TestPage() {
     setPhase("rhythm");
   };
 
-  // Per il test del Ritmo vogliamo mantenere precision e level
   const handleRhythmComplete = (rhythmResults: { precision: number; level: number }) => {
     setResults(prev => ({
       ...prev,
@@ -156,38 +165,118 @@ export default function TestPage() {
         case "intro":
           return (
             <div className="max-w-4xl mx-auto px-4">
-              <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">
-                  Test del Quoziente Intellettivo
-                </h1>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-blue-50 p-6 rounded-lg">
-                    <Brain className="w-8 h-8 text-blue-500 mb-4" />
-                    <h3 className="font-bold mb-2">Ragionamento Astratto</h3>
-                    <p className="text-gray-600">Test delle matrici progressive</p>
-                  </div>
-                  <div className="bg-green-50 p-6 rounded-lg">
-                    <Eye className="w-8 h-8 text-green-500 mb-4" />
-                    <h3 className="font-bold mb-2">Coordinazione Visiva</h3>
-                    <p className="text-gray-600">Test di precisione occhio-mano</p>
-                  </div>
-                  <div className="bg-purple-50 p-6 rounded-lg">
-                    <ActivitySquare className="w-8 h-8 text-purple-500 mb-4" />
-                    <h3 className="font-bold mb-2">Interferenza Cognitiva</h3>
-                    <p className="text-gray-600">Test di Stroop</p>
-                  </div>
-                  <div className="bg-orange-50 p-6 rounded-lg">
-                    <BookOpen className="w-8 h-8 text-orange-500 mb-4" />
-                    <h3 className="font-bold mb-2">Lettura Veloce</h3>
-                    <p className="text-gray-600">Test di velocità di lettura</p>
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-2xl shadow-lg">
+                <div className="p-6">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                    Test del Quoziente Intellettivo Completo
+                  </h1>
+                  <p className="text-sm sm:text-base text-blue-100 mb-2">
+                    Valuta le tue capacità cognitive attraverso test scientificamente validati
+                  </p>
+                  <div className="text-xs text-blue-200 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>Durata stimata: 45 minuti • 7 test specializzati</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setPhase("raven")}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Inizia il Test
-                </button>
+              </div>
+
+              <div className="bg-white shadow-xl rounded-b-2xl p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    {
+                      icon: Brain,
+                      title: "Ragionamento Astratto",
+                      subtitle: "Test delle matrici progressive",
+                      description: "Valuta la capacità di identificare pattern e relazioni logiche",
+                      gradient: "from-blue-50 to-blue-100",
+                      iconColor: "text-blue-600",
+                      bgHover: "hover:bg-blue-50/80"
+                    },
+                    {
+                      icon: Eye,
+                      title: "Coordinazione Visiva",
+                      subtitle: "Test di precisione occhio-mano",
+                      description: "Misura la tua coordinazione visivo-motoria e i tempi di reazione",
+                      gradient: "from-green-50 to-green-100",
+                      iconColor: "text-green-600",
+                      bgHover: "hover:bg-green-50/80"
+                    },
+                    {
+                      icon: ActivitySquare,
+                      title: "Interferenza Cognitiva",
+                      subtitle: "Test di Stroop",
+                      description: "Analizza la tua capacità di gestire informazioni conflittuali",
+                      gradient: "from-purple-50 to-purple-100",
+                      iconColor: "text-purple-600",
+                      bgHover: "hover:bg-purple-50/80"
+                    },
+                    {
+                      icon: BookOpen,
+                      title: "Lettura Veloce",
+                      subtitle: "Test di velocità di lettura",
+                      description: "Valuta la tua velocità di lettura e comprensione",
+                      gradient: "from-orange-50 to-orange-100",
+                      iconColor: "text-orange-600",
+                      bgHover: "hover:bg-orange-50/80"
+                    },
+                    {
+                      icon: Lightbulb,
+                      title: "Memoria a Breve Termine",
+                      subtitle: "Test di memorizzazione",
+                      description: "Misura la capacità di memorizzare e ricordare informazioni",
+                      gradient: "from-red-50 to-red-100",
+                      iconColor: "text-red-600",
+                      bgHover: "hover:bg-red-50/80"
+                    },
+                    {
+                      icon: Eye,
+                      title: "Attenzione Visiva",
+                      subtitle: "Tabella di Schulte",
+                      description: "Valuta la velocità di ricerca visiva e l'attenzione selettiva",
+                      gradient: "from-indigo-50 to-indigo-100",
+                      iconColor: "text-indigo-600",
+                      bgHover: "hover:bg-indigo-50/80"
+                    },
+                    {
+                      icon: Music,
+                      title: "Test del Ritmo",
+                      subtitle: "Coordinazione temporale",
+                      description: "Misura la precisione nella percezione e riproduzione di pattern ritmici",
+                      gradient: "from-pink-50 to-pink-100",
+                      iconColor: "text-pink-600",
+                      bgHover: "hover:bg-pink-50/80"
+                    }
+                  ].map((item, index) => (
+                    <div 
+                      key={index} 
+                      className={`bg-gradient-to-br ${item.gradient} rounded-xl p-4 transition-all duration-300 
+                        hover:shadow-lg transform hover:translate-y-px ${item.bgHover}`}
+                    >
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="bg-white p-2.5 rounded-lg shadow-sm">
+                          <item.icon className={`w-6 h-6 ${item.iconColor}`} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-800">{item.title}</h3>
+                          <p className="text-sm text-gray-600">{item.subtitle}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
+                <div className="max-w-4xl mx-auto">
+                  <button
+                    onClick={() => setPhase("raven")}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
+                      font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
+                  >
+                    <span className="text-lg">Inizia il Test</span>
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -312,11 +401,11 @@ export default function TestPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
         <div className="max-w-4xl mx-auto px-4 mb-8">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -410,4 +499,3 @@ export default function TestPage() {
     </ProtectedRoute>
   );
 }
-
