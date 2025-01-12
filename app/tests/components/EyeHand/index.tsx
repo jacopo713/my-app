@@ -288,7 +288,6 @@ const EyeHandTest: React.FC<EyeHandTestProps> = ({ onComplete }) => {
             accuracy: finalAveragePrecision,
             averageDeviation,
             score: score,
-            type: 'eyehand', // Aggiungi il type in minuscolo
           });
         }
       }
