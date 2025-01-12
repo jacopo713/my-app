@@ -1,9 +1,11 @@
 'use client';
 
-import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react'; // Importa tutte le icone necessarie
+import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 import { ComponentType } from 'react';
 
+// Definizione dell'interfaccia TestResult con il campo 'type'
 interface TestResult {
+  type: 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
   score?: number;
   accuracy?: number;
   percentile?: number;
@@ -35,7 +37,7 @@ interface TestScoreBarProps {
   };
 }
 
-// Definisci il componente TestScoreBar
+// Componente TestScoreBar
 const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: TestScoreBarProps) => {
   const percentage = (value / maxValue) * 100;
 
