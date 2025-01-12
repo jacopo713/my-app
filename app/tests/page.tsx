@@ -14,7 +14,7 @@ import {
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { type TestPhase } from './TestInstructions';
-import TestInstructions from './components/istruzioni';
+import { TestInstructionsComponent } from './TestInstructions'; // Importa il componente corretto
 
 // Stile personalizzato per rendere la freccia più spessa
 const customChevronStyle = {
@@ -309,43 +309,43 @@ export default function TestPage() {
           );
         case "raven":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <RavenTest onComplete={handleRavenComplete} />
           );
         case "eyehand":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <EyeHandTest onComplete={handleEyeHandComplete} />
           );
         case "stroop":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <StroopTest onComplete={handleStroopComplete} />
           );
         case "speedreading":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />
           );
         case "memory":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <ShortTermMemoryTest onComplete={handleMemoryComplete} />
           );
         case "schulte":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <SchulteTable onComplete={handleSchulteComplete} />
           );
         case "rhythm":
           return !testStarted ? (
-            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
           ) : (
             <RhythmTest onComplete={handleRhythmComplete} />
           );
@@ -444,7 +444,7 @@ export default function TestPage() {
     return (
       <div className="max-w-4xl mx-auto px-4">
         {!testStarted && phase !== "intro" && phase !== "results" && (
-          <TestInstructions 
+          <TestInstructionsComponent
             phase={phase}
             onStart={() => setTestStarted(true)}
           />
