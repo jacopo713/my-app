@@ -141,26 +141,25 @@ export default function TestPage() {
 
   // Funzione per gestire il completamento di un test
   const handleTestCompletion = async (testResults: TestResult, testType: string) => {
-    const normalizedType = testType.toLowerCase(); // Normalizza il type in minuscolo
     const updatedResults = {
       ...testResults,
-      type: normalizedType, // Usa il type normalizzato
+      type: testType,
     };
 
     // Aggiorna lo stato locale
     setResults(prev => ({
       ...prev,
-      [normalizedType]: updatedResults
+      [testType]: updatedResults
     }));
 
     // Salva sempre i risultati nel localStorage
     const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
-    guestResults[normalizedType] = updatedResults; // Usa il type normalizzato
+    guestResults[testType] = updatedResults;
     localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
 
     if (user) {
       // Se l'utente è registrato, salva i risultati anche nel database Firestore
-      await saveTestResults(user.uid, `${normalizedType}Test`, updatedResults); // Usa il type normalizzato
+      await saveTestResults(user.uid, `${testType}Test`, updatedResults);
     } else {
       // Per un utente guest, non effettuo un redirect immediato, salvo solo nel localStorage
       setIsGuest(true);
@@ -576,3 +575,4 @@ export default function TestPage() {
     </div>
   );
 }
+
