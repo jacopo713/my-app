@@ -1,3 +1,4 @@
+// app/checkout-success/page.tsx (o checkout-success.tsx, a seconda della struttura del tuo progetto)
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -24,9 +25,11 @@ const CheckoutSuccess: React.FC = () => {
           console.error('Transfer error:', error);
         } finally {
           setLoading(false);
-          router.push('/tests/results');
+          // Modifica il redirect qui per mandare l'utente alla dashboard
+          router.push('/dashboard');
         }
       };
+
       executeTransfer();
     } else {
       router.push('/login');
