@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown } from 'lucide-react';
@@ -112,7 +111,6 @@ export default function TestPage() {
     const timer = setTimeout(() => {
       setShowScrollIndicator(false);
     }, 5000);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -133,7 +131,6 @@ export default function TestPage() {
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-
       if (userSnap.exists()) {
         const userData = userSnap.data();
         return userData?.subscriptionStatus === 'active';
@@ -149,33 +146,35 @@ export default function TestPage() {
       type: testType,
     };
 
+    // Aggiorna lo stato locale
     setResults(prev => ({
       ...prev,
       [testType]: updatedResults
     }));
 
+    // Salva sempre i risultati nel localStorage
+    const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
+    guestResults[testType] = updatedResults;
+    localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
+
     if (user) {
-      // Se l'utente è registrato, salva i risultati nel database
+      // Se l'utente è registrato, salva i risultati anche nel database Firestore
       await saveTestResults(user.uid, `${testType}Test`, updatedResults);
     } else {
-      // Se l'utente non è registrato, salva i risultati temporaneamente nel localStorage
-      const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
-      guestResults[testType] = updatedResults;
-      localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
-      setIsGuest(true); // Imposta lo stato guest su true
-      router.push('/register'); // Reindirizza alla pagina di registrazione
-      return; // Interrompi l'esecuzione per evitare di passare alla fase successiva
+      // Per un utente guest, non effettuo un redirect immediato, salvo solo nel localStorage
+      setIsGuest(true);
     }
 
-    // Verifica lo stato dell'abbonamento
-    const isSubscribed = await checkSubscriptionStatus();
-    if (!isSubscribed && user) {
-      // Reindirizza alla pagina di pagamento o registrazione
-      router.push('/payment'); // Cambia '/payment' con il percorso della tua pagina di pagamento
-      return; // Interrompi l'esecuzione per evitare di passare alla fase successiva
+    // Se l'utente è registrato, verifico lo stato dell'abbonamento
+    if (user) {
+      const isSubscribed = await checkSubscriptionStatus();
+      if (!isSubscribed) {
+        router.push('/payment');
+        return;
+      }
     }
 
-    // Passa alla fase successiva solo se l'utente è registrato/abbonato
+    // Passa alla fase successiva (o alla fase "results", se si è concluso il flusso)
     const currentIndex = phases.indexOf(phase);
     if (currentIndex < phases.length - 1) {
       setPhase(phases[currentIndex + 1]);
@@ -183,12 +182,11 @@ export default function TestPage() {
     }
   };
 
-  // Reindirizza l'utente alla pagina dei risultati dopo la registrazione
+  // Gestione del reindirizzamento post-registrazione se l'utente era guest
   useEffect(() => {
     if (user && isGuest) {
-      // Se l'utente era guest e ora è registrato, reindirizzalo alla pagina dei risultati
       router.push('/tests/results');
-      setIsGuest(false); // Resetta lo stato guest
+      setIsGuest(false);
     }
   }, [user, isGuest, router]);
 
@@ -225,7 +223,7 @@ export default function TestPage() {
       switch (phase) {
         case "intro":
           return (
-            <div className="max-w-4xl mx-auto px-4">
+            <div className="max-w-4xl mx-auto px-4" id="scroll-container">
               {/* Header fisso */}
               <div className="sticky top-0 z-30 bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-2xl shadow-lg">
                 <div className="p-6">
@@ -333,9 +331,9 @@ export default function TestPage() {
               {/* Indicatore di scorrimento (scritta, lineetta e freccia) */}
               {showScrollIndicator && (
                 <div className="fixed bottom-20 left-0 right-0 w-full flex justify-center items-center flex-col gap-2 animate-bounce">
-                  <span className="text-sm text-gray-700 font-medium">Scroll down</span> {/* Scritta "Scroll down" */}
-                  <div className="w-16 h-0.5 bg-white"></div> {/* Lineetta bianca */}
-                  <ChevronDown className="w-8 h-8 text-blue-600" style={customChevronStyle} /> {/* Freccia più spessa e grande */}
+                  <span className="text-sm text-gray-700 font-medium">Scroll down</span>
+                  <div className="w-16 h-0.5 bg-white"></div>
+                  <ChevronDown className="w-8 h-8 text-blue-600" style={customChevronStyle} />
                 </div>
               )}
 
@@ -475,21 +473,33 @@ export default function TestPage() {
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Torna alla Dashboard
-                </button>
+                {/* Se l'utente è registrato, mostra il pulsante per andare in dashboard; altrimenti invita l'utente ad iscriversi */}
+                {user ? (
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Torna alla Dashboard
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Per vedere i risultati, iscriviti
+                  </button>
+                )}
               </div>
             </div>
           );
+        default:
+          return null;
       }
     };
 
     return (
       <div className="max-w-4xl mx-auto px-4">
-        {!testStarted && phase !== "intro" && phase !== "results" && (
+        {(!testStarted && phase !== "intro" && phase !== "results") && (
           <TestInstructionsComponent
             phase={phase}
             onStart={() => setTestStarted(true)}
@@ -515,11 +525,11 @@ export default function TestPage() {
       </div>
 
       {/* Contenuto principale con margine superiore ridotto */}
-      <div className="mt-16"> {/* Margine ridotto */}
+      <div className="mt-16">
         {renderCurrentPhase()}
       </div>
 
-      {/* Pulsante fisso in basso */}
+      {/* Pulsante fisso in basso per la navigazione manuale */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
         <div className="max-w-4xl mx-auto">
           <button
@@ -539,7 +549,7 @@ export default function TestPage() {
         </div>
       </div>
 
-      {/* Messaggio di iscrizione */}
+      {/* Messaggio di iscrizione (se necessario) */}
       {showSubscriptionPrompt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full">
@@ -565,3 +575,4 @@ export default function TestPage() {
     </div>
   );
 }
+
