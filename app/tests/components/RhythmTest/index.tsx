@@ -85,6 +85,49 @@ const MELODIES: Note[][] = [
     { note: 659.25, duration: 200, gain: 0.3 },
     { note: 523.25, duration: 400, gain: 0.3 },
     { note: 440, duration: 300, gain: 0.3 },
+  ],
+  // Livello 7: Melodia con note più lunghe e pause più brevi
+  [
+    { note: 440, duration: 700, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 523.25, duration: 500, gain: 0.3 },
+    { note: 659.25, duration: 600, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 783.99, duration: 700, gain: 0.3 },
+  ],
+  // Livello 8: Melodia con ritmo molto veloce e pause più brevi
+  [
+    { note: 440, duration: 150, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 523.25, duration: 200, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 659.25, duration: 250, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 783.99, duration: 300, gain: 0.3 },
+  ],
+  // Livello 9: Melodia con note molto complesse e ritmo irregolare
+  [
+    { note: 440, duration: 250, gain: 0.3 },
+    { note: 523.25, duration: 150, gain: 0.3 },
+    { note: 659.25, duration: 350, gain: 0.3 },
+    { note: 783.99, duration: 200, gain: 0.3 },
+    { note: 659.25, duration: 150, gain: 0.3 },
+    { note: 523.25, duration: 300, gain: 0.3 },
+    { note: 440, duration: 250, gain: 0.3 },
+  ],
+  // Livello 10: Melodia finale con ritmo molto complesso e pause brevi
+  [
+    { note: 440, duration: 200, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 523.25, duration: 150, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 659.25, duration: 300, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 783.99, duration: 200, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 659.25, duration: 150, gain: 0.3 },
+    { note: 0, duration: 50 },  // Pausa
+    { note: 523.25, duration: 250, gain: 0.3 },
   ]
 ];
 
