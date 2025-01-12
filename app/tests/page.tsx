@@ -177,7 +177,7 @@ export default function TestPage() {
   const handleSpeedReadingComplete = async (speedReadingResults: { wpm: number; percentile: number }) => {
     const updatedResults = {
       ...speedReadingResults,
-      type: 'speedReading', // Aggiungi il campo 'type'
+      type: 'speedreading', // Aggiungi il campo 'type'
     };
 
     setResults(prev => ({
