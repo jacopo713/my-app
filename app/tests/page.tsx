@@ -25,6 +25,16 @@ const customChevronStyle = {
   strokeWidth: 5,
 };
 
+// Definizione del tipo per i risultati dei test
+type TestResult = 
+  | { score: number; accuracy: number; type?: string } // Raven
+  | { score: number; accuracy: number; averageDeviation: number; type?: string } // EyeHand
+  | { score: number; percentile: number; interferenceScore: number; type?: string } // Stroop
+  | { wpm: number; percentile: number; type?: string } // SpeedReading
+  | { score: number; percentile: number; evaluation: string; type?: string } // Memory
+  | { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number; type?: string } // Schulte
+  | { precision: number; level: number; type?: string }; // Rhythm
+
 interface TestResults {
   raven: {
     score: number;
@@ -133,7 +143,7 @@ export default function TestPage() {
   };
 
   // Funzione per gestire il completamento di un test
-  const handleTestCompletion = async (testResults: any, testType: string) => {
+  const handleTestCompletion = async (testResults: TestResult, testType: string) => {
     const updatedResults = {
       ...testResults,
       type: testType,
