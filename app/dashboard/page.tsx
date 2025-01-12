@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Brain, ChevronRight } from 'lucide-react'; // Importazioni necessarie
+import { Brain, ChevronRight } from 'lucide-react';
 
 const DailyTraining = () => {
   const [loadingExerciseId, setLoadingExerciseId] = useState(null);
