@@ -5,9 +5,9 @@ import { ComponentType, useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 import { getAllUserTests } from '@/app/lib/firebase'; // Importa la funzione per recuperare i test da Firebase
 
-// Definizione dell'interfaccia TestResult
+// Definizione dell'interfaccia TestResult con il campo 'type'
 interface TestResult {
-  type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+  type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
   score?: number;
   accuracy?: number;
   percentile?: number;
