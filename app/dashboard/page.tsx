@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Brain, ChevronRight } from 'lucide-react';
 
 const DailyTraining = () => {
-  const [loadingExerciseId, setLoadingExerciseId] = useState(null);
+  const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null); // Aggiungi il tipo per lo stato
 
   const exercises = [
     {
@@ -34,7 +34,7 @@ const DailyTraining = () => {
     }
   ];
 
-  const startExercise = (exerciseId) => {
+  const startExercise = (exerciseId: number) => { // Aggiungi il tipo per il parametro
     setLoadingExerciseId(exerciseId);
   };
 
