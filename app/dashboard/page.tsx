@@ -75,9 +75,9 @@ const GlobalRanking: React.FC = () => {
     const fetchRankingData = async () => {
       try {
         const users = await getAllUsers();
-        const ranking: RankingData[] = [];
 
-        for (const user of users) {
+        // Usa Promise.all per parallelizzare il recupero dei test
+        const rankingPromises = users.map(async (user) => {
           const testResults = await getAllUserTests(user.uid);
           const testScores: { [key in TestType]?: number } = {};
 
@@ -95,15 +95,18 @@ const GlobalRanking: React.FC = () => {
           // Calcola la media dei punteggi
           const averageScore = testCount > 0 ? totalScore / testCount : 0;
 
-          ranking.push({
+          return {
             userId: user.uid,
             username: user.displayName || 'Anonymous',
             totalScore: Math.round(averageScore), // Usa la media arrotondata
             rank: 0, // Sarà calcolato dopo
             level: 1, // Puoi calcolare il livello in base al punteggio totale
             testScores,
-          });
-        }
+          };
+        });
+
+        // Esegui tutte le promesse in parallelo
+        const ranking = await Promise.all(rankingPromises);
 
         // Ordina gli utenti in base al punteggio totale (media)
         ranking.sort((a, b) => b.totalScore - a.totalScore);
