@@ -15,7 +15,7 @@ export interface TestInstructions {
   iconColor?: string; // Colore dell'icona
 }
 
-export type TestPhase = "intro" | "ravenTest" | "eyehandTest" | "stroopTest" | "speedreadingTest" | "memoryTest" | "schulteTest" | "rhythmTest" | "resultsTest";
+export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
 
 export const testInstructions: Record<TestPhase, TestInstructions> = {
   intro: {
@@ -279,4 +279,5 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
     </div>
   );
 };
+
 
