@@ -469,19 +469,8 @@ export default function TestPage() {
           </div>
         </div>
 
-        {/* Header fisso (rettangolo blu) */}
-        {phase !== "intro" && phase !== "results" && (
-          <div className="fixed top-12 left-0 right-0 z-30 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-            <div className="max-w-4xl mx-auto px-4 py-2">
-              <h1 className="text-xl font-bold text-white">
-                {testInstructions[phase].title}
-              </h1>
-            </div>
-          </div>
-        )}
-
-        {/* Contenuto principale con margine superiore per evitare sovrapposizioni */}
-        <div className="mt-24"> {/* Aggiungi margine superiore per evitare sovrapposizioni */}
+        {/* Contenuto principale con margine superiore ridotto */}
+        <div className="mt-16"> {/* Margine ridotto */}
           {renderCurrentPhase()}
         </div>
 
