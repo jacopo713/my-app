@@ -15,7 +15,7 @@ export interface TestInstructions {
   iconColor?: string; // Colore dell'icona
 }
 
-export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results" | "registration";
+export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
 
 export const testInstructions: Record<TestPhase, TestInstructions> = {
   intro: {
@@ -134,7 +134,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     steps: [
       "Trova i numeri in ordine crescente",
       "Mantieni lo sguardo al centro della tabella",
-      "Usa solo gli occhi, non muovi la testa",
+      "Usa solo gli occhi, non muovere la testa",
       "Completa la sequenza il più velocemente possibile"
     ],
     tips: [
@@ -182,25 +182,6 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Usa i risultati come base per il miglioramento"
     ],
     duration: "N/A",
-    icon: Brain,
-    gradient: "from-blue-600 to-blue-700",
-    iconColor: "text-blue-600"
-  },
-  registration: {
-    title: "Registrazione",
-    description: "Completa la registrazione per visualizzare i risultati completi del test.",
-    steps: [
-      "Inserisci il tuo nome completo",
-      "Inserisci la tua email",
-      "Crea una password sicura",
-      "Completa il processo di registrazione"
-    ],
-    tips: [
-      "Assicurati di utilizzare un'email valida",
-      "Scegli una password sicura e memorabile",
-      "Verifica di aver inserito correttamente tutti i dati"
-    ],
-    duration: "2-3 minuti",
     icon: Brain,
     gradient: "from-blue-600 to-blue-700",
     iconColor: "text-blue-600"
@@ -298,4 +279,5 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
     </div>
   );
 };
+
 
