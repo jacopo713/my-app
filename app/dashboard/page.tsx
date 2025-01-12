@@ -109,6 +109,8 @@ export default function DashboardPage() {
             </button>
           </div>
 
+          <GlobalRanking />
+
           <StatsModal 
             isOpen={showResults}
             onClose={() => setShowResults(false)}
