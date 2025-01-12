@@ -139,7 +139,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [precision, setPrecision] = useState(100);
   const [pulseScale, setPulseScale] = useState(1);
   const [currentLevel, setCurrentLevel] = useState(0);
-  // Usati per calcolare la media: somma totale dei punteggi e numero di prove effettuate
+  // Stati per il calcolo della precisione media
   const [sumPrecisions, setSumPrecisions] = useState(0);
   const [precisionCount, setPrecisionCount] = useState(0);
 
@@ -264,11 +264,12 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 3)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
-    // Aggiorno somma e conteggio per il calcolo della media
+    // Aggiorno la somma e il conteggio e calcolo la media
     setSumPrecisions(prevSum => {
       const newSum = prevSum + finalPrecision;
       setPrecisionCount(prevCount => {
         const newCount = prevCount + 1;
+        // Calcolo la media e la imposto nello state "precision"
         setPrecision(newSum / newCount);
         return newCount;
       });
@@ -282,7 +283,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
       onComplete({
-        precision, // precisione media attuale
+        precision: precision, // precisione media attuale
         level: currentLevel
       });
     }
@@ -341,7 +342,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       <div className="flex justify-center gap-4">
         {phase === 'start' && (
           <button
-            onClick={startDemo}
+            onClick={() => playMelody(true)}
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             Inizia Test
@@ -393,9 +394,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
           <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
           <li>
-            La precisione viene calcolata in base alla differenza temporale. Ora la tolleranza è pari al
-            5% della durata totale e viene applicata una penalizzazione con esponente 3, quindi anche piccole
-            deviazioni riducono notevolmente il punteggio.
+            La precisione viene calcolata in base alla differenza temporale. La tolleranza è pari al 5% della
+            durata totale e viene applicata una penalizzazione con esponente 3, per cui anche piccole deviazioni
+            riducono notevolmente il punteggio.
           </li>
           <li>Completa tutti i livelli per ottenere il punteggio finale</li>
         </ul>
