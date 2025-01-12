@@ -7,7 +7,7 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-// Definizione dei tipi
+// 1. Definizione dei tipi
 type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
 interface TestResult {
@@ -27,13 +27,24 @@ interface TestResult {
   timestamp?: string;
 }
 
+interface RankingData {
+  userId: string;
+  username: string;
+  totalScore: number;
+  rank: number;
+  level: number;
+  testScores: {
+    [key in TestType]?: number;
+  };
+}
+
 interface StatsModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: TestResult[];
 }
 
-// Componente Modal per visualizzare i risultati
+// 2. Componenti di supporto
 const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
@@ -55,7 +66,86 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
   );
 };
 
-export default function DashboardPage() {
+// 3. Componente Classifica
+const GlobalRanking: React.FC = () => {
+  // Dati mock per la classifica
+  const mockRankingData: RankingData[] = [
+    {
+      userId: '1',
+      username: 'Marco V.',
+      totalScore: 950,
+      rank: 1,
+      level: 8,
+      testScores: {
+        raven: 980,
+        memory: 920,
+        stroop: 950
+      }
+    },
+    {
+      userId: '2',
+      username: 'Laura B.',
+      totalScore: 920,
+      rank: 2,
+      level: 7,
+      testScores: {
+        raven: 910,
+        memory: 930,
+        stroop: 920
+      }
+    },
+    {
+      userId: '3',
+      username: 'Paolo M.',
+      totalScore: 890,
+      rank: 3,
+      level: 7,
+      testScores: {
+        raven: 880,
+        memory: 900,
+        stroop: 890
+      }
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Classifica Globale
+      </h2>
+      
+      <div className="space-y-4">
+        {mockRankingData.map((user) => (
+          <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg
+                ${user.rank === 1 ? 'bg-yellow-100 text-yellow-600' : 
+                  user.rank === 2 ? 'bg-gray-100 text-gray-600' :
+                  user.rank === 3 ? 'bg-orange-100 text-orange-600' :
+                  'bg-blue-100 text-blue-600'}`}>
+                {user.rank}
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">{user.username}</div>
+                <div className="text-sm text-gray-500">Livello {user.level}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-gray-900">{user.totalScore}</div>
+              <div className="text-sm text-gray-500">punti totali</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 4. Componente principale
+const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -120,4 +210,6 @@ export default function DashboardPage() {
       </div>
     </ProtectedRoute>
   );
-}
+};
+
+export default DashboardPage;
