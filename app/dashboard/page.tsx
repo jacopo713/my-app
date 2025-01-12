@@ -1,3 +1,5 @@
+'use client'; // Aggiungi questa linea all'inizio del file
+
 import React, { useState } from 'react';
 import { Brain, Trophy, ChevronRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 import TestProgressChart from './TestProgressChart'; // Importa il componente TestProgressChart
