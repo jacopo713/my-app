@@ -94,6 +94,7 @@ export default function TestPage() {
   const [progress, setProgress] = useState(0);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false); // Nuovo stato per il prompt di iscrizione
+  const [isGuest, setIsGuest] = useState(false); // Nuovo stato per gestire gli utenti guest
   const router = useRouter();
   const { user } = useAuth();
 
@@ -154,12 +155,17 @@ export default function TestPage() {
     }));
 
     if (user) {
+      // Se l'utente è registrato, salva i risultati nel database
       await saveTestResults(user.uid, `${testType}Test`, updatedResults);
+    } else {
+      // Se l'utente non è registrato, salva i risultati temporaneamente nel localStorage
+      localStorage.setItem('guestTestResults', JSON.stringify(updatedResults));
+      setIsGuest(true); // Imposta lo stato guest su true
     }
 
     // Verifica lo stato dell'abbonamento
     const isSubscribed = await checkSubscriptionStatus();
-    if (!isSubscribed) {
+    if (!isSubscribed && user) {
       // Reindirizza alla pagina di pagamento o registrazione
       router.push('/payment'); // Cambia '/payment' con il percorso della tua pagina di pagamento
       return; // Interrompi l'esecuzione per evitare di passare alla fase successiva
