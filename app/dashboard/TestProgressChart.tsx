@@ -66,7 +66,7 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
 
 export default function TestProgressChart({ data }: TestProgressChartProps) {
   // Define the type for the keys of normalizedData
-  type TestId = 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
+  type TestId = 'raven' | 'eyehand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
 
   // Normalizza i dati su una scala da 0 a 1000
   const normalizedData: Record<TestId, number> = {
