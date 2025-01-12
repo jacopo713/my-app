@@ -75,7 +75,7 @@ const DailyTraining = () => {
                   <div className="flex items-center gap-2 text-blue-600 text-sm">
                     <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <span className="animate-pulse">
-                      L'algoritmo sta elaborando...
+                      L&apos;algoritmo sta elaborando...
                     </span>
                   </div>
                 ) : (
