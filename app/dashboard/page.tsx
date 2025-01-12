@@ -10,7 +10,8 @@ const DailyTraining = () => {
     {
       id: 1,
       name: "Test di Stroop",
-      description: "Migliora la tua resistenza all&apos;interferenza cognitiva", // Apostrofo escapato
+      description: "Migliora la tua resistenza all&apos;interferenza cognitiva", {/* eslint-disable-next-line react/no-unescaped-entities */}
+<p>Migliora la tua resistenza all'interferenza cognitiva</p>
       duration: "10 minuti",
       priority: "Alta",
       result: "Resistenza Mentale: 780/1000"
