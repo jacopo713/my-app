@@ -46,7 +46,144 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     gradient: "from-blue-600 to-blue-700",
     iconColor: "text-blue-600"
   },
-  // ... (resto delle istruzioni)
+  eyehand: {
+    title: "Test di Coordinazione Occhio-Mano",
+    description: "Misura la tua precisione nel controllo del mouse e la coordinazione visivo-motoria.",
+    steps: [
+      "Appariranno dei target sullo schermo",
+      "Clicca su ciascun target il più rapidamente e precisamente possibile",
+      "Mantieni una postura comoda per massimizzare la precisione",
+      "Il test termina dopo una serie di target completati"
+    ],
+    tips: [
+      "Trova un ritmo costante tra velocità e precisione",
+      "Mantieni il polso in una posizione comoda",
+      "Respira normalmente durante l'esecuzione"
+    ],
+    duration: "5-7 minuti",
+    difficulty: "facile",
+    icon: Clock,
+    gradient: "from-green-600 to-green-700",
+    iconColor: "text-green-600"
+  },
+  stroop: {
+    title: "Test di Stroop",
+    description: "Valuta la tua capacità di gestire l'interferenza cognitiva e l'attenzione selettiva.",
+    steps: [
+      "Vedrai parole di colori scritte in colori diversi",
+      "Devi selezionare il colore in cui è scritta la parola, non il colore che la parola descrive",
+      "Rispondi il più velocemente possibile mantenendo l'accuratezza",
+      "Il test si conclude dopo un numero prestabilito di prove"
+    ],
+    tips: [
+      "Concentrati solo sul colore visibile, ignora il significato della parola",
+      "Mantieni un ritmo costante",
+      "Non esitare troppo su ogni risposta"
+    ],
+    duration: "5 minuti",
+    difficulty: "medio",
+    icon: Clock,
+    gradient: "from-purple-600 to-purple-700",
+    iconColor: "text-purple-600"
+  },
+  speedreading: {
+    title: "Test di Lettura Veloce",
+    description: "Misura la tua velocità di lettura e comprensione del testo.",
+    steps: [
+      "Leggi il testo presentato il più velocemente possibile",
+      "Cerca di comprendere il contenuto mentre leggi",
+      "Rispondi alle domande di comprensione alla fine",
+      "Il tempo di lettura viene registrato automaticamente"
+    ],
+    tips: [
+      "Usa il dito o il cursore come guida se ti aiuta",
+      "Evita di rileggere le frasi",
+      "Mantieni la concentrazione sul flusso del testo"
+    ],
+    duration: "10 minuti",
+    difficulty: "medio",
+    icon: Clock,
+    gradient: "from-orange-600 to-orange-700",
+    iconColor: "text-orange-600"
+  },
+  memory: {
+    title: "Test di Memoria a Breve Termine",
+    description: "Valuta la tua capacità di memorizzare e ricordare informazioni.",
+    steps: [
+      "Osserva attentamente la sequenza presentata",
+      "Memorizza gli elementi mostrati",
+      "Riproduci la sequenza quando richiesto",
+      "La difficoltà aumenta progressivamente"
+    ],
+    tips: [
+      "Cerca di creare associazioni mentali",
+      "Raggruppa gli elementi quando possibile",
+      "Mantieni la concentrazione durante la fase di memorizzazione"
+    ],
+    duration: "7-10 minuti",
+    difficulty: "difficile",
+    icon: Clock,
+    gradient: "from-red-600 to-red-700",
+    iconColor: "text-red-600"
+  },
+  schulte: {
+    title: "Tabella di Schulte",
+    description: "Migliora la velocità di lettura e l'ampiezza del campo visivo.",
+    steps: [
+      "Trova i numeri in ordine crescente",
+      "Mantieni lo sguardo al centro della tabella",
+      "Usa solo gli occhi, non muovere la testa",
+      "Completa la sequenza il più velocemente possibile"
+    ],
+    tips: [
+      "Cerca di vedere più numeri contemporaneamente",
+      "Non seguire un pattern predefinito",
+      "Respira normalmente e mantieni la calma"
+    ],
+    duration: "3-5 minuti",
+    difficulty: "medio",
+    icon: Clock,
+    gradient: "from-indigo-600 to-indigo-700",
+    iconColor: "text-indigo-600"
+  },
+  rhythm: {
+    title: "Test del Ritmo",
+    description: "Valuta la tua capacità di percepire e riprodurre sequenze ritmiche.",
+    steps: [
+      "Ascolta attentamente la sequenza ritmica",
+      "Memorizza il pattern presentato",
+      "Riproduci il ritmo usando la barra spaziatrice",
+      "La complessità aumenta ad ogni livello"
+    ],
+    tips: [
+      "Conta mentalmente il tempo",
+      "Concentrati sulla regolarità del ritmo",
+      "Non anticipare i battiti"
+    ],
+    duration: "5 minuti",
+    difficulty: "medio",
+    icon: Clock,
+    gradient: "from-pink-600 to-pink-700",
+    iconColor: "text-pink-600"
+  },
+  results: {
+    title: "Risultati dei Test",
+    description: "Visualizzazione e interpretazione dei risultati ottenuti.",
+    steps: [
+      "Analizza i punteggi ottenuti in ogni test",
+      "Confronta i risultati con le medie di riferimento",
+      "Identifica i tuoi punti di forza e le aree di miglioramento"
+    ],
+    tips: [
+      "Considera il contesto globale dei risultati",
+      "Non confrontare direttamente test diversi",
+      "Usa i risultati come base per il miglioramento"
+    ],
+    duration: "N/A",
+    icon: Clock,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
+  }
 };
 
 interface TestInstructionsProps {
