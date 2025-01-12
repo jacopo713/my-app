@@ -7,7 +7,7 @@ import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 
 interface TestResults {
-  type: 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
+  type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
   score?: number;
   accuracy?: number;
   percentile?: number;
