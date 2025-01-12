@@ -5,7 +5,7 @@ import { ComponentType } from 'react';
 
 // Definizione dell'interfaccia TestResult con il campo 'type'
 interface TestResult {
-  type: 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
+  type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
   score?: number;
   accuracy?: number;
   percentile?: number;
