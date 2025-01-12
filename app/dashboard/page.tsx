@@ -1,11 +1,12 @@
-'use client';
-import React, { useState } from 'react';
-import { Brain, ChevronRight, Trophy, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Brain, Trophy, ChevronRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
-import TestProgressChart from './TestProgressChart';
+import { getAllUserTests } from '@/app/lib/firebase';
+import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 const DailyTraining = () => {
-  const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null);
+  const [loadingExerciseId, setLoadingExerciseId] = useState(null);
 
   const exercises = [
     {
@@ -34,7 +35,7 @@ const DailyTraining = () => {
     }
   ];
 
-  const startExercise = (exerciseId: number) => {
+  const startExercise = (exerciseId) => {
     setLoadingExerciseId(exerciseId);
   };
 
@@ -93,10 +94,8 @@ const DailyTraining = () => {
   );
 };
 
-type LeaderboardKey = 'global' | 'raven' | 'eyehand';
-
 const Leaderboard = () => {
-  const [selectedTest, setSelectedTest] = useState<LeaderboardKey>('global');
+  const [selectedTest, setSelectedTest] = useState('global');
   const [isOpen, setIsOpen] = useState(false);
 
   const testConfigs = [
@@ -113,7 +112,7 @@ const Leaderboard = () => {
   const selectedConfig = testConfigs.find(test => test.id === selectedTest);
   const SelectedIcon = selectedConfig?.icon || Trophy;
 
-  const leaderboardData: Record<LeaderboardKey, { username: string; score: number; rank: number }[]> = {
+  const leaderboardData = {
     global: [
       { username: "Mario R.", score: 950, rank: 1 },
       { username: "Laura B.", score: 920, rank: 2 },
@@ -168,7 +167,7 @@ const Leaderboard = () => {
                 <button
                   key={test.id}
                   onClick={() => {
-                    setSelectedTest(test.id as LeaderboardKey);
+                    setSelectedTest(test.id);
                     setIsOpen(false);
                   }}
                   className={`w-full p-2 flex items-center gap-2 hover:bg-gray-50 ${
@@ -206,47 +205,97 @@ const Leaderboard = () => {
   );
 };
 
-export default function DashboardPage() {
-  const { user } = useAuth();
-
-  const handleSeeCognitiveLevels = () => {
-    const testProgressSection = document.getElementById('test-progress-section');
-    if (testProgressSection) {
-      testProgressSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+const StatsModal = ({ isOpen, onClose, testResults }) => {
+  if (!isOpen) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Ciao, {user?.displayName || 'Utente'}!
-          </h1>
-          <button 
-            onClick={handleSeeCognitiveLevels}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
-          >
-            <Brain className="w-5 h-5 text-blue-500" />
-            <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <DailyTraining />
-          </div>
-          <div>
-            <Leaderboard />
-          </div>
-        </div>
-
-        {/* Sezione TestProgressChart con id per il reindirizzamento */}
-        <div id="test-progress-section" className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Risultati Test Cognitivi</h2>
-          <TestProgressChart />
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-xl p-6 w-full max-w-4xl relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <TestProgressChart data={testResults} />
       </div>
     </div>
+  );
+};
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+  const [showStats, setShowStats] = useState(false);
+  const [testResults, setTestResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestResults = async () => {
+      if (user) {
+        try {
+          const results = await getAllUserTests(user.uid);
+          const typedResults = results.map((result) => ({
+            ...result,
+            type: result.type || result.id.replace('Test', '').toLowerCase(),
+          }));
+          setTestResults(typedResults);
+        } catch (error) {
+          console.error('Error fetching test results:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTestResults();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">
+          <div className="text-lg text-gray-600">Caricamento risultati...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Ciao, {user?.displayName || 'User'}!
+            </h1>
+            <button 
+              onClick={() => setShowStats(true)}
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+            >
+              <Brain className="w-5 h-5 text-blue-500" />
+              <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <DailyTraining />
+            </div>
+            <div>
+              <Leaderboard />
+            </div>
+          </div>
+
+          <StatsModal 
+            isOpen={showStats} 
+            onClose={() => setShowStats(false)}
+            testResults={testResults}
+          />
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 }

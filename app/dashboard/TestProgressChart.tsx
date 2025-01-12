@@ -1,9 +1,7 @@
 'use client';
 
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { ComponentType, useEffect, useState } from 'react';
-import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
-import { getAllUserTests } from '@/app/lib/firebase'; // Importa la funzione per recuperare i test da Firebase
+import { ComponentType } from 'react';
 
 // Definizione dell'interfaccia TestResult con il campo 'type'
 interface TestResult {
@@ -24,7 +22,7 @@ interface TestResult {
 }
 
 interface TestProgressChartProps {
-  // Non è più necessario passare i dati tramite props, poiché li recuperiamo direttamente qui
+  data: TestResult[];
 }
 
 interface TestScoreBarProps {
@@ -66,49 +64,24 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
   );
 };
 
-export default function TestProgressChart({}: TestProgressChartProps) {
-  const { user } = useAuth(); // Ottieni l'utente autenticato
-  const [testResults, setTestResults] = useState<TestResult[]>([]); // Stato per memorizzare i risultati dei test
-  const [loading, setLoading] = useState(true); // Stato per gestire il caricamento
-
-  // Recupera i dati da Firebase quando il componente viene renderizzato
-  useEffect(() => {
-    const fetchTestResults = async () => {
-      if (user) {
-        try {
-          // Recupera tutti i test dell'utente da Firebase
-          const results = await getAllUserTests(user.uid);
-          // Assicurati che ogni risultato abbia il campo 'type'
-          const typedResults = results.map((result) => ({
-            ...result,
-            type: result.type || result.id.replace('Test', '').toLowerCase(), // Usa 'id' come fallback se 'type' non è presente
-          }));
-          setTestResults(typedResults); // Imposta i risultati nello stato
-        } catch (error) {
-          console.error('Error fetching test results:', error);
-        } finally {
-          setLoading(false); // Ferma il caricamento
-        }
-      }
-    };
-
-    fetchTestResults(); // Chiama la funzione per recuperare i dati
-  }, [user]);
+export default function TestProgressChart({ data }: TestProgressChartProps) {
+  // Define the type for the keys of normalizedData
+  type TestId = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
   // Normalizza i dati su una scala da 0 a 1000
-  const normalizedData: Record<string, number> = {
-    raven: testResults.find((test) => test.type === 'raven')?.score || 0,
-    eyehand: Math.round((testResults.find((test) => test.type === 'eyehand')?.accuracy || 0) / 100 * 1000),
-    stroop: Math.round((testResults.find((test) => test.type === 'stroop')?.percentile || 0) / 100 * 1000),
-    speedreading: Math.round((testResults.find((test) => test.type === 'speedreading')?.wpm || 0) / 100 * 1000),
-    memory: testResults.find((test) => test.type === 'memory')?.score || 0,
-    schulte: Math.round((testResults.find((test) => test.type === 'schulte')?.percentile || 0) / 100 * 1000),
-    rhythm: Math.round((testResults.find((test) => test.type === 'rhythm')?.precision || 0) / 100 * 1000),
+  const normalizedData: Record<TestId, number> = {
+    raven: data.find((test) => test.type === 'raven')?.score || 0,
+    eyehand: Math.round((data.find((test) => test.type === 'eyehand')?.accuracy || 0) / 100 * 1000),
+    stroop: Math.round((data.find((test) => test.type === 'stroop')?.percentile || 0) / 100 * 1000),
+    speedreading: Math.round((data.find((test) => test.type === 'speedreading')?.wpm || 0) / 100 * 1000),
+    memory: data.find((test) => test.type === 'memory')?.score || 0,
+    schulte: Math.round((data.find((test) => test.type === 'schulte')?.percentile || 0) / 100 * 1000),
+    rhythm: Math.round((data.find((test) => test.type === 'rhythm')?.precision || 0) / 100 * 1000),
   };
 
   const testConfigs = [
     {
-      id: 'raven',
+      id: 'raven' as TestId,
       label: 'Ragionamento Astratto',
       icon: Brain,
       color: {
@@ -118,7 +91,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'eyehand',
+      id: 'eyehand' as TestId,
       label: 'Coordinazione Visiva',
       icon: Eye,
       color: {
@@ -128,7 +101,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'stroop',
+      id: 'stroop' as TestId,
       label: 'Interferenza Cognitiva',
       icon: ActivitySquare,
       color: {
@@ -138,7 +111,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'speedreading',
+      id: 'speedreading' as TestId,
       label: 'Lettura Veloce',
       icon: BookOpen,
       color: {
@@ -148,7 +121,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'memory',
+      id: 'memory' as TestId,
       label: 'Memoria a Breve Termine',
       icon: Lightbulb,
       color: {
@@ -158,7 +131,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'schulte',
+      id: 'schulte' as TestId,
       label: 'Attenzione Visiva',
       icon: Eye,
       color: {
@@ -168,7 +141,7 @@ export default function TestProgressChart({}: TestProgressChartProps) {
       }
     },
     {
-      id: 'rhythm',
+      id: 'rhythm' as TestId,
       label: 'Coordinazione Ritmica',
       icon: Music,
       color: {
@@ -186,18 +159,6 @@ export default function TestProgressChart({}: TestProgressChartProps) {
   const averageScore = Math.round(
     validTests.reduce((acc, test) => acc + normalizedData[test.id], 0) / validTests.length
   );
-
-  if (loading) {
-    return (
-      <div className="w-full bg-white shadow-xl rounded-xl p-6">
-        <div className="flex items-center justify-center">
-          <div className="animate-pulse">
-            <div className="text-lg text-gray-600">Caricamento risultati...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full bg-white shadow-xl rounded-xl p-6">
@@ -227,3 +188,4 @@ export default function TestProgressChart({}: TestProgressChartProps) {
     </div>
   );
 }
+
