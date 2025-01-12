@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Brain,
   Eye,
@@ -15,13 +14,6 @@ import {
 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
-  const router = useRouter();
-
-  const handleStartTest = () => {
-    // Reindirizza direttamente alla pagina del test senza controllare l'autenticazione
-    router.push('/tests');
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-gray-800">
       {/* NAVBAR */}
@@ -72,12 +64,9 @@ const HomePage: React.FC = () => {
                 <p className="text-lg mb-4 font-light">
                   Scopri il tuo potenziale intellettivo
                 </p>
-                <button
-                  onClick={handleStartTest}
-                  className="inline-block bg-white text-blue-600 font-bold text-lg px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
-                >
+                <a href="/tests" className="inline-block bg-white text-blue-600 font-bold text-lg px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl">
                   Inizia il Test
-                </button>
+                </a>
 
                 <div className="mt-4 border-t border-white/20 pt-4">
                   <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 text-sm">
