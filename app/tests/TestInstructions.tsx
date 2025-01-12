@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unescaped-entities */
+
 import React from 'react';
 import { Brain, Clock, Target, AlertCircle, ArrowRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 
