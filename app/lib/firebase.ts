@@ -31,7 +31,6 @@ interface TestResults {
   precision?: number;
   level?: number;
   timestamp?: string;
-  type?: string; // Aggiungi il campo type
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Firma di indice per supportare campi dinamici
 }
