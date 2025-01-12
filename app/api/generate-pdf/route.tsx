@@ -174,9 +174,9 @@ export async function POST(req: Request) {
       .moveDown(1)
       .fontSize(10)
       .font('Helvetica')
+      .fillColor('#666666') // Imposta il colore del testo
       .text('Questo report è stato generato automaticamente dal sistema di test del QI.', {
-        align: 'center',
-        color: '#666666'
+        align: 'center'
       });
 
     // Finalizza il documento
