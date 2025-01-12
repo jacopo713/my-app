@@ -481,8 +481,7 @@ export default function TestPage() {
   };
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
         {/* Barra di progressione fissa in alto */}
         <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-lg">
           <div className="max-w-4xl mx-auto px-4 py-2">
@@ -547,3 +546,4 @@ export default function TestPage() {
     </ProtectedRoute>
   );
 }
+      
