@@ -96,8 +96,20 @@ const DailyTraining = () => {
   );
 };
 
+interface LeaderboardEntry {
+  username: string;
+  score: number;
+  rank: number;
+}
+
+type TestType = 'global' | 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+
+interface LeaderboardData {
+  [key: string]: LeaderboardEntry[];
+}
+
 const Leaderboard = () => {
-  const [selectedTest, setSelectedTest] = useState('global');
+  const [selectedTest, setSelectedTest] = useState<TestType>('global');
   const [isOpen, setIsOpen] = useState(false);
 
   const testConfigs = [
