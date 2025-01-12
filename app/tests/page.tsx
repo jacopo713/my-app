@@ -15,7 +15,7 @@ import {
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { type TestPhase } from './TestInstructions';
 import { TestInstructionsComponent } from './TestInstructions';
-import { saveTestResults } from '@/lib/firebase'; // Importa la funzione per salvare i risultati
+import { saveTestResults } from '@/app/lib/firebase'; // Importa la funzione per salvare i risultati
 import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 
 // Stile personalizzato per rendere la freccia più spessa
