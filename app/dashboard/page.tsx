@@ -82,25 +82,30 @@ const GlobalRanking: React.FC = () => {
           const testScores: { [key in TestType]?: number } = {};
 
           let totalScore = 0;
+          let testCount = 0;
 
           testResults.forEach((test) => {
             const type = test.type as TestType;
             const score = test.score || 0; // Usa il campo score normalizzato
             testScores[type] = score;
             totalScore += score;
+            testCount += 1;
           });
+
+          // Calcola la media dei punteggi
+          const averageScore = testCount > 0 ? totalScore / testCount : 0;
 
           ranking.push({
             userId: user.uid,
             username: user.displayName || 'Anonymous',
-            totalScore,
+            totalScore: Math.round(averageScore), // Usa la media arrotondata
             rank: 0, // Sarà calcolato dopo
             level: 1, // Puoi calcolare il livello in base al punteggio totale
             testScores,
           });
         }
 
-        // Ordina gli utenti in base al punteggio totale
+        // Ordina gli utenti in base al punteggio totale (media)
         ranking.sort((a, b) => b.totalScore - a.totalScore);
 
         // Assegna il rank
@@ -160,7 +165,7 @@ const GlobalRanking: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="font-bold text-gray-900">{user.totalScore}</div>
-              <div className="text-sm text-gray-500">punti totali</div>
+              <div className="text-sm text-gray-500">punti medi</div>
             </div>
           </div>
         ))}
