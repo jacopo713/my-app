@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-undef */
 export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ phase, onStart }) => {
   const currentTest = testInstructions[phase];
 
