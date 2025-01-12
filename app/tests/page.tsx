@@ -308,19 +308,47 @@ export default function TestPage() {
             </div>
           );
         case "raven":
-          return <RavenTest onComplete={handleRavenComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <RavenTest onComplete={handleRavenComplete} />
+          );
         case "eyehand":
-          return <EyeHandTest onComplete={handleEyeHandComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <EyeHandTest onComplete={handleEyeHandComplete} />
+          );
         case "stroop":
-          return <StroopTest onComplete={handleStroopComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <StroopTest onComplete={handleStroopComplete} />
+          );
         case "speedreading":
-          return <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />
+          );
         case "memory":
-          return <ShortTermMemoryTest onComplete={handleMemoryComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <ShortTermMemoryTest onComplete={handleMemoryComplete} />
+          );
         case "schulte":
-          return <SchulteTable onComplete={handleSchulteComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <SchulteTable onComplete={handleSchulteComplete} />
+          );
         case "rhythm":
-          return <RhythmTest onComplete={handleRhythmComplete} />;
+          return !testStarted ? (
+            <TestInstructions phase={phase} onStart={() => setTestStarted(true)} />
+          ) : (
+            <RhythmTest onComplete={handleRhythmComplete} />
+          );
         case "results":
           return (
             <div className="max-w-4xl mx-auto px-4">
