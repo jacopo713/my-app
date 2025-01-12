@@ -13,7 +13,7 @@ import {
   SchulteTable, 
   RhythmTest 
 } from './components';
-import TestResults from '@/components/test/TestResults';
+import TestResults from '@/app/components/test/TestResults';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { type TestPhase } from './TestInstructions';
 import { TestInstructionsComponent } from './TestInstructions';
