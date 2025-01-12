@@ -6,6 +6,9 @@ import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
+import { signOut } from 'firebase/auth'; // Importa la funzione di logout
+import { auth } from '@/app/lib/firebase'; // Importa l'oggetto auth di Firebase
+import { useRouter } from 'next/navigation'; // Importa il router per il reindirizzamento
 
 // 1. Definizione dei tipi
 type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
@@ -217,6 +220,17 @@ const DashboardPage: React.FC = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Inizializza il router
+
+  // Funzione per gestire il logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Effettua il logout
+      router.push('/login'); // Reindirizza alla pagina di login
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchTestResults = async () => {
@@ -257,13 +271,21 @@ const DashboardPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">
               Ciao, {user?.displayName || 'User'}!
             </h1>
-            <button 
-              onClick={() => setShowResults(true)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
-            >
-              <Brain className="w-5 h-5 text-blue-500" />
-              <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
-            </button>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setShowResults(true)}
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+              >
+                <Brain className="w-5 h-5 text-blue-500" />
+                <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
+              >
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
           </div>
 
           <GlobalRanking />
