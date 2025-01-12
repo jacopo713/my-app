@@ -277,7 +277,7 @@ const StatsModal = ({ isOpen, onClose, testResults }: StatsModalProps) => {
 export default function DashboardPage() {
   const { user } = useAuth();
   const [showStats, setShowStats] = useState(false);
-  const [testResults, setTestResults] = useState([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -285,9 +285,9 @@ export default function DashboardPage() {
       if (user) {
         try {
           const results = await getAllUserTests(user.uid);
-          const typedResults = results.map((result) => ({
+          const typedResults: TestResult[] = results.map((result: any) => ({
             ...result,
-            type: result.type || result.id.replace('Test', '').toLowerCase(),
+            type: (result.type || result.id.replace('Test', '').toLowerCase()) as TestResult['type'],
           }));
           setTestResults(typedResults);
         } catch (error) {
