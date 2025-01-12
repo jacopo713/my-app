@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities */ // Disabilita la regola per l'intero file
 
 import React, { useState } from 'react';
 import { Brain, ChevronRight } from 'lucide-react';
@@ -10,8 +11,7 @@ const DailyTraining = () => {
     {
       id: 1,
       name: "Test di Stroop",
-      description: "Migliora la tua resistenza all&apos;interferenza cognitiva", {/* eslint-disable-next-line react/no-unescaped-entities */}
-<p>Migliora la tua resistenza all'interferenza cognitiva</p>
+      description: "Migliora la tua resistenza all'interferenza cognitiva", // Apostrofo non escapato
       duration: "10 minuti",
       priority: "Alta",
       result: "Resistenza Mentale: 780/1000"
