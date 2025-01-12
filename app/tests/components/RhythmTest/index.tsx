@@ -262,7 +262,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
     // Tolleranza ulteriormente ridotta: massimo errore accettato pari al 10% della durata totale
-    const maxDeviation = totalDuration * 0.01;
+    const maxDeviation = totalDuration * 0.1;
     
     // Penalizzazione non lineare più marcata: usa esponente 2.5
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2.5)));
