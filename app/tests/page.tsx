@@ -13,12 +13,14 @@ import {
   RhythmTest 
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { type TestPhase } from './TestInstructions'; // Rimossa testInstructions non utilizzata
-import { TestInstructionsComponent } from './TestInstructions'; // Importa il componente corretto
+import { type TestPhase } from './TestInstructions';
+import { TestInstructionsComponent } from './TestInstructions';
+import { saveTestResults } from '@/lib/firebase'; // Importa la funzione per salvare i risultati
+import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 
 // Stile personalizzato per rendere la freccia più spessa
 const customChevronStyle = {
-  strokeWidth: 5, // Aumentato ulteriormente lo spessore della freccia
+  strokeWidth: 5,
 };
 
 interface TestResults {
@@ -72,8 +74,9 @@ export default function TestPage() {
     rhythm: null
   });
   const [progress, setProgress] = useState(0);
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true); // Stato per l'indicatore di scorrimento
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const router = useRouter();
+  const { user } = useAuth(); // Ottieni l'utente autenticato
 
   const phases: TestPhase[] = [
     "intro", "raven", "eyehand", "stroop", 
@@ -88,7 +91,7 @@ export default function TestPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowScrollIndicator(false);
-    }, 5000); // 5 secondi
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -105,71 +108,138 @@ export default function TestPage() {
     }
   }, []);
 
-  const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
+  const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
+    const updatedResults = {
+      ...ravenResults,
+      percentile: Math.round(ravenResults.accuracy)
+    };
+
     setResults(prev => ({
       ...prev,
-      raven: {
-        ...ravenResults,
-        percentile: Math.round(ravenResults.accuracy)
-      }
+      raven: updatedResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'ravenTest', {
+        ...updatedResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(25);
     setPhase("eyehand");
   };
 
-  const handleEyeHandComplete = (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
+  const handleEyeHandComplete = async (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
+    const updatedResults = {
+      ...eyeHandResults,
+      accuracy: Math.round(eyeHandResults.accuracy)
+    };
+
     setResults(prev => ({
       ...prev,
-      eyeHand: {
-        ...eyeHandResults,
-        accuracy: Math.round(eyeHandResults.accuracy)
-      }
+      eyeHand: updatedResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'eyeHandTest', {
+        ...updatedResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(50);
     setPhase("stroop");
   };
 
-  const handleStroopComplete = (stroopResults: { score: number; percentile: number; interferenceScore: number }) => {
+  const handleStroopComplete = async (stroopResults: { score: number; percentile: number; interferenceScore: number }) => {
     setResults(prev => ({
       ...prev,
       stroop: stroopResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'stroopTest', {
+        ...stroopResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(75);
     setPhase("speedreading");
   };
 
-  const handleSpeedReadingComplete = (speedReadingResults: { wpm: number; percentile: number }) => {
+  const handleSpeedReadingComplete = async (speedReadingResults: { wpm: number; percentile: number }) => {
     setResults(prev => ({
       ...prev,
       speedReading: speedReadingResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'speedReadingTest', {
+        ...speedReadingResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(85);
     setPhase("memory");
   };
 
-  const handleMemoryComplete = (memoryResults: { score: number; percentile: number; evaluation: string }) => {
+  const handleMemoryComplete = async (memoryResults: { score: number; percentile: number; evaluation: string }) => {
     setResults(prev => ({
       ...prev,
       memory: memoryResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'memoryTest', {
+        ...memoryResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(90);
     setPhase("schulte");
   };
 
-  const handleSchulteComplete = (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
+  const handleSchulteComplete = async (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
     setResults(prev => ({
       ...prev,
       schulte: schulteResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'schulteTest', {
+        ...schulteResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(95);
     setPhase("rhythm");
   };
 
-  const handleRhythmComplete = (rhythmResults: { precision: number; level: number }) => {
+  const handleRhythmComplete = async (rhythmResults: { precision: number; level: number }) => {
     setResults(prev => ({
       ...prev,
       rhythm: rhythmResults
     }));
+
+    // Salva i risultati nel database Firebase
+    if (user) {
+      await saveTestResults(user.uid, 'rhythmTest', {
+        ...rhythmResults,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     setProgress(100);
     setPhase("results");
   };
