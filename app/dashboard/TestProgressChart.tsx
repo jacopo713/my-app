@@ -71,9 +71,9 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
   // Normalizza i dati su una scala da 0 a 1000
   const normalizedData: Record<TestId, number> = {
     raven: data.find((test) => test.type === 'raven')?.score || 0,
-    eyehand: Math.round((data.find((test) => test.type === 'eyeHand')?.accuracy || 0) / 100 * 1000),
+    eyehand: Math.round((data.find((test) => test.type === 'eyehand')?.accuracy || 0) / 100 * 1000),
     stroop: Math.round((data.find((test) => test.type === 'stroop')?.percentile || 0) / 100 * 1000),
-    speedreading: Math.round((data.find((test) => test.type === 'speedReading')?.wpm || 0) / 100 * 1000),
+    speedreading: Math.round((data.find((test) => test.type === 'speedreading')?.wpm || 0) / 100 * 1000),
     memory: data.find((test) => test.type === 'memory')?.score || 0,
     schulte: Math.round((data.find((test) => test.type === 'schulte')?.percentile || 0) / 100 * 1000),
     rhythm: Math.round((data.find((test) => test.type === 'rhythm')?.precision || 0) / 100 * 1000),
