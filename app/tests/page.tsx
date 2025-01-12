@@ -163,6 +163,8 @@ export default function TestPage() {
       guestResults[testType] = updatedResults;
       localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
       setIsGuest(true); // Imposta lo stato guest su true
+      router.push('/register'); // Reindirizza alla pagina di registrazione
+      return; // Interrompi l'esecuzione per evitare di passare alla fase successiva
     }
 
     // Verifica lo stato dell'abbonamento
