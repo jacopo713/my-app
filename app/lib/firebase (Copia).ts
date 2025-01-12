@@ -31,7 +31,6 @@ interface TestResults {
   precision?: number;
   level?: number;
   timestamp?: string;
-  type?: string; // Aggiungi il campo 'type'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Firma di indice per supportare campi dinamici
 }
@@ -45,7 +44,7 @@ interface TestResults {
 export const saveTestResults = async (userId: string, testId: string, results: TestResults) => {
   try {
     const testRef = doc(db, 'users', userId, 'tests', testId);
-    await setDoc(testRef, { ...results, type: testId }, { merge: true }); // Aggiungi il campo 'type'
+    await setDoc(testRef, results, { merge: true }); // Usa merge per non sovrascrivere altri dati
     console.log('Test results saved successfully!');
   } catch (error) {
     console.error('Error saving test results:', error);

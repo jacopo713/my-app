@@ -15,8 +15,8 @@ import {
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { type TestPhase } from './TestInstructions';
 import { TestInstructionsComponent } from './TestInstructions';
-import { saveTestResults } from '@/app/lib/firebase';
-import { useAuth } from '@/app/contexts/AuthContext';
+import { saveTestResults } from '@/app/lib/firebase'; // Importa la funzione per salvare i risultati
+import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 
 // Stile personalizzato per rendere la freccia più spessa
 const customChevronStyle = {
@@ -28,30 +28,25 @@ interface TestResults {
     score: number;
     accuracy: number;
     percentile?: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   eyeHand: {
     score: number;
     accuracy: number;
     averageDeviation: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   stroop: {
     score: number;
     percentile: number;
     interferenceScore: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   speedReading: {
     wpm: number;
     percentile: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   memory: {
     score: number;
     percentile: number;
     evaluation: string;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   schulte: {
     score: number;
@@ -59,12 +54,10 @@ interface TestResults {
     gridSizes: number[];
     completionTimes: number[];
     percentile: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
   rhythm: {
     precision: number;
     level: number;
-    type?: string; // Aggiungi il campo 'type'
   } | null;
 }
 
@@ -83,7 +76,7 @@ export default function TestPage() {
   const [progress, setProgress] = useState(0);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuth(); // Ottieni l'utente autenticato
 
   const phases: TestPhase[] = [
     "intro", "raven", "eyehand", "stroop", 
@@ -118,8 +111,7 @@ export default function TestPage() {
   const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
     const updatedResults = {
       ...ravenResults,
-      percentile: Math.round(ravenResults.accuracy),
-      type: 'raven', // Aggiungi il campo 'type'
+      percentile: Math.round(ravenResults.accuracy)
     };
 
     setResults(prev => ({
@@ -127,8 +119,12 @@ export default function TestPage() {
       raven: updatedResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'ravenTest', updatedResults);
+      await saveTestResults(user.uid, 'ravenTest', {
+        ...updatedResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(25);
@@ -138,8 +134,7 @@ export default function TestPage() {
   const handleEyeHandComplete = async (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
     const updatedResults = {
       ...eyeHandResults,
-      accuracy: Math.round(eyeHandResults.accuracy),
-      type: 'eyeHand', // Aggiungi il campo 'type'
+      accuracy: Math.round(eyeHandResults.accuracy)
     };
 
     setResults(prev => ({
@@ -147,8 +142,12 @@ export default function TestPage() {
       eyeHand: updatedResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'eyeHandTest', updatedResults);
+      await saveTestResults(user.uid, 'eyeHandTest', {
+        ...updatedResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(50);
@@ -156,18 +155,17 @@ export default function TestPage() {
   };
 
   const handleStroopComplete = async (stroopResults: { score: number; percentile: number; interferenceScore: number }) => {
-    const updatedResults = {
-      ...stroopResults,
-      type: 'stroop', // Aggiungi il campo 'type'
-    };
-
     setResults(prev => ({
       ...prev,
-      stroop: updatedResults
+      stroop: stroopResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'stroopTest', updatedResults);
+      await saveTestResults(user.uid, 'stroopTest', {
+        ...stroopResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(75);
@@ -175,18 +173,17 @@ export default function TestPage() {
   };
 
   const handleSpeedReadingComplete = async (speedReadingResults: { wpm: number; percentile: number }) => {
-    const updatedResults = {
-      ...speedReadingResults,
-      type: 'speedReading', // Aggiungi il campo 'type'
-    };
-
     setResults(prev => ({
       ...prev,
-      speedReading: updatedResults
+      speedReading: speedReadingResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'speedReadingTest', updatedResults);
+      await saveTestResults(user.uid, 'speedReadingTest', {
+        ...speedReadingResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(85);
@@ -194,18 +191,17 @@ export default function TestPage() {
   };
 
   const handleMemoryComplete = async (memoryResults: { score: number; percentile: number; evaluation: string }) => {
-    const updatedResults = {
-      ...memoryResults,
-      type: 'memory', // Aggiungi il campo 'type'
-    };
-
     setResults(prev => ({
       ...prev,
-      memory: updatedResults
+      memory: memoryResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'memoryTest', updatedResults);
+      await saveTestResults(user.uid, 'memoryTest', {
+        ...memoryResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(90);
@@ -213,18 +209,17 @@ export default function TestPage() {
   };
 
   const handleSchulteComplete = async (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
-    const updatedResults = {
-      ...schulteResults,
-      type: 'schulte', // Aggiungi il campo 'type'
-    };
-
     setResults(prev => ({
       ...prev,
-      schulte: updatedResults
+      schulte: schulteResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'schulteTest', updatedResults);
+      await saveTestResults(user.uid, 'schulteTest', {
+        ...schulteResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(95);
@@ -232,18 +227,17 @@ export default function TestPage() {
   };
 
   const handleRhythmComplete = async (rhythmResults: { precision: number; level: number }) => {
-    const updatedResults = {
-      ...rhythmResults,
-      type: 'rhythm', // Aggiungi il campo 'type'
-    };
-
     setResults(prev => ({
       ...prev,
-      rhythm: updatedResults
+      rhythm: rhythmResults
     }));
 
+    // Salva i risultati nel database Firebase
     if (user) {
-      await saveTestResults(user.uid, 'rhythmTest', updatedResults);
+      await saveTestResults(user.uid, 'rhythmTest', {
+        ...rhythmResults,
+        timestamp: new Date().toISOString()
+      });
     }
 
     setProgress(100);

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import TestProgressChart from '@/app/dashboard/TestProgressChart'; // Importa il componente del grafico
+import TestProgressChart from '@/app/dashboard/TestProgressChart';
 
 interface TestResults {
   type: 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
@@ -37,7 +37,7 @@ export default function DashboardPage() {
           // Assicurati che ogni risultato abbia il campo 'type'
           const typedResults = results.map((result) => ({
             ...result,
-            type: result.type || 'unknown', // Imposta un valore di default se 'type' non è presente
+            type: result.type || result.id.replace('Test', '').toLowerCase(), // Usa 'id' come fallback se 'type' non è presente
           }));
           setTestResults(typedResults);
         } catch (error) {
@@ -90,6 +90,7 @@ export default function DashboardPage() {
                           {test.score && <p><strong>Score:</strong> {test.score}</p>}
                           {test.accuracy && <p><strong>Accuracy:</strong> {test.accuracy}%</p>}
                           {test.timestamp && <p><strong>Date:</strong> {new Date(test.timestamp).toLocaleDateString()}</p>}
+                          {test.type && <p><strong>Type:</strong> {test.type}</p>} {/* Mostra il tipo di test */}
                           {/* Aggiungi altri campi qui se necessario */}
                         </div>
                       </div>
