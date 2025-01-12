@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain } from 'lucide-react';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getAllUserTests, getAllUsers } from '@/app/lib/firebase'; // Aggiungi getAllUsers
+import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 // 1. Definizione dei tipi

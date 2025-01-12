@@ -36,6 +36,14 @@ interface TestResults {
   [key: string]: any; // Firma di indice per supportare campi dinamici
 }
 
+// Interfaccia per i dati dell'utente
+interface UserData {
+  uid: string;
+  displayName?: string; // Campo opzionale
+  email?: string; // Altri campi opzionali
+  level?: number; // Altri campi opzionali
+}
+
 /**
  * Salva i risultati di un test per un utente specifico.
  * @param userId - ID dell'utente.
@@ -117,14 +125,14 @@ export const getAllUserTests = async (userId: string): Promise<TestResults[]> =>
  * Recupera tutti gli utenti da Firestore.
  * @returns Un array di oggetti utente con uid e altri dati.
  */
-export const getAllUsers = async () => {
+export const getAllUsers = async (): Promise<UserData[]> => {
   try {
     const usersCollection = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCollection);
     const users = usersSnapshot.docs.map(doc => ({
       uid: doc.id,
       ...doc.data(),
-    }));
+    })) as UserData[]; // Cast esplicito a UserData[]
     return users;
   } catch (error) {
     console.error('Errore durante il recupero degli utenti:', error);
@@ -132,4 +140,4 @@ export const getAllUsers = async () => {
   }
 };
 
-export { app, auth, db }; // Rimuovi getAllUsers da qui
+export { app, auth, db };
