@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,13 +16,30 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Interfaccia per i risultati del test
+interface TestResults {
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+}
+
 /**
  * Salva i risultati di un test per un utente specifico.
  * @param userId - ID dell'utente.
  * @param testId - ID del test (es. "ravenTest").
  * @param results - Risultati del test da salvare.
  */
-export const saveTestResults = async (userId: string, testId: string, results: any) => {
+export const saveTestResults = async (userId: string, testId: string, results: TestResults) => {
   try {
     const testRef = doc(db, 'users', userId, 'tests', testId);
     await setDoc(testRef, results, { merge: true }); // Usa merge per non sovrascrivere altri dati
@@ -39,12 +56,12 @@ export const saveTestResults = async (userId: string, testId: string, results: a
  * @param testId - ID del test (es. "ravenTest").
  * @returns Risultati del test o null se non trovati.
  */
-export const getTestResults = async (userId: string, testId: string) => {
+export const getTestResults = async (userId: string, testId: string): Promise<TestResults | null> => {
   try {
     const testRef = doc(db, 'users', userId, 'tests', testId);
     const docSnap = await getDoc(testRef);
     if (docSnap.exists()) {
-      return docSnap.data();
+      return docSnap.data() as TestResults;
     } else {
       console.log('No test results found for this user and test.');
       return null;
@@ -61,7 +78,7 @@ export const getTestResults = async (userId: string, testId: string) => {
  * @param testId - ID del test (es. "ravenTest").
  * @param newResults - Nuovi risultati da aggiornare.
  */
-export const updateTestResults = async (userId: string, testId: string, newResults: any) => {
+export const updateTestResults = async (userId: string, testId: string, newResults: TestResults) => {
   try {
     const testRef = doc(db, 'users', userId, 'tests', testId);
     await updateDoc(testRef, newResults);
@@ -77,13 +94,13 @@ export const updateTestResults = async (userId: string, testId: string, newResul
  * @param userId - ID dell'utente.
  * @returns Array di oggetti contenenti i risultati di tutti i test.
  */
-export const getAllUserTests = async (userId: string) => {
+export const getAllUserTests = async (userId: string): Promise<TestResults[]> => {
   try {
     const testsRef = collection(db, 'users', userId, 'tests');
     const querySnapshot = await getDocs(testsRef);
-    const tests: any[] = [];
+    const tests: TestResults[] = [];
     querySnapshot.forEach((doc) => {
-      tests.push({ id: doc.id, ...doc.data() });
+      tests.push({ id: doc.id, ...doc.data() } as TestResults);
     });
     return tests;
   } catch (error) {
