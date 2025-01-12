@@ -424,4 +424,99 @@ export default function TestPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
         <div className="max-w-4xl mx-auto px-4 mb-8">
-          <div className="w-full h-2 bg-gray-100
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        {renderCurrentPhase()}
+        
+        <div className="fixed bottom-4 right-4 z-50">
+          <button
+            onClick={() => {
+              const currentIndex = phases.indexOf(phase);
+              if (currentIndex < phases.length - 1) {
+                const nextPhase = phases[currentIndex + 1];
+                setPhase(nextPhase);
+                setProgress(Math.min((currentIndex + 1) * 15, 100));
+
+                const mockResult = {
+                  score: 85,
+                  accuracy: 90,
+                  percentile: 75,
+                  averageDeviation: 5,
+                  averageReactionTime: 450,
+                  interferenceScore: 100,
+                  responsesPerMinute: "45",
+                  wpm: 300,
+                  evaluation: "Eccellente",
+                  level: 3,
+                  gridSizes: [3, 4, 5],
+                  completionTimes: [10, 15, 20],
+                  precision: 95
+                };
+
+                switch(phase) {
+                  case "raven":
+                    setResults(prev => ({ ...prev, raven: { 
+                      score: mockResult.score, 
+                      accuracy: mockResult.accuracy, 
+                      percentile: mockResult.percentile 
+                    }}));
+                    break;
+                  case "eyehand":
+                    setResults(prev => ({ ...prev, eyeHand: { 
+                      score: mockResult.score, 
+                      accuracy: mockResult.accuracy, 
+                      averageDeviation: mockResult.averageDeviation 
+                    }}));
+                    break;
+                  case "stroop":
+                    setResults(prev => ({ ...prev, stroop: { 
+                      score: mockResult.score,
+                      percentile: mockResult.percentile,
+                      interferenceScore: mockResult.interferenceScore
+                    }}));
+                    break;
+                  case "speedreading":
+                    setResults(prev => ({ ...prev, speedReading: { 
+                      wpm: mockResult.wpm, 
+                      percentile: mockResult.percentile
+                    }}));
+                    break;
+                  case "memory":
+                    setResults(prev => ({ ...prev, memory: { 
+                      score: mockResult.score,
+                      percentile: mockResult.percentile,
+                      evaluation: mockResult.evaluation 
+                    }}));
+                    break;
+                  case "schulte":
+                    setResults(prev => ({ ...prev, schulte: { 
+                      score: mockResult.score,
+                      averageTime: mockResult.averageDeviation,
+                      gridSizes: mockResult.gridSizes,
+                      completionTimes: mockResult.completionTimes,
+                      percentile: mockResult.percentile
+                    }}));
+                    break;
+                  case "rhythm":
+                    setResults(prev => ({ ...prev, rhythm: { 
+                      precision: mockResult.precision,
+                      level: mockResult.level 
+                    }}));
+                    break;
+                }
+              }
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+          >
+            <span className="text-sm">Salta alla Fase Successiva →</span>
+          </button>
+        </div>
+      </div>
+    </ProtectedRoute>
+  );
+}
