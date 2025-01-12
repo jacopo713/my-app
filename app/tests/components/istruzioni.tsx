@@ -1,10 +1,11 @@
 import { TestPhase } from '../TestInstructions';
 import { testInstructions } from '../TestInstructions';
 
-<TestInstructionsComponent
-  phase={currentPhase} // Passa la fase corrente
-  onStart={() => setTestStarted(true)} // Funzione per avviare il test
-/>
+interface TestInstructionsProps {
+  phase: TestPhase;
+  onStart: () => void;
+}
+
 
 export default function TestInstructions({ phase, onStart }: TestInstructionsProps) {
   const instructions = testInstructions[phase];
