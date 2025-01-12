@@ -1,6 +1,6 @@
 // app/api/generate-pdf/route.ts
 import { NextResponse } from 'next/server';
-import { admin, db } from '@/app/lib/firebaseAdmin';
+import { admin } from '@/app/lib/firebaseAdmin';
 import PDFDocument from 'pdfkit';
 
 export async function POST(req: Request) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       if (decodedToken.uid !== userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
-    } catch (err) {
+    } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     });
 
     // Array per contenere i chunks del PDF
-    const chunks: any[] = [];
+    const chunks: Buffer[] = [];
 
     // Cattura i chunks del PDF
     doc.on('data', chunk => chunks.push(chunk));

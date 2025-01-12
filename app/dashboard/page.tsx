@@ -5,9 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
-import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { Brain, Eye, ActivitySquare, BookOpen, Music, BarChart3, Download, Share2 } from 'lucide-react';
+import { Brain, Eye, BarChart3, Download, Share2 } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -76,7 +75,6 @@ export default function DashboardPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'compare'>('overview');
-  const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
