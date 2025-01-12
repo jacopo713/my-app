@@ -132,4 +132,4 @@ export const getAllUsers = async () => {
   }
 };
 
-export { app, auth, db, getAllUsers };
+export { app, auth, db }; // Rimuovi getAllUsers da qui
