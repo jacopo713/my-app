@@ -14,9 +14,9 @@ interface RhythmTestProps {
 }
 
 interface Note {
-  note: number;    
-  duration: number; 
-  gain?: number;   
+  note: number;    // Frequenza della nota (0 per le pause)
+  duration: number; // Durata in millisecondi
+  gain?: number;   // Guadagno (volume) da riprodurre
 }
 
 interface AudioResources {
@@ -145,7 +145,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const startTimeRef = useRef<number | null>(null);
   const audioCleanupRef = useRef<(() => void) | null>(null);
 
-  // Ottiene la melodia corrente
+  // Ottiene la melodia corrente e la sua durata
   const currentMelody = MELODIES[currentLevel];
   const totalDuration = currentMelody.reduce((acc, { duration }) => acc + duration, 0);
   const isLastLevel = currentLevel === MELODIES.length - 1;
@@ -223,7 +223,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       osc.start(startTime);
       osc.stop(startTime + duration / 1000);
 
-      // Effetto visivo
+      // Effetto visivo: aumenta il pulsante (pulse) in corrispondenza di ciascuna nota
       setTimeout(() => {
         setPulseScale(1.3);
         setTimeout(() => setPulseScale(1), 100);
@@ -239,6 +239,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     startTimeRef.current = performance.now();
 
     if (isDemo) {
+      // Per la modalità demo, quando finisce la melodia si passa alla fase "replay"
       const stopTimeout = setTimeout(() => {
         setIsPlaying(false);
         setPhase('replay');
@@ -260,21 +261,26 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
-    // Consideriamo una deviazione massima accettabile del 30% del tempo totale
-    const maxDeviation = totalDuration * 0.3;
-    
-    // Calcoliamo la precisione con una scala non lineare
-    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2)));
+    // Aumentiamo la tolleranza: qui il massimo errore accettato è il 50% della durata totale
+    const maxDeviation = totalDuration * 0.5;
+
+    // Calcolo della precisione con scala LINEARE:
+    // Se la deviazione è pari a maxDeviation o più, la precisione diventa 0
+    // Altrimenti la precisione scende linearmente da 100 a 0
+    const calculatedPrecision = Math.max(0, 100 * (1 - deviation / maxDeviation));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
+    // Aggiungo il punteggio di questa riproduzione ed aggiorno la media
     setPrecisions(prev => [...prev, finalPrecision]);
-    const averagePrecision = [...precisions, finalPrecision].reduce((a, b) => a + b, 0) / (precisions.length + 1);
+    const newPrecisions = [...precisions, finalPrecision];
+    const averagePrecision = newPrecisions.reduce((a, b) => a + b, 0) / newPrecisions.length;
     setPrecision(averagePrecision);
 
     setIsPlaying(false);
     setPhase('results');
     cleanupAudio();
 
+    // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
       onComplete({ 
         precision: averagePrecision,
@@ -293,7 +299,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [cleanupAudio, isLastLevel]);
 
-  // Cleanup al dismount
+  // Cleanup quando il componente viene smontato
   useEffect(() => {
     return () => {
       cleanupAudio();
@@ -397,7 +403,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           <li>Ascolta attentamente la melodia di esempio</li>
           <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
           <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
-          <li>La tua precisione sarà calcolata in base alla differenza temporale</li>
+          <li>La tua precisione sarà calcolata in base alla differenza temporale, considerando una tolleranza fino al 50% della durata totale</li>
           <li>Completa tutti i livelli per migliorare il tuo punteggio finale</li>
         </ul>
       </div>
@@ -406,3 +412,4 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 };
 
 export default RhythmTest;
+
