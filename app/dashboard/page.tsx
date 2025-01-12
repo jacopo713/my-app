@@ -7,25 +7,30 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
+// Definizione dei tipi
+type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+
+interface TestResult {
+  type: TestType;
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+}
+
 interface StatsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: Array<{
-    type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
-    score?: number;
-    accuracy?: number;
-    percentile?: number;
-    averageDeviation?: number;
-    interferenceScore?: number;
-    wpm?: number;
-    evaluation?: string;
-    averageTime?: number;
-    gridSizes?: number[];
-    completionTimes?: number[];
-    precision?: number;
-    level?: number;
-    timestamp?: string;
-  }>;
+  data: TestResult[];
 }
 
 // Componente Modal per visualizzare i risultati
@@ -52,7 +57,7 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [testResults, setTestResults] = useState([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -61,10 +66,11 @@ export default function DashboardPage() {
       if (user) {
         try {
           const results = await getAllUserTests(user.uid);
-          setTestResults(results.map(result => ({
+          const typedResults: TestResult[] = results.map(result => ({
             ...result,
-            type: result.type || result.id.replace('Test', '').toLowerCase(),
-          })));
+            type: (result.type || result.id.replace('Test', '').toLowerCase()) as TestType
+          }));
+          setTestResults(typedResults);
         } catch (error) {
           console.error('Error fetching test results:', error);
         } finally {
@@ -103,11 +109,6 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <div className="mb-8">
-            <TestProgressChart data={testResults} />
-          </div>
-
-          {/* Modal per visualizzare i risultati */}
           <StatsModal 
             isOpen={showResults}
             onClose={() => setShowResults(false)}
