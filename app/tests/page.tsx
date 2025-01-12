@@ -12,7 +12,6 @@ import {
   SchulteTable, 
   RhythmTest 
 } from './components';
-import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { type TestPhase } from './TestInstructions';
 import { TestInstructionsComponent } from './TestInstructions';
 import { saveTestResults } from '@/app/lib/firebase';
@@ -161,10 +160,12 @@ export default function TestPage() {
     // Verifica lo stato dell'abbonamento
     const isSubscribed = await checkSubscriptionStatus();
     if (!isSubscribed) {
-      setShowSubscriptionPrompt(true); // Mostra il prompt di iscrizione
+      // Reindirizza alla pagina di pagamento o registrazione
+      router.push('/payment'); // Cambia '/payment' con il percorso della tua pagina di pagamento
+      return; // Interrompi l'esecuzione per evitare di passare alla fase successiva
     }
 
-    // Passa alla fase successiva
+    // Passa alla fase successiva solo se l'utente è registrato/abbonato
     const currentIndex = phases.indexOf(phase);
     if (currentIndex < phases.length - 1) {
       setPhase(phases[currentIndex + 1]);
@@ -482,68 +483,66 @@ export default function TestPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-        {/* Barra di progressione fissa in alto */}
-        <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-lg">
-          <div className="max-w-4xl mx-auto px-4 py-2">
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+      {/* Barra di progressione fissa in alto */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 py-2">
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
+      </div>
 
-        {/* Contenuto principale con margine superiore ridotto */}
-        <div className="mt-16"> {/* Margine ridotto */}
-          {renderCurrentPhase()}
+      {/* Contenuto principale con margine superiore ridotto */}
+      <div className="mt-16"> {/* Margine ridotto */}
+        {renderCurrentPhase()}
+      </div>
+
+      {/* Pulsante fisso in basso */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={() => {
+              const currentIndex = phases.indexOf(phase);
+              if (currentIndex < phases.length - 1) {
+                const nextPhase = phases[currentIndex + 1];
+                setPhase(nextPhase);
+                setProgress(Math.min((currentIndex + 1) * 15, 100));
+              }
+            }}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
+              font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
+          >
+            <span className="text-lg">Salta alla Fase Successiva →</span>
+          </button>
         </div>
+      </div>
 
-        {/* Pulsante fisso in basso */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
-          <div className="max-w-4xl mx-auto">
+      {/* Messaggio di iscrizione */}
+      {showSubscriptionPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Iscriviti per continuare</h2>
+            <p className="text-gray-600 mb-6">
+              Per accedere ai risultati completi dei test e alle funzionalità premium, iscriviti ora.
+            </p>
             <button
-              onClick={() => {
-                const currentIndex = phases.indexOf(phase);
-                if (currentIndex < phases.length - 1) {
-                  const nextPhase = phases[currentIndex + 1];
-                  setPhase(nextPhase);
-                  setProgress(Math.min((currentIndex + 1) * 15, 100));
-                }
-              }}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
-                font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
+              onClick={() => router.push('/register')}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
-              <span className="text-lg">Salta alla Fase Successiva →</span>
+              Iscriviti ora
+            </button>
+            <button
+              onClick={() => setShowSubscriptionPrompt(false)}
+              className="w-full mt-4 text-gray-600 hover:text-gray-800"
+            >
+              Continua senza iscrizione
             </button>
           </div>
         </div>
-
-        {/* Messaggio di iscrizione */}
-        {showSubscriptionPrompt && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Iscriviti per continuare</h2>
-              <p className="text-gray-600 mb-6">
-                Per accedere ai risultati completi dei test e alle funzionalità premium, iscriviti ora.
-              </p>
-              <button
-                onClick={() => router.push('/register')}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Iscriviti ora
-              </button>
-              <button
-                onClick={() => setShowSubscriptionPrompt(false)}
-                className="w-full mt-4 text-gray-600 hover:text-gray-800"
-              >
-                Continua senza iscrizione
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </ProtectedRoute>
+      )}
+    </div>
   );
 }
-      
