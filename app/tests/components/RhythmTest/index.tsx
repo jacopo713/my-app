@@ -139,8 +139,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [precision, setPrecision] = useState(100);
   const [pulseScale, setPulseScale] = useState(1);
   const [currentLevel, setCurrentLevel] = useState(0);
-  // Utilizziamo uno state per salvare le precisioni ottenute in ciascuna prova
-  const [precisionRecords, setPrecisionRecords] = useState<number[]>([]);
+  // Usati per calcolare la media: somma totale dei punteggi e numero di prove effettuate
+  const [sumPrecisions, setSumPrecisions] = useState(0);
+  const [precisionCount, setPrecisionCount] = useState(0);
 
   // Refs per la gestione del timing
   const startTimeRef = useRef<number | null>(null);
@@ -251,12 +252,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [audioResources, cleanupAudio, currentMelody, initAudioContext, totalDuration]);
 
-  // Gestori eventi
-  const startDemo = useCallback(() => {
-    setPhase('listen');
-    playMelody(true);
-  }, [playMelody]);
-
+  // Gestione dell'evento "Stop" durante la riproduzione
   const stopReplay = useCallback(() => {
     if (!startTimeRef.current || !audioResources) return;
 
@@ -264,17 +260,19 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     const deviation = Math.abs(elapsed - totalDuration);
     // Tolleranza ridotta al 5% della durata totale
     const maxDeviation = totalDuration * 0.05;
-    // Penalizzazione con esponente 3 per un effetto ancora più marcato
+    // Penalizzazione con esponente 3
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 3)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
-    // Aggiorno le precisioni: assicurandoci di usare il valore corrente
-    setPrecisionRecords(prevRecords => {
-      const newRecords = [...prevRecords, finalPrecision];
-      // Calcolo della media
-      const avgPrecision = newRecords.reduce((sum, curr) => sum + curr, 0) / newRecords.length;
-      setPrecision(avgPrecision);
-      return newRecords;
+    // Aggiorno somma e conteggio per il calcolo della media
+    setSumPrecisions(prevSum => {
+      const newSum = prevSum + finalPrecision;
+      setPrecisionCount(prevCount => {
+        const newCount = prevCount + 1;
+        setPrecision(newSum / newCount);
+        return newCount;
+      });
+      return newSum;
     });
 
     setIsPlaying(false);
@@ -284,7 +282,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
       onComplete({
-        precision,
+        precision, // precisione media attuale
         level: currentLevel
       });
     }
@@ -296,7 +294,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       setCurrentLevel(prev => prev + 1);
       setPhase('start');
       setPrecision(100);
-      setPrecisionRecords([]);
+      setSumPrecisions(0);
+      setPrecisionCount(0);
     }
   }, [cleanupAudio, isLastLevel]);
 
@@ -382,7 +381,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'replay' && !isPlaying && "Riproduci la melodia quando sei pronto"}
         {phase === 'replay' && isPlaying && "Ferma quando pensi che la melodia dovrebbe finire"}
         {phase === 'results' &&
-          (isLastLevel ? "Test completato! Hai superato tutti i livelli!" : "Livello completato! Prosegui al successivo")}
+          (isLastLevel
+            ? "Test completato! Hai superato tutti i livelli!"
+            : "Livello completato! Prosegui al successivo")}
       </div>
 
       <div className="mt-8 text-sm text-gray-600">
