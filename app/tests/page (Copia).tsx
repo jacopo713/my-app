@@ -17,8 +17,6 @@ import { type TestPhase } from './TestInstructions';
 import { TestInstructionsComponent } from './TestInstructions';
 import { saveTestResults } from '@/app/lib/firebase';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/app/lib/firebase';
 
 // Stile personalizzato per rendere la freccia più spessa
 const customChevronStyle = {
@@ -30,30 +28,30 @@ interface TestResults {
     score: number;
     accuracy: number;
     percentile?: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   eyeHand: {
     score: number;
     accuracy: number;
     averageDeviation: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   stroop: {
     score: number;
     percentile: number;
     interferenceScore: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   speedReading: {
     wpm: number;
     percentile: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   memory: {
     score: number;
     percentile: number;
     evaluation: string;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   schulte: {
     score: number;
@@ -61,12 +59,12 @@ interface TestResults {
     gridSizes: number[];
     completionTimes: number[];
     percentile: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
   rhythm: {
     precision: number;
     level: number;
-    type?: string;
+    type?: string; // Aggiungi il campo 'type'
   } | null;
 }
 
@@ -84,7 +82,6 @@ export default function TestPage() {
   });
   const [progress, setProgress] = useState(0);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
-  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false); // Nuovo stato per il prompt di iscrizione
   const router = useRouter();
   const { user } = useAuth();
 
@@ -118,76 +115,139 @@ export default function TestPage() {
     }
   }, []);
 
-  // Funzione per verificare lo stato dell'abbonamento
-  const checkSubscriptionStatus = async () => {
-    if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        return userData?.subscriptionStatus === 'active';
-      }
-    }
-    return false;
-  };
-
-  // Funzione per gestire il completamento di un test
-  const handleTestCompletion = async (testResults: any, testType: string) => {
+  const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
     const updatedResults = {
-      ...testResults,
-      type: testType,
+      ...ravenResults,
+      percentile: Math.round(ravenResults.accuracy),
+      type: 'raven', // Aggiungi il campo 'type'
     };
 
     setResults(prev => ({
       ...prev,
-      [testType]: updatedResults
+      raven: updatedResults
     }));
 
     if (user) {
-      await saveTestResults(user.uid, `${testType}Test`, updatedResults);
+      await saveTestResults(user.uid, 'ravenTest', updatedResults);
     }
 
-    // Verifica lo stato dell'abbonamento
-    const isSubscribed = await checkSubscriptionStatus();
-    if (!isSubscribed) {
-      setShowSubscriptionPrompt(true); // Mostra il prompt di iscrizione
-    }
-
-    // Passa alla fase successiva
-    const currentIndex = phases.indexOf(phase);
-    if (currentIndex < phases.length - 1) {
-      setPhase(phases[currentIndex + 1]);
-      setProgress(Math.min((currentIndex + 1) * 15, 100));
-    }
-  };
-
-  const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
-    await handleTestCompletion(ravenResults, 'raven');
+    setProgress(25);
+    setPhase("eyehand");
   };
 
   const handleEyeHandComplete = async (eyeHandResults: { score: number; accuracy: number; averageDeviation: number }) => {
-    await handleTestCompletion(eyeHandResults, 'eyeHand');
+    const updatedResults = {
+      ...eyeHandResults,
+      accuracy: Math.round(eyeHandResults.accuracy),
+      type: 'eyeHand', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      eyeHand: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'eyeHandTest', updatedResults);
+    }
+
+    setProgress(50);
+    setPhase("stroop");
   };
 
   const handleStroopComplete = async (stroopResults: { score: number; percentile: number; interferenceScore: number }) => {
-    await handleTestCompletion(stroopResults, 'stroop');
+    const updatedResults = {
+      ...stroopResults,
+      type: 'stroop', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      stroop: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'stroopTest', updatedResults);
+    }
+
+    setProgress(75);
+    setPhase("speedreading");
   };
 
   const handleSpeedReadingComplete = async (speedReadingResults: { wpm: number; percentile: number }) => {
-    await handleTestCompletion(speedReadingResults, 'speedReading');
+    const updatedResults = {
+      ...speedReadingResults,
+      type: 'speedreading', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      speedReading: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'speedReadingTest', updatedResults);
+    }
+
+    setProgress(85);
+    setPhase("memory");
   };
 
   const handleMemoryComplete = async (memoryResults: { score: number; percentile: number; evaluation: string }) => {
-    await handleTestCompletion(memoryResults, 'memory');
+    const updatedResults = {
+      ...memoryResults,
+      type: 'memory', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      memory: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'memoryTest', updatedResults);
+    }
+
+    setProgress(90);
+    setPhase("schulte");
   };
 
   const handleSchulteComplete = async (schulteResults: { score: number; averageTime: number; gridSizes: number[]; completionTimes: number[]; percentile: number }) => {
-    await handleTestCompletion(schulteResults, 'schulte');
+    const updatedResults = {
+      ...schulteResults,
+      type: 'schulte', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      schulte: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'schulteTest', updatedResults);
+    }
+
+    setProgress(95);
+    setPhase("rhythm");
   };
 
   const handleRhythmComplete = async (rhythmResults: { precision: number; level: number }) => {
-    await handleTestCompletion(rhythmResults, 'rhythm');
+    const updatedResults = {
+      ...rhythmResults,
+      type: 'rhythm', // Aggiungi il campo 'type'
+    };
+
+    setResults(prev => ({
+      ...prev,
+      rhythm: updatedResults
+    }));
+
+    if (user) {
+      await saveTestResults(user.uid, 'rhythmTest', updatedResults);
+    }
+
+    setProgress(100);
+    setPhase("results");
   };
 
   const renderCurrentPhase = () => {
@@ -509,30 +569,6 @@ export default function TestPage() {
             </button>
           </div>
         </div>
-
-        {/* Messaggio di iscrizione */}
-        {showSubscriptionPrompt && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Iscriviti per continuare</h2>
-              <p className="text-gray-600 mb-6">
-                Per accedere ai risultati completi dei test e alle funzionalità premium, iscriviti ora.
-              </p>
-              <button
-                onClick={() => router.push('/register')}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Iscriviti ora
-              </button>
-              <button
-                onClick={() => setShowSubscriptionPrompt(false)}
-                className="w-full mt-4 text-gray-600 hover:text-gray-800"
-              >
-                Continua senza iscrizione
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </ProtectedRoute>
   );
