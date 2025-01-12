@@ -40,7 +40,7 @@ interface TestResults {
     percentile?: number;
     type?: string;
   } | null;
-  eyeHand: {
+  eyehand: {
     score: number;
     accuracy: number;
     averageDeviation: number;
@@ -52,7 +52,7 @@ interface TestResults {
     interferenceScore: number;
     type?: string;
   } | null;
-  speedReading: {
+  speedreading: {
     wpm: number;
     percentile: number;
     type?: string;
