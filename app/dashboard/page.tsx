@@ -68,7 +68,9 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
 
 // 3. Componente Classifica
 const GlobalRanking: React.FC = () => {
+  const { user } = useAuth(); // Ottieni l'utente corrente
   const [rankingData, setRankingData] = useState<RankingData[]>([]);
+  const [userRanking, setUserRanking] = useState<RankingData | null>(null); // Posizione dell'utente corrente
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -116,7 +118,16 @@ const GlobalRanking: React.FC = () => {
           user.rank = index + 1;
         });
 
-        setRankingData(ranking);
+        // Trova la posizione dell'utente corrente
+        if (user) {
+          const currentUserRanking = ranking.find((u) => u.userId === user.uid);
+          if (currentUserRanking) {
+            setUserRanking(currentUserRanking);
+          }
+        }
+
+        // Mostra solo i primi 3 utenti
+        setRankingData(ranking.slice(0, 3));
       } catch (error) {
         console.error('Error fetching ranking data:', error);
       } finally {
@@ -125,7 +136,7 @@ const GlobalRanking: React.FC = () => {
     };
 
     fetchRankingData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -151,6 +162,7 @@ const GlobalRanking: React.FC = () => {
       </h2>
       
       <div className="space-y-4">
+        {/* Mostra i primi 3 utenti */}
         {rankingData.map((user) => (
           <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div className="flex items-center gap-4">
@@ -172,6 +184,28 @@ const GlobalRanking: React.FC = () => {
             </div>
           </div>
         ))}
+
+        {/* Mostra la posizione dell'utente corrente se non è tra i primi 3 */}
+        {userRanking && userRanking.rank > 3 && (
+          <>
+            <div className="text-center text-gray-500 my-4">...</div>
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg bg-blue-100 text-blue-600">
+                  {userRanking.rank}
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{userRanking.username}</div>
+                  <div className="text-sm text-gray-500">Livello {userRanking.level}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-gray-900">{userRanking.totalScore}</div>
+                <div className="text-sm text-gray-500">punti medi</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
