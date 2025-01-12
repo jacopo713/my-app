@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getAllUserTests } from '@/app/lib/firebase'; // Importa le funzioni per recuperare i risultati
+import { getAllUserTests } from '@app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
+import TestProgressChart from '@/app/components/dashboard/TestProgressChart'; // Importa il componente del grafico
 
 interface TestResults {
   score?: number;
@@ -67,19 +68,28 @@ export default function DashboardPage() {
             <div className="mt-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Results</h2>
               {testResults.length > 0 ? (
-                <div className="space-y-4">
-                  {testResults.map((test, index) => (
-                    <div key={index} className="bg-white shadow-md rounded-lg p-6">
-                      <h3 className="text-xl font-semibold text-gray-700">Test {index + 1}</h3>
-                      <div className="mt-4 space-y-2">
-                        {test.score && <p><strong>Score:</strong> {test.score}</p>}
-                        {test.accuracy && <p><strong>Accuracy:</strong> {test.accuracy}%</p>}
-                        {test.timestamp && <p><strong>Date:</strong> {new Date(test.timestamp).toLocaleDateString()}</p>}
-                        {/* Aggiungi altri campi qui se necessario */}
+                <>
+                  {/* Grafico dei progressi */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-gray-700 mb-4">Progress Over Time</h3>
+                    <TestProgressChart data={testResults} />
+                  </div>
+
+                  {/* Dettagli dei test */}
+                  <div className="space-y-4">
+                    {testResults.map((test, index) => (
+                      <div key={index} className="bg-white shadow-md rounded-lg p-6">
+                        <h3 className="text-xl font-semibold text-gray-700">Test {index + 1}</h3>
+                        <div className="mt-4 space-y-2">
+                          {test.score && <p><strong>Score:</strong> {test.score}</p>}
+                          {test.accuracy && <p><strong>Accuracy:</strong> {test.accuracy}%</p>}
+                          {test.timestamp && <p><strong>Date:</strong> {new Date(test.timestamp).toLocaleDateString()}</p>}
+                          {/* Aggiungi altri campi qui se necessario */}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <p className="text-gray-600">No test results found.</p>
               )}
