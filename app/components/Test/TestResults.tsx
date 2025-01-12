@@ -5,7 +5,6 @@ import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, sign
 import { auth, db } from '@/app/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { loadStripe } from '@stripe/stripe-js';
-import { useRouter } from 'next/navigation';
 import { Brain, Eye, Clock } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -61,7 +60,7 @@ export default function TestResults({ testResults }: TestResultsProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
+ 
 
   const calculateOverallScore = () => {
     let totalScore = 0;
