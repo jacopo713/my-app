@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Brain, Trophy, ChevronRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
