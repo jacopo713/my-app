@@ -16,6 +16,11 @@ import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { type TestPhase } from './TestInstructions';
 import TestInstructions from './components/istruzioni';
 
+// Stile personalizzato per rendere la freccia più spessa
+const customChevronStyle = {
+  strokeWidth: 3, // Aumenta lo spessore della freccia
+};
+
 interface TestResults {
   raven: {
     score: number;
@@ -279,11 +284,12 @@ export default function TestPage() {
                 </div>
               </div>
 
-              {/* Indicatore di scorrimento (solo freccetta blu con lineetta bianca) */}
+              {/* Indicatore di scorrimento (lineetta orizzontale, freccia spessa e scritta) */}
               {showScrollIndicator && (
-                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce">
-                  <div className="w-0.5 h-6 bg-white"></div> {/* Lineetta bianca */}
-                  <ChevronDown className="w-6 h-6 text-blue-600" /> {/* Freccetta blu */}
+                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+                  <div className="w-12 h-0.5 bg-white"></div> {/* Lineetta orizzontale */}
+                  <ChevronDown className="w-6 h-6 text-blue-600" style={customChevronStyle} /> {/* Freccia più spessa */}
+                  <span className="text-sm text-gray-700">Scorri per continuare</span> {/* Scritta */}
                 </div>
               )}
 
