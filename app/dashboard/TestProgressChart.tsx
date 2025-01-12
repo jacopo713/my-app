@@ -1,3 +1,67 @@
+'use client';
+
+import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react'; // Importa tutte le icone necessarie
+import { ComponentType } from 'react';
+
+interface TestResult {
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+}
+
+interface TestProgressChartProps {
+  data: TestResult[];
+}
+
+interface TestScoreBarProps {
+  label: string;
+  value: number;
+  maxValue?: number;
+  icon: ComponentType<{ className?: string }>;
+  color: {
+    bg: string;
+    icon: string;
+    bar: string;
+  };
+}
+
+// Definisci il componente TestScoreBar
+const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: TestScoreBarProps) => {
+  const percentage = (value / maxValue) * 100;
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-3 mb-2">
+        <div className={`p-2 rounded-lg ${color.bg}`}>
+          <Icon className={`w-5 h-5 ${color.icon}`} />
+        </div>
+        <div className="flex-1">
+          <div className="flex justify-between items-center">
+            <span className="font-medium text-gray-700">{label}</span>
+            <span className="font-semibold text-gray-900">{value}/1000</span>
+          </div>
+          <div className="mt-2 h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${color.bar} transition-all duration-1000 ease-out rounded-full`}
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function TestProgressChart({ data }: TestProgressChartProps) {
   // Define the type for the keys of normalizedData
   type TestId = 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
