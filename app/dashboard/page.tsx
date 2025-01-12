@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { Brain, ChevronRight, Trophy, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 import TestProgressChart from './TestProgressChart'; // Importa il componente TestProgressChart
 
 const DailyTraining = () => {
@@ -208,9 +209,7 @@ const Leaderboard = () => {
 };
 
 export default function DashboardPage() {
-  const mockUser = {
-    displayName: "Mario Rossi",
-  };
+  const { user } = useAuth(); // Ottieni l'utente collegato dal contesto di autenticazione
 
   const handleSeeCognitiveLevels = () => {
     const testProgressSection = document.getElementById('test-progress-section');
@@ -224,7 +223,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">
-            Ciao, {mockUser.displayName}!
+            Ciao, {user?.displayName || 'Utente'}! {/* Usa il nome dell'utente collegato */}
           </h1>
           <button 
             onClick={handleSeeCognitiveLevels}
@@ -247,7 +246,7 @@ export default function DashboardPage() {
         {/* Sezione TestProgressChart con id per il reindirizzamento */}
         <div id="test-progress-section" className="mt-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Risultati Test Cognitivi</h2>
-          <TestProgressChart data={[]} /> {/* Passa i dati necessari qui */}
+          <TestProgressChart data={[]} /> {/* Passa i dati corretti qui */}
         </div>
       </div>
     </div>
