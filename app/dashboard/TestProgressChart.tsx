@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { ReactElement } from 'react';
+import { ReactElement, ComponentType } from 'react';
 
 interface TestResult {
   score?: number;
@@ -27,7 +27,7 @@ interface TestScoreBarProps {
   label: string;
   value: number;
   maxValue?: number;
-  icon: ReactElement;
+  icon: ComponentType<{ className?: string }>; // Correctly type the icon as a React component
   color: {
     bg: string;
     icon: string;
@@ -42,7 +42,7 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
     <div className="mb-6">
       <div className="flex items-center gap-3 mb-2">
         <div className={`p-2 rounded-lg ${color.bg}`}>
-          <Icon className={`w-5 h-5 ${color.icon}`} />
+          <Icon className={`w-5 h-5 ${color.icon}`} /> {/* Icon is now correctly typed */}
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
