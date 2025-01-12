@@ -1,10 +1,11 @@
 'use client';
 /* eslint-disable react/no-unescaped-entities */ // Disabilita la regola per l'intero file
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Brain, ChevronRight, Trophy, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 import TestProgressChart from './TestProgressChart'; // Importa il componente TestProgressChart
+import { getAllUserTests } from '@/app/lib/firebase'; // Importa la funzione per recuperare i test da Firebase
 
 const DailyTraining = () => {
   const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null);
@@ -210,6 +211,31 @@ const Leaderboard = () => {
 
 export default function DashboardPage() {
   const { user } = useAuth(); // Ottieni l'utente collegato dal contesto di autenticazione
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestResults = async () => {
+      if (user) {
+        try {
+          // Recupera tutti i test dell'utente da Firebase
+          const results = await getAllUserTests(user.uid);
+          // Assicurati che ogni risultato abbia il campo 'type'
+          const typedResults = results.map((result) => ({
+            ...result,
+            type: result.type || result.id.replace('Test', '').toLowerCase(), // Usa 'id' come fallback se 'type' non è presente
+          }));
+          setTestResults(typedResults);
+        } catch (error) {
+          console.error('Error fetching test results:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTestResults();
+  }, [user]);
 
   const handleSeeCognitiveLevels = () => {
     const testProgressSection = document.getElementById('test-progress-section');
@@ -217,6 +243,16 @@ export default function DashboardPage() {
       testProgressSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">
+          <div className="text-lg text-gray-600">Loading test results...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -246,7 +282,7 @@ export default function DashboardPage() {
         {/* Sezione TestProgressChart con id per il reindirizzamento */}
         <div id="test-progress-section" className="mt-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Risultati Test Cognitivi</h2>
-          <TestProgressChart data={[]} /> {/* Passa i dati corretti qui */}
+          <TestProgressChart data={testResults} /> {/* Passa i dati corretti qui */}
         </div>
       </div>
     </div>
