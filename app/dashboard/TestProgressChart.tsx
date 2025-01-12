@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { ReactElement, ComponentType } from 'react';
+import { ComponentType } from 'react'; // Removed ReactElement since it's unused
 
 interface TestResult {
   score?: number;
