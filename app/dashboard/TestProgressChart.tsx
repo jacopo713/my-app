@@ -1,4 +1,4 @@
-import TestProgressChart from '@/app/components/dashboard/TestProgressChart';
+import TestProgressChart from '@/app/dashboard/TestProgressChart';
 
 const DashboardPage = () => {
   const testResults = [
