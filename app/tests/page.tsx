@@ -30,30 +30,30 @@ interface TestResults {
     score: number;
     accuracy: number;
     percentile?: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   eyeHand: {
     score: number;
     accuracy: number;
     averageDeviation: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   stroop: {
     score: number;
     percentile: number;
     interferenceScore: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   speedReading: {
     wpm: number;
     percentile: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   memory: {
     score: number;
     percentile: number;
     evaluation: string;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   schulte: {
     score: number;
@@ -61,12 +61,12 @@ interface TestResults {
     gridSizes: number[];
     completionTimes: number[];
     percentile: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
   rhythm: {
     precision: number;
     level: number;
-    type?: string; // Aggiungi il campo type
+    type?: TestType; // Aggiungi il campo type
   } | null;
 }
 
