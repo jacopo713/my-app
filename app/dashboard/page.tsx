@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Brain, Trophy, ChevronRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import TestProgressChart from './TestProgressChart';
+import { Brain, ChevronRight } from 'lucide-react'; // Importazioni necessarie
 
 const DailyTraining = () => {
   const [loadingExerciseId, setLoadingExerciseId] = useState(null);
@@ -93,4 +92,26 @@ const DailyTraining = () => {
   );
 };
 
-// Resto del codice...
+export default function DashboardPage() {
+  const mockUser = {
+    displayName: "Mario Rossi",
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Ciao, {mockUser.displayName}!
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <DailyTraining />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
