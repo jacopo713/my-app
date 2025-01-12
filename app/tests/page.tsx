@@ -13,7 +13,7 @@ import {
   RhythmTest 
 } from './components';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { type TestPhase, testInstructions } from './TestInstructions'; // Importa testInstructions
+import { type TestPhase } from './TestInstructions'; // Rimossa testInstructions non utilizzata
 import { TestInstructionsComponent } from './TestInstructions'; // Importa il componente corretto
 
 // Stile personalizzato per rendere la freccia più spessa
