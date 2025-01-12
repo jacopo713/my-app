@@ -15,7 +15,7 @@ export interface TestInstructions {
   iconColor?: string; // Colore dell'icona
 }
 
-export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
+export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results" | "registration";
 
 export const testInstructions: Record<TestPhase, TestInstructions> = {
   intro: {

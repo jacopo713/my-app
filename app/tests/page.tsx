@@ -79,7 +79,7 @@ export default function TestPage() {
 
   const phases: TestPhase[] = [
     "intro", "raven", "eyehand", "stroop", 
-    "speedreading", "memory", "schulte", "rhythm", "results"
+    "speedreading", "memory", "schulte", "rhythm", "results", "registration"
   ];
 
   useEffect(() => {
