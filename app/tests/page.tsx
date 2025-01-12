@@ -93,8 +93,8 @@ export default function TestPage() {
   });
   const [progress, setProgress] = useState(0);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
-  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false); // Nuovo stato per il prompt di iscrizione
-  const [isGuest, setIsGuest] = useState(false); // Nuovo stato per gestire gli utenti guest
+  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [isGuest, setIsGuest] = useState(false); // Stato per gestire gli utenti guest
   const router = useRouter();
   const { user } = useAuth();
 
@@ -159,7 +159,9 @@ export default function TestPage() {
       await saveTestResults(user.uid, `${testType}Test`, updatedResults);
     } else {
       // Se l'utente non è registrato, salva i risultati temporaneamente nel localStorage
-      localStorage.setItem('guestTestResults', JSON.stringify(updatedResults));
+      const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
+      guestResults[testType] = updatedResults;
+      localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
       setIsGuest(true); // Imposta lo stato guest su true
     }
 
@@ -178,6 +180,15 @@ export default function TestPage() {
       setProgress(Math.min((currentIndex + 1) * 15, 100));
     }
   };
+
+  // Reindirizza l'utente alla pagina dei risultati dopo la registrazione
+  useEffect(() => {
+    if (user && isGuest) {
+      // Se l'utente era guest e ora è registrato, reindirizzalo alla pagina dei risultati
+      router.push('/tests/results');
+      setIsGuest(false); // Resetta lo stato guest
+    }
+  }, [user, isGuest, router]);
 
   const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
     await handleTestCompletion(ravenResults, 'raven');
