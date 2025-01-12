@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getAllUserTests } from '@/lib/firebase';
+import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import TestProgressChart from '@/app//dashboard/TestProgressChart'; // Importa il componente del grafico
 
