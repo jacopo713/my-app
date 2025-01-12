@@ -14,13 +14,16 @@
     "firebase-admin": "^13.0.2",
     "lucide-react": "^0.344.0",
     "next": "15.1.4",
+    "pdfkit": "^0.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^2.15.0",
     "stripe": "^17.5.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/pdfkit": "^0.13.8",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^9",
