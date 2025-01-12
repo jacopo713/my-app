@@ -7,14 +7,37 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
+// Types
+interface Exercise {
+  id: number;
+  name: string;
+  description: string;
+  duration: string;
+  priority: string;
+  result: string;
+}
+
+interface LeaderboardEntry {
+  username: string;
+  score: number;
+  rank: number;
+}
+
+type TestType = 'global' | 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+
+type LeaderboardDataType = {
+  [K in TestType]?: LeaderboardEntry[];
+};
+
+// Components
 const DailyTraining = () => {
   const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null);
 
-  const exercises = [
+  const exercises: Exercise[] = [
     {
       id: 1,
       name: "Test di Stroop",
-      description: "Migliora la tua resistenza all'interferenza cognitiva",
+      description: "Migliora la tua resistenza all&apos;interferenza cognitiva",
       duration: "10 minuti",
       priority: "Alta",
       result: "Resistenza Mentale: 780/1000"
@@ -96,37 +119,25 @@ const DailyTraining = () => {
   );
 };
 
-interface LeaderboardEntry {
-  username: string;
-  score: number;
-  rank: number;
-}
-
-type TestType = 'global' | 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
-
-interface LeaderboardData {
-  [key: string]: LeaderboardEntry[];
-}
-
 const Leaderboard = () => {
   const [selectedTest, setSelectedTest] = useState<TestType>('global');
   const [isOpen, setIsOpen] = useState(false);
 
   const testConfigs = [
-    { id: 'global', label: 'Punteggio Globale', icon: Trophy },
-    { id: 'raven', label: 'Ragionamento Astratto', icon: Brain },
-    { id: 'eyehand', label: 'Coordinazione Visiva', icon: Eye },
-    { id: 'stroop', label: 'Interferenza Cognitiva', icon: ActivitySquare },
-    { id: 'speedreading', label: 'Lettura Veloce', icon: BookOpen },
-    { id: 'memory', label: 'Memoria a Breve Termine', icon: Lightbulb },
-    { id: 'schulte', label: 'Attenzione Visiva', icon: Eye },
-    { id: 'rhythm', label: 'Coordinazione Ritmica', icon: Music }
+    { id: 'global' as TestType, label: 'Punteggio Globale', icon: Trophy },
+    { id: 'raven' as TestType, label: 'Ragionamento Astratto', icon: Brain },
+    { id: 'eyehand' as TestType, label: 'Coordinazione Visiva', icon: Eye },
+    { id: 'stroop' as TestType, label: 'Interferenza Cognitiva', icon: ActivitySquare },
+    { id: 'speedreading' as TestType, label: 'Lettura Veloce', icon: BookOpen },
+    { id: 'memory' as TestType, label: 'Memoria a Breve Termine', icon: Lightbulb },
+    { id: 'schulte' as TestType, label: 'Attenzione Visiva', icon: Eye },
+    { id: 'rhythm' as TestType, label: 'Coordinazione Ritmica', icon: Music }
   ];
 
   const selectedConfig = testConfigs.find(test => test.id === selectedTest);
   const SelectedIcon = selectedConfig?.icon || Trophy;
 
-  const leaderboardData = {
+  const leaderboardData: LeaderboardDataType = {
     global: [
       { username: "Mario R.", score: 950, rank: 1 },
       { username: "Laura B.", score: 920, rank: 2 },
@@ -198,7 +209,7 @@ const Leaderboard = () => {
       </div>
 
       <div className="space-y-3">
-        {currentData.map((entry) => (
+        {currentData?.map((entry) => (
           <div key={entry.rank} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
             <div className="flex items-center gap-3">
               <span className={`w-6 h-6 flex items-center justify-center rounded-full ${
