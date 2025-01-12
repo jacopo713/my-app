@@ -230,7 +230,13 @@ const Leaderboard = () => {
   );
 };
 
-const StatsModal = ({ isOpen, onClose, testResults }) => {
+interface StatsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  testResults: any[]; // oppure usa il tipo specifico dei test results
+}
+
+const StatsModal = ({ isOpen, onClose, testResults }: StatsModalProps) => {
   if (!isOpen) return null;
 
   return (
