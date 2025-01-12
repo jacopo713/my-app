@@ -18,7 +18,7 @@ import TestInstructions from './components/istruzioni';
 
 // Stile personalizzato per rendere la freccia più spessa
 const customChevronStyle = {
-  strokeWidth: 4, // Aumenta ulteriormente lo spessore della freccia
+  strokeWidth: 5, // Aumentato ulteriormente lo spessore della freccia
 };
 
 interface TestResults {
@@ -286,7 +286,7 @@ export default function TestPage() {
 
               {/* Indicatore di scorrimento (scritta, lineetta e freccia) */}
               {showScrollIndicator && (
-                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+                <div className="fixed bottom-20 left-0 right-0 w-full flex justify-center items-center flex-col gap-2 animate-bounce">
                   <span className="text-sm text-gray-700 font-medium">Scroll down</span> {/* Scritta "Scroll down" */}
                   <div className="w-16 h-0.5 bg-white"></div> {/* Lineetta bianca */}
                   <ChevronDown className="w-8 h-8 text-blue-600" style={customChevronStyle} /> {/* Freccia più spessa e grande */}
