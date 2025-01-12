@@ -261,13 +261,12 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
-    // Aumentiamo la tolleranza: qui il massimo errore accettato è il 50% della durata totale
-    const maxDeviation = totalDuration * 0.5;
+    // Riduciamo la tolleranza: qui il massimo errore accettato è il 30% della durata totale
+    const maxDeviation = totalDuration * 0.3;
 
-    // Calcolo della precisione con scala LINEARE:
-    // Se la deviazione è pari a maxDeviation o più, la precisione diventa 0
-    // Altrimenti la precisione scende linearmente da 100 a 0
-    const calculatedPrecision = Math.max(0, 100 * (1 - deviation / maxDeviation));
+    // Calcolo della precisione con penalizzazione QUADRATICA:
+    // Si penalizza maggiormente anche una piccola deviazione.
+    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
     // Aggiungo il punteggio di questa riproduzione ed aggiorno la media
@@ -403,7 +402,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           <li>Ascolta attentamente la melodia di esempio</li>
           <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
           <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
-          <li>La tua precisione sarà calcolata in base alla differenza temporale, considerando una tolleranza fino al 50% della durata totale</li>
+          <li>La tua precisione sarà calcolata in base alla differenza temporale, con tolleranza ridotta al 30% e una penalizzazione non lineare</li>
           <li>Completa tutti i livelli per migliorare il tuo punteggio finale</li>
         </ul>
       </div>
