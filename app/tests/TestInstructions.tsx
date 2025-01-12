@@ -1,3 +1,6 @@
+import React from 'react';
+import { Brain, Clock, Target, AlertCircle, ArrowRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+
 export interface TestInstructions {
   title: string;
   description: string;
@@ -5,6 +8,9 @@ export interface TestInstructions {
   tips: string[];
   duration?: string;
   difficulty?: 'facile' | 'medio' | 'difficile';
+  icon?: React.ElementType; // Icona specifica per il test
+  gradient?: string; // Gradiente specifico per il test
+  iconColor?: string; // Colore dell'icona
 }
 
 export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
@@ -15,7 +21,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     description: "Una serie di test per valutare diverse capacità cognitive",
     steps: ["Leggi attentamente le istruzioni di ogni test", "Prenditi il tempo necessario", "Rispondi con attenzione"],
     tips: ["Assicurati di essere in un ambiente tranquillo", "Fai una pausa se necessario"],
-    duration: "45-60 minuti totali"
+    duration: "45-60 minuti totali",
+    icon: Brain,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
   },
   raven: {
     title: "Test delle Matrici Progressive",
@@ -32,7 +41,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Non soffermarti troppo a lungo su una singola matrice"
     ],
     duration: "15-20 minuti",
-    difficulty: "medio"
+    difficulty: "medio",
+    icon: Brain,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
   },
   eyehand: {
     title: "Test di Coordinazione Occhio-Mano",
@@ -49,7 +61,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Respira normalmente durante l'esecuzione"
     ],
     duration: "5-7 minuti",
-    difficulty: "facile"
+    difficulty: "facile",
+    icon: Eye,
+    gradient: "from-green-600 to-green-700",
+    iconColor: "text-green-600"
   },
   stroop: {
     title: "Test di Stroop",
@@ -66,7 +81,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Non esitare troppo su ogni risposta"
     ],
     duration: "5 minuti",
-    difficulty: "medio"
+    difficulty: "medio",
+    icon: ActivitySquare,
+    gradient: "from-purple-600 to-purple-700",
+    iconColor: "text-purple-600"
   },
   speedreading: {
     title: "Test di Lettura Veloce",
@@ -83,7 +101,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Mantieni la concentrazione sul flusso del testo"
     ],
     duration: "10 minuti",
-    difficulty: "medio"
+    difficulty: "medio",
+    icon: BookOpen,
+    gradient: "from-orange-600 to-orange-700",
+    iconColor: "text-orange-600"
   },
   memory: {
     title: "Test di Memoria a Breve Termine",
@@ -100,7 +121,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Mantieni la concentrazione durante la fase di memorizzazione"
     ],
     duration: "7-10 minuti",
-    difficulty: "difficile"
+    difficulty: "difficile",
+    icon: Lightbulb,
+    gradient: "from-red-600 to-red-700",
+    iconColor: "text-red-600"
   },
   schulte: {
     title: "Tabella di Schulte",
@@ -117,7 +141,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Respira normalmente e mantieni la calma"
     ],
     duration: "3-5 minuti",
-    difficulty: "medio"
+    difficulty: "medio",
+    icon: Eye,
+    gradient: "from-indigo-600 to-indigo-700",
+    iconColor: "text-indigo-600"
   },
   rhythm: {
     title: "Test del Ritmo",
@@ -134,7 +161,10 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Non anticipare i battiti"
     ],
     duration: "5 minuti",
-    difficulty: "medio"
+    difficulty: "medio",
+    icon: Music,
+    gradient: "from-pink-600 to-pink-700",
+    iconColor: "text-pink-600"
   },
   results: {
     title: "Risultati dei Test",
@@ -149,6 +179,101 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Non confrontare direttamente test diversi",
       "Usa i risultati come base per il miglioramento"
     ],
-    duration: "N/A"
+    duration: "N/A",
+    icon: Brain,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
   }
+};
+
+interface TestInstructionsProps {
+  phase: TestPhase;
+  onStart: () => void;
+}
+
+export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ phase, onStart }) => {
+  const currentTest = testInstructions[phase];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      {/* Header con gradiente e indicatore di progressione */}
+      <div className={`bg-gradient-to-r ${currentTest.gradient} p-6 text-white`}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold">{currentTest.title}</h2>
+          <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+            {currentTest.difficulty ? `Difficoltà: ${currentTest.difficulty}` : "Introduzione"}
+          </div>
+        </div>
+        <p className="text-blue-100">{currentTest.description}</p>
+      </div>
+
+      {/* Contenuto principale */}
+      <div className="p-6 space-y-6">
+        {/* Informazioni chiave in grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Durata */}
+          <div className="bg-blue-50 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold">Durata</h3>
+            </div>
+            <p className="text-gray-700">{currentTest.duration}</p>
+          </div>
+
+          {/* Obiettivo */}
+          <div className="bg-green-50 rounded-xl p-4 sm:col-span-2">
+            <div className="flex items-center gap-3 mb-2">
+              <Target className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold">Obiettivo</h3>
+            </div>
+            <p className="text-gray-700">Completa il test con precisione e velocità.</p>
+          </div>
+        </div>
+
+        {/* Procedura con numerazione migliorata */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg text-gray-800">Procedura</h3>
+          <div className="space-y-3">
+            {currentTest.steps.map((step, index) => (
+              <div key={index} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
+                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 mt-0.5 font-medium">
+                  {index + 1}
+                </div>
+                <p className="text-gray-700">{step}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Box Suggerimenti ridisegnato */}
+        <div className="bg-yellow-50 rounded-xl p-4 border-l-4 border-yellow-400">
+          <div className="flex items-center gap-3 mb-2">
+            <AlertCircle className="w-5 h-5 text-yellow-600" />
+            <h3 className="font-semibold">Suggerimenti per l'esecuzione</h3>
+          </div>
+          <ul className="list-disc list-inside text-gray-700">
+            {currentTest.tips.map((tip, index) => (
+              <li key={index}>{tip}</li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Timer e Avvio */}
+        <div className="space-y-4">
+          <button
+            onClick={onStart}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl 
+              font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px
+              flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">Inizia il Test</span>
+            <ArrowRight className="w-5 h-5" />
+          </button>
+          <p className="text-center text-sm text-gray-500">
+            Timer partirà automaticamente all'avvio del test
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };
