@@ -1,4 +1,3 @@
-// app/pages/checkout-success.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -28,7 +27,6 @@ const CheckoutSuccess: React.FC = () => {
           router.push('/tests/results');
         }
       };
-
       executeTransfer();
     } else {
       router.push('/login');
