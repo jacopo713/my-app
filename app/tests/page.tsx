@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music } from 'lucide-react';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown } from 'lucide-react'; // Aggiunto ChevronDown
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -67,6 +67,7 @@ export default function TestPage() {
     rhythm: null
   });
   const [progress, setProgress] = useState(0);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true); // Stato per l'indicatore di scorrimento
   const router = useRouter();
 
   const phases: TestPhase[] = [
@@ -77,6 +78,27 @@ export default function TestPage() {
   useEffect(() => {
     setTestStarted(false);
   }, [phase]);
+
+  // Nascondi l'indicatore di scorrimento dopo 5 secondi
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowScrollIndicator(false);
+    }, 5000); // 5 secondi
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Nascondi l'indicatore di scorrimento quando l'utente scorre
+  useEffect(() => {
+    const container = document.getElementById('scroll-container');
+    if (container) {
+      const handleScroll = () => {
+        setShowScrollIndicator(false);
+      };
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
     setResults(prev => ({
@@ -256,6 +278,16 @@ export default function TestPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Indicatore di scorrimento */}
+              {showScrollIndicator && (
+                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg flex flex-col items-center gap-1 animate-bounce">
+                  <span className="text-sm font-medium text-gray-700">
+                    Scorri per vedere tutti i test
+                  </span>
+                  <ChevronDown className="w-5 h-5 text-blue-600" />
+                </div>
+              )}
 
               {/* Pulsante fisso in basso */}
               <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
