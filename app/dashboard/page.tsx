@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import TestProgressChart from '@/app//dashboard/TestProgressChart'; // Importa il componente del grafico
+import TestProgressChart from '@/app/dashboard/TestProgressChart'; // Importa il componente del grafico
 
 interface TestResults {
+  type: 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm'; // Aggiungi il campo 'type'
   score?: number;
   accuracy?: number;
   percentile?: number;
@@ -33,7 +34,12 @@ export default function DashboardPage() {
         try {
           // Recupera tutti i test dell'utente
           const results = await getAllUserTests(user.uid);
-          setTestResults(results);
+          // Assicurati che ogni risultato abbia il campo 'type'
+          const typedResults = results.map((result) => ({
+            ...result,
+            type: result.type || 'unknown', // Imposta un valore di default se 'type' non è presente
+          }));
+          setTestResults(typedResults);
         } catch (error) {
           console.error('Error fetching test results:', error);
         } finally {
