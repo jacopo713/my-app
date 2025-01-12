@@ -8,21 +8,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-/**
- * Questa funzione serve a trasferire i risultati dei test salvati nel localStorage
- * nel database Firestore per l'utente registrato.
- */
-const transferTestResults = async (uid: string) => {
-  const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
-  for (const [testType, testResult] of Object.entries(guestResults)) {
-    if (testResult) {
-      const testRef = doc(db, 'users', uid, 'tests', `${testType}Test`);
-      await setDoc(testRef, { ...testResult, type: testType }, { merge: true });
-    }
-  }
-  localStorage.removeItem('guestTestResults');
-};
-
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,10 +21,6 @@ export default function LoginForm() {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
-
-      // Trasferisci i risultati dei test dal localStorage a Firestore
-      await transferTestResults(result.user.uid);
-
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
@@ -55,10 +36,6 @@ export default function LoginForm() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       await checkAndCreateUserDoc(result.user.uid, result.user.email || '', result.user.displayName || '');
-
-      // Trasferisci i risultati dei test dal localStorage a Firestore
-      await transferTestResults(result.user.uid);
-
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
@@ -186,3 +163,4 @@ export default function LoginForm() {
     </div>
   );
 }
+

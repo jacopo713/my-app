@@ -17,11 +17,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 /**
  * Questa funzione serve a trasferire i risultati dei test salvati nel localStorage
  * nel database Firestore per l'utente registrato.
- *
- * Attualmente non viene utilizzata in questo file, ma potrà essere importata e utilizzata
- * nella pagina di "checkout success" per completare il trasferimento dei dati.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const transferTestResults = async (uid: string) => {
   const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
   for (const [testType, testResult] of Object.entries(guestResults)) {
@@ -84,6 +80,10 @@ export default function RegisterForm() {
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+
+      // Trasferisci i risultati dei test dal localStorage a Firestore
+      await transferTestResults(userCredential.user.uid);
+
       const idToken = await userCredential.user.getIdToken();
 
       const response = await fetch('/api/create-checkout-session', {
@@ -116,11 +116,6 @@ export default function RegisterForm() {
       if (stripeError) {
         throw stripeError;
       }
-
-      // A questo punto l'utente viene reindirizzato a Stripe per completare il pagamento.
-      // Dopo il completamento del pagamento, nella pagina di checkout success,
-      // potrai chiamare la funzione transferTestResults(userCredential.user.uid)
-      // per trasferire i dati dei test salvati nel localStorage su Firestore.
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -231,4 +226,3 @@ export default function RegisterForm() {
     </div>
   );
 }
-
