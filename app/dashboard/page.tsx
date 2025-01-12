@@ -1,73 +1,54 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useRouter, useSearchParams } from 'next/navigation';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
-import CancelSubscription from '../components/subscription/CancelSubscription';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { getTestResults, getAllUserTests } from '@/lib/firebase'; // Importa le funzioni per recuperare i risultati
+import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
-interface SubscriptionData {
-  subscriptionStatus: string;
-  customerId: string;
-  subscriptionId: string;
-  email: string;
-  createdAt: string;
-  updatedAt: string;
-  paymentCompleted?: boolean;
+interface TestResults {
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
 }
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
+  const [testResults, setTestResults] = useState<TestResults[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const fetchSubscriptionData = async () => {
+    const fetchTestResults = async () => {
       if (user) {
         try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            const userData = docSnap.data() as SubscriptionData;
-            setSubscriptionData(userData);
-            
-            // Verifica lo stato del pagamento
-            if (!userData.paymentCompleted || userData.subscriptionStatus !== 'active') {
-              console.log('Subscription not active, redirecting to pending-payment');
-              router.push('/pending-payment');
-              return;
-            }
-          }
-          
-          setLoading(false);
+          // Recupera tutti i test dell'utente
+          const results = await getAllUserTests(user.uid);
+          setTestResults(results);
         } catch (error) {
-          console.error('Error fetching subscription data:', error);
+          console.error('Error fetching test results:', error);
+        } finally {
           setLoading(false);
         }
       }
     };
 
-    // Se c'è un success=true nei parametri, forza il controllo dello stato
-    const success = searchParams.get('success');
-    if (success === 'true') {
-      console.log('Payment success detected, checking subscription status');
-      // Aggiungi un piccolo delay per dare tempo al webhook di aggiornare i dati
-      setTimeout(fetchSubscriptionData, 2000);
-    } else {
-      fetchSubscriptionData();
-    }
-  }, [user, router, searchParams]);
+    fetchTestResults();
+  }, [user]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse">
-          <div className="text-lg text-gray-600">Loading dashboard...</div>
+          <div className="text-lg text-gray-600">Loading test results...</div>
         </div>
       </div>
     );
@@ -81,76 +62,31 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold text-gray-900">
               Welcome, {user?.displayName || 'User'}!
             </h1>
-            
-            {subscriptionData && (
-              <div className="mt-6">
-                <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-                  <div className="md:grid md:grid-cols-3 md:gap-6">
-                    <div className="md:col-span-1">
-                      <h3 className="text-lg font-medium leading-6 text-gray-900">
-                        Subscription Details
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Information about your current subscription status.
-                      </p>
-                    </div>
-                    <div className="mt-5 md:mt-0 md:col-span-2">
-                      <div className="space-y-6">
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Status</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              subscriptionData.subscriptionStatus === 'active' 
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {subscriptionData.subscriptionStatus.toUpperCase()}
-                            </span>
-                          </dd>
-                        </div>
 
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Subscription ID</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            {subscriptionData.subscriptionId}
-                          </dd>
-                        </div>
-
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Email</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            {subscriptionData.email}
-                          </dd>
-                        </div>
-
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Member Since</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            {new Date(subscriptionData.createdAt).toLocaleDateString()}
-                          </dd>
-                        </div>
-
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            {new Date(subscriptionData.updatedAt).toLocaleDateString()}
-                          </dd>
-                        </div>
-
-                        <CancelSubscription 
-                          customerId={subscriptionData.customerId}
-                          subscriptionId={subscriptionData.subscriptionId}
-                        />
+            {/* Sezione per visualizzare i risultati dei test */}
+            <div className="mt-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Results</h2>
+              {testResults.length > 0 ? (
+                <div className="space-y-4">
+                  {testResults.map((test, index) => (
+                    <div key={index} className="bg-white shadow-md rounded-lg p-6">
+                      <h3 className="text-xl font-semibold text-gray-700">Test {index + 1}</h3>
+                      <div className="mt-4 space-y-2">
+                        {test.score && <p><strong>Score:</strong> {test.score}</p>}
+                        {test.accuracy && <p><strong>Accuracy:</strong> {test.accuracy}%</p>}
+                        {test.timestamp && <p><strong>Date:</strong> {new Date(test.timestamp).toLocaleDateString()}</p>}
+                        {/* Aggiungi altri campi qui se necessario */}
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-gray-600">No test results found.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </ProtectedRoute>
   );
 }
-
