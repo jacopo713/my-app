@@ -284,11 +284,12 @@ export default function TestPage() {
                 </div>
               </div>
 
-              {/* Indicatore di scorrimento (lineetta bianca sotto la freccia, freccia più spessa) */}
+              {/* Indicatore di scorrimento (scritta, lineetta e freccia) */}
               {showScrollIndicator && (
                 <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+                  <span className="text-sm text-gray-700 font-medium">Scroll down</span> {/* Scritta "Scroll down" */}
+                  <div className="w-16 h-0.5 bg-white"></div> {/* Lineetta bianca */}
                   <ChevronDown className="w-8 h-8 text-blue-600" style={customChevronStyle} /> {/* Freccia più spessa e grande */}
-                  <div className="w-16 h-0.5 bg-white"></div> {/* Lineetta bianca più lunga */}
                 </div>
               )}
 
