@@ -113,4 +113,23 @@ export const getAllUserTests = async (userId: string): Promise<TestResults[]> =>
   }
 };
 
-export { app, auth, db };
+/**
+ * Recupera tutti gli utenti da Firestore.
+ * @returns Un array di oggetti utente con uid e altri dati.
+ */
+export const getAllUsers = async () => {
+  try {
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    const users = usersSnapshot.docs.map(doc => ({
+      uid: doc.id,
+      ...doc.data(),
+    }));
+    return users;
+  } catch (error) {
+    console.error('Errore durante il recupero degli utenti:', error);
+    throw error;
+  }
+};
+
+export { app, auth, db, getAllUsers };
