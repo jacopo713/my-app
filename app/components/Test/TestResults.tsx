@@ -1,13 +1,13 @@
-// app/components/test/TestResults.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { loadStripe } from '@stripe/stripe-js';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, Clock } from 'lucide-react';
+import { User } from 'firebase/auth';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -60,7 +60,7 @@ export default function TestResults({ testResults }: TestResultsProps) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Aggiunto stato per autenticazione
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   const calculateOverallScore = () => {
@@ -109,7 +109,7 @@ export default function TestResults({ testResults }: TestResultsProps) {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setIsAuthenticated(true); // Imposta l'autenticazione a true dopo il login
+      setIsAuthenticated(true);
       await saveTestResults(userCredential.user.uid);
       await initiatePayment(userCredential.user);
     } catch (err) {
@@ -134,7 +134,6 @@ export default function TestResults({ testResults }: TestResultsProps) {
     const userDoc = await getDoc(userRef);
 
     if (userDoc.exists()) {
-      // Se l'utente esiste, aggiorna solo i risultati del test
       await setDoc(userRef, {
         testResults: testData,
         updatedAt: new Date().toISOString(),
@@ -144,7 +143,7 @@ export default function TestResults({ testResults }: TestResultsProps) {
     return testData;
   };
 
-  const initiatePayment = async (user: any) => {
+  const initiatePayment = async (user: User) => {
     try {
       const idToken = await user.getIdToken();
       
@@ -224,7 +223,7 @@ export default function TestResults({ testResults }: TestResultsProps) {
       await saveTestResults(userCredential.user.uid);
       await initiatePayment(userCredential.user);
 
-      setIsAuthenticated(true); // Imposta l'autenticazione a true dopo la registrazione
+      setIsAuthenticated(true);
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -354,10 +353,10 @@ export default function TestResults({ testResults }: TestResultsProps) {
             // Mostra i risultati completi se l'utente è autenticato
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {testResults.raven && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Brain className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-semibold">Matrici Progressive</h3>
+                    <h3 className="font-semibold">Test delle Matrici Progressive</h3>
                   </div>
                   <p>Punteggio: {testResults.raven.score}</p>
                   <p>Accuratezza: {testResults.raven.accuracy}%</p>
@@ -368,21 +367,21 @@ export default function TestResults({ testResults }: TestResultsProps) {
               )}
 
               {testResults.eyeHand && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-green-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Eye className="w-5 h-5 text-green-600" />
-                    <h3 className="font-semibold">Coordinazione Occhio-Mano</h3>
+                    <h3 className="font-semibold">Coordinazione Visiva</h3>
                   </div>
                   <p>Punteggio: {testResults.eyeHand.score}</p>
-                  <p>Precisione: {testResults.eyeHand.accuracy}%</p>
+                  <p>Accuratezza: {testResults.eyeHand.accuracy}%</p>
                   <p>Deviazione Media: {testResults.eyeHand.averageDeviation}ms</p>
                 </div>
               )}
 
               {testResults.stroop && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-purple-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-blue-600" />
+                    <Brain className="w-5 h-5 text-purple-600" />
                     <h3 className="font-semibold">Test di Stroop</h3>
                   </div>
                   <p>Punteggio: {testResults.stroop.score}</p>
@@ -392,9 +391,9 @@ export default function TestResults({ testResults }: TestResultsProps) {
               )}
 
               {testResults.speedReading && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-orange-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-blue-600" />
+                    <Brain className="w-5 h-5 text-orange-600" />
                     <h3 className="font-semibold">Lettura Veloce</h3>
                   </div>
                   <p>Velocità: {testResults.speedReading.wpm} parole/min</p>
@@ -403,9 +402,9 @@ export default function TestResults({ testResults }: TestResultsProps) {
               )}
 
               {testResults.memory && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-red-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-blue-600" />
+                    <Brain className="w-5 h-5 text-red-600" />
                     <h3 className="font-semibold">Test di Memoria</h3>
                   </div>
                   <p>Punteggio: {testResults.memory.score}</p>
@@ -415,10 +414,10 @@ export default function TestResults({ testResults }: TestResultsProps) {
               )}
 
               {testResults.schulte && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-indigo-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-semibold">Test di Schulte</h3>
+                    <Brain className="w-5 h-5 text-indigo-600" />
+                    <h3 className="font-semibold">Tabella di Schulte</h3>
                   </div>
                   <p>Punteggio: {testResults.schulte.score}</p>
                   <p>Tempo Medio: {testResults.schulte.averageTime}s</p>
@@ -427,9 +426,9 @@ export default function TestResults({ testResults }: TestResultsProps) {
               )}
 
               {testResults.rhythm && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-pink-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-blue-600" />
+                    <Brain className="w-5 h-5 text-pink-600" />
                     <h3 className="font-semibold">Test del Ritmo</h3>
                   </div>
                   <p>Precisione: {testResults.rhythm.precision}%</p>
@@ -457,10 +456,10 @@ export default function TestResults({ testResults }: TestResultsProps) {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <Eye className="w-5 h-5 text-green-600" />
-                        <h3 className="font-semibold">Coordinazione Occhio-Mano</h3>
+                        <h3 className="font-semibold">Coordinazione Visiva</h3>
                       </div>
                       <p>Punteggio: {testResults.eyeHand.score}</p>
-                      <p>Precisione: {testResults.eyeHand.accuracy}%</p>
+                      <p>Accuratezza: {testResults.eyeHand.accuracy}%</p>
                     </div>
                   )}
                 </div>
