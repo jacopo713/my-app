@@ -1,7 +1,7 @@
-// app/components/dashboard/TestProgressChart.tsx
 'use client';
 
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+import { ReactElement } from 'react';
 
 interface TestResult {
   score?: number;
@@ -23,7 +23,19 @@ interface TestProgressChartProps {
   data: TestResult[];
 }
 
-const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }) => {
+interface TestScoreBarProps {
+  label: string;
+  value: number;
+  maxValue?: number;
+  icon: ReactElement;
+  color: {
+    bg: string;
+    icon: string;
+    bar: string;
+  };
+}
+
+const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: TestScoreBarProps) => {
   const percentage = (value / maxValue) * 100;
 
   return (
