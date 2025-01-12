@@ -230,6 +230,25 @@ const Leaderboard = () => {
   );
 };
 
+// Firebase Data Types
+interface FirebaseTestResult {
+  id: string;
+  type?: TestResult['type'];
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+}
+
 interface TestResult {
   type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
   score?: number;
@@ -285,7 +304,7 @@ export default function DashboardPage() {
       if (user) {
         try {
           const results = await getAllUserTests(user.uid);
-          const typedResults: TestResult[] = results.map((result: any) => ({
+          const typedResults: TestResult[] = results.map((result: FirebaseTestResult) => ({
             ...result,
             type: (result.type || result.id.replace('Test', '').toLowerCase()) as TestResult['type'],
           }));
