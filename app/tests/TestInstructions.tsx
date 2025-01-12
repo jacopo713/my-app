@@ -1,6 +1,53 @@
 import React from 'react';
-import { Brain, Clock, Target, AlertCircle, ArrowRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { TestPhase, testInstructions } from './TestInstructions';
+import { Clock, Target, AlertCircle, ArrowRight } from 'lucide-react'; // Importa solo le icone necessarie
+
+export interface TestInstructions {
+  title: string;
+  description: string;
+  steps: string[];
+  tips: string[];
+  duration?: string;
+  difficulty?: 'facile' | 'medio' | 'difficile';
+  icon?: React.ElementType; // Icona specifica per il test
+  gradient?: string; // Gradiente specifico per il test
+  iconColor?: string; // Colore dell'icona
+}
+
+export type TestPhase = "intro" | "raven" | "eyehand" | "stroop" | "speedreading" | "memory" | "schulte" | "rhythm" | "results";
+
+export const testInstructions: Record<TestPhase, TestInstructions> = {
+  intro: {
+    title: "Introduzione ai Test Cognitivi",
+    description: "Una serie di test per valutare diverse capacità cognitive",
+    steps: ["Leggi attentamente le istruzioni di ogni test", "Prenditi il tempo necessario", "Rispondi con attenzione"],
+    tips: ["Assicurati di essere in un ambiente tranquillo", "Fai una pausa se necessario"],
+    duration: "45-60 minuti totali",
+    icon: Clock,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
+  },
+  raven: {
+    title: "Test delle Matrici Progressive",
+    description: "Valuta la tua capacità di ragionamento logico e la comprensione di pattern visivi.",
+    steps: [
+      "Ti verranno mostrate delle matrici con un elemento mancante",
+      "Analizza attentamente il pattern presente nella matrice",
+      "Seleziona tra le opzioni disponibili quella che completa correttamente il pattern",
+      "Lavora con precisione ma cerca di mantenere un buon ritmo"
+    ],
+    tips: [
+      "Osserva sia le righe che le colonne per individuare i pattern",
+      "Verifica che la tua risposta sia coerente in tutte le direzioni",
+      "Non soffermarti troppo a lungo su una singola matrice"
+    ],
+    duration: "15-20 minuti",
+    difficulty: "medio",
+    icon: Clock,
+    gradient: "from-blue-600 to-blue-700",
+    iconColor: "text-blue-600"
+  },
+  // ... (resto delle istruzioni)
+};
 
 interface TestInstructionsProps {
   phase: TestPhase;
@@ -41,7 +88,7 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
                   <Target className="w-5 h-5 text-green-600" />
                   <h3 className="font-semibold">Obiettivo</h3>
                 </div>
-                <p className="text-gray-700">Completa il test con precisione e velocità.</p>
+                <p className="text-gray-700">Completa il test con precisione e velocità&apos;.</p>
               </div>
             </div>
 
@@ -64,7 +111,7 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
             <div className="bg-yellow-50 rounded-xl p-4 border-l-4 border-yellow-400">
               <div className="flex items-center gap-3 mb-2">
                 <AlertCircle className="w-5 h-5 text-yellow-600" />
-                <h3 className="font-semibold">Suggerimenti per l'esecuzione</h3>
+                <h3 className="font-semibold">Suggerimenti per l&apos;esecuzione</h3>
               </div>
               <ul className="list-disc list-inside text-gray-700">
                 {currentTest.tips.map((tip, index) => (
@@ -85,7 +132,7 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
                 <ArrowRight className="w-5 h-5" />
               </button>
               <p className="text-center text-sm text-gray-500">
-                Timer partirà automaticamente all'avvio del test
+                Timer partirà automaticamente all&apos;avvio del test
               </p>
             </div>
           </div>
