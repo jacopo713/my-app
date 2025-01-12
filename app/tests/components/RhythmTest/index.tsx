@@ -51,29 +51,29 @@ const MELODIES: Note[][] = [
   // Livello 3: Melodia con pause
   [
     { note: 440, duration: 300, gain: 0.3 },
-    { note: 0, duration: 200 },  // Pausa
+    { note: 0, duration: 200 }, // Pausa
     { note: 523.25, duration: 300, gain: 0.3 },
     { note: 659.25, duration: 400, gain: 0.3 },
-    { note: 0, duration: 200 },  // Pausa
+    { note: 0, duration: 200 }, // Pausa
     { note: 783.99, duration: 300, gain: 0.3 },
   ],
   // Livello 4: Melodia con note più lunghe e pause più brevi
   [
     { note: 440, duration: 600, gain: 0.3 },
-    { note: 0, duration: 100 },  // Pausa
+    { note: 0, duration: 100 }, // Pausa
     { note: 523.25, duration: 400, gain: 0.3 },
     { note: 659.25, duration: 500, gain: 0.3 },
-    { note: 0, duration: 100 },  // Pausa
+    { note: 0, duration: 100 }, // Pausa
     { note: 783.99, duration: 600, gain: 0.3 },
   ],
   // Livello 5: Melodia con ritmo più veloce e pause più frequenti
   [
     { note: 440, duration: 200, gain: 0.3 },
-    { note: 0, duration: 100 },  // Pausa
+    { note: 0, duration: 100 }, // Pausa
     { note: 523.25, duration: 300, gain: 0.3 },
-    { note: 0, duration: 100 },  // Pausa
+    { note: 0, duration: 100 }, // Pausa
     { note: 659.25, duration: 400, gain: 0.3 },
-    { note: 0, duration: 100 },  // Pausa
+    { note: 0, duration: 100 }, // Pausa
     { note: 783.99, duration: 500, gain: 0.3 },
   ],
   // Livello 6: Melodia con note più complesse e ritmo irregolare
@@ -118,15 +118,15 @@ const MELODIES: Note[][] = [
   // Livello 10: Melodia finale con ritmo molto complesso e pause brevi
   [
     { note: 440, duration: 200, gain: 0.3 },
-    { note: 0, duration: 50 },  // Pausa
+    { note: 0, duration: 50 },   // Pausa
     { note: 523.25, duration: 150, gain: 0.3 },
-    { note: 0, duration: 50 },  // Pausa
+    { note: 0, duration: 50 },   // Pausa
     { note: 659.25, duration: 300, gain: 0.3 },
-    { note: 0, duration: 50 },  // Pausa
+    { note: 0, duration: 50 },   // Pausa
     { note: 783.99, duration: 200, gain: 0.3 },
-    { note: 0, duration: 50 },  // Pausa
+    { note: 0, duration: 50 },   // Pausa
     { note: 659.25, duration: 150, gain: 0.3 },
-    { note: 0, duration: 50 },  // Pausa
+    { note: 0, duration: 50 },   // Pausa
     { note: 523.25, duration: 250, gain: 0.3 },
   ]
 ];
@@ -139,9 +139,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [precision, setPrecision] = useState(100);
   const [pulseScale, setPulseScale] = useState(1);
   const [currentLevel, setCurrentLevel] = useState(0);
-  // Stati per il calcolo della precisione media
-  const [sumPrecisions, setSumPrecisions] = useState(0);
-  const [precisionCount, setPrecisionCount] = useState(0);
+
+  // Utilizziamo un ref per memorizzare i punteggi ottenuti, così da calcolare la media
+  const precisionRef = useRef<number[]>([]);
 
   // Refs per la gestione del timing
   const startTimeRef = useRef<number | null>(null);
@@ -264,17 +264,12 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 3)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
-    // Aggiorno la somma e il conteggio e calcolo la media
-    setSumPrecisions(prevSum => {
-      const newSum = prevSum + finalPrecision;
-      setPrecisionCount(prevCount => {
-        const newCount = prevCount + 1;
-        // Calcolo la media e la imposto nello state "precision"
-        setPrecision(newSum / newCount);
-        return newCount;
-      });
-      return newSum;
-    });
+    // Aggiungo il punteggio ottenuto al ref e ricalcolo la media
+    precisionRef.current.push(finalPrecision);
+    const avg =
+      precisionRef.current.reduce((sum, curr) => sum + curr, 0) /
+      precisionRef.current.length;
+    setPrecision(avg);
 
     setIsPlaying(false);
     setPhase('results');
@@ -283,11 +278,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
       onComplete({
-        precision: precision, // precisione media attuale
-        level: currentLevel
+        precision: avg, // precisione media attuale
+        level: currentLevel,
       });
     }
-  }, [audioResources, cleanupAudio, currentLevel, isLastLevel, onComplete, totalDuration, precision]);
+  }, [audioResources, cleanupAudio, currentLevel, isLastLevel, onComplete, totalDuration]);
 
   const nextLevel = useCallback(() => {
     if (!isLastLevel) {
@@ -295,8 +290,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       setCurrentLevel(prev => prev + 1);
       setPhase('start');
       setPrecision(100);
-      setSumPrecisions(0);
-      setPrecisionCount(0);
+      // Reset del ref per la precisione media
+      precisionRef.current = [];
     }
   }, [cleanupAudio, isLastLevel]);
 
