@@ -1,11 +1,8 @@
 'use client';
-/* eslint-disable react/no-unescaped-entities */ // Disabilita la regola per l'intero file
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Brain, ChevronRight, Trophy, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
-import TestProgressChart from './TestProgressChart'; // Importa il componente TestProgressChart
-import { getAllUserTests } from '@/app/lib/firebase'; // Importa la funzione per recuperare i test da Firebase
+import { useAuth } from '@/app/contexts/AuthContext';
+import TestProgressChart from './TestProgressChart';
 
 const DailyTraining = () => {
   const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null);
@@ -14,7 +11,7 @@ const DailyTraining = () => {
     {
       id: 1,
       name: "Test di Stroop",
-      description: "Migliora la tua resistenza all'interferenza cognitiva", // Apostrofo non escapato
+      description: "Migliora la tua resistenza all'interferenza cognitiva",
       duration: "10 minuti",
       priority: "Alta",
       result: "Resistenza Mentale: 780/1000"
@@ -96,10 +93,10 @@ const DailyTraining = () => {
   );
 };
 
-type LeaderboardKey = 'global' | 'raven' | 'eyehand'; // Definisci un tipo per le chiavi valide
+type LeaderboardKey = 'global' | 'raven' | 'eyehand';
 
 const Leaderboard = () => {
-  const [selectedTest, setSelectedTest] = useState<LeaderboardKey>('global'); // Usa il tipo per selectedTest
+  const [selectedTest, setSelectedTest] = useState<LeaderboardKey>('global');
   const [isOpen, setIsOpen] = useState(false);
 
   const testConfigs = [
@@ -171,7 +168,7 @@ const Leaderboard = () => {
                 <button
                   key={test.id}
                   onClick={() => {
-                    setSelectedTest(test.id as LeaderboardKey); // Assicurati che test.id sia di tipo LeaderboardKey
+                    setSelectedTest(test.id as LeaderboardKey);
                     setIsOpen(false);
                   }}
                   className={`w-full p-2 flex items-center gap-2 hover:bg-gray-50 ${
@@ -210,32 +207,7 @@ const Leaderboard = () => {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth(); // Ottieni l'utente collegato dal contesto di autenticazione
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTestResults = async () => {
-      if (user) {
-        try {
-          // Recupera tutti i test dell'utente da Firebase
-          const results = await getAllUserTests(user.uid);
-          // Assicurati che ogni risultato abbia il campo 'type'
-          const typedResults = results.map((result) => ({
-            ...result,
-            type: result.type || result.id.replace('Test', '').toLowerCase(), // Usa 'id' come fallback se 'type' non è presente
-          }));
-          setTestResults(typedResults);
-        } catch (error) {
-          console.error('Error fetching test results:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchTestResults();
-  }, [user]);
+  const { user } = useAuth();
 
   const handleSeeCognitiveLevels = () => {
     const testProgressSection = document.getElementById('test-progress-section');
@@ -244,22 +216,12 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">
-          <div className="text-lg text-gray-600">Loading test results...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">
-            Ciao, {user?.displayName || 'Utente'}! {/* Usa il nome dell'utente collegato */}
+            Ciao, {user?.displayName || 'Utente'}!
           </h1>
           <button 
             onClick={handleSeeCognitiveLevels}
@@ -275,14 +237,14 @@ export default function DashboardPage() {
             <DailyTraining />
           </div>
           <div>
-            <Leaderboard /> {/* Assicurati che il componente Leaderboard sia utilizzato qui */}
+            <Leaderboard />
           </div>
         </div>
 
         {/* Sezione TestProgressChart con id per il reindirizzamento */}
         <div id="test-progress-section" className="mt-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Risultati Test Cognitivi</h2>
-          <TestProgressChart data={testResults} /> {/* Passa i dati corretti qui */}
+          <TestProgressChart />
         </div>
       </div>
     </div>
