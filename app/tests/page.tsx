@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown } from 'lucide-react';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music } from 'lucide-react'; // Rimossa ChevronDown
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -67,7 +67,6 @@ export default function TestPage() {
     rhythm: null
   });
   const [progress, setProgress] = useState(0);
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const router = useRouter();
 
   const phases: TestPhase[] = [
@@ -78,17 +77,6 @@ export default function TestPage() {
   useEffect(() => {
     setTestStarted(false);
   }, [phase]);
-
-  useEffect(() => {
-    const container = document.getElementById('scroll-container');
-    if (container) {
-      const handleScroll = () => {
-        setShowScrollIndicator(container.scrollTop < 50);
-      };
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
 
   const handleRavenComplete = (ravenResults: { score: number; accuracy: number }) => {
     setResults(prev => ({
