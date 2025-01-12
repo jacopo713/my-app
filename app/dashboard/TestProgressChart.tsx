@@ -1,42 +1,25 @@
-// app/components/dashboard/TestProgressChart.tsx
-'use client';
+import TestProgressChart from '@/app/components/dashboard/TestProgressChart';
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-interface TestResult {
-  score?: number;
-  accuracy?: number;
-  timestamp?: string;
-}
-
-interface TestProgressChartProps {
-  data: TestResult[];
-}
-
-export default function TestProgressChart({ data }: TestProgressChartProps) {
-  // Formatta i dati per il grafico
-  const chartData = data.map((test) => ({
-    date: test.timestamp ? new Date(test.timestamp).toLocaleDateString() : 'N/A',
-    score: test.score || 0,
-    accuracy: test.accuracy || 0,
-  }));
+const DashboardPage = () => {
+  const testResults = [
+    { score: 750, accuracy: 85, percentile: 85 },
+    { score: 820, accuracy: 92, averageDeviation: 0.15 },
+    { score: 680, percentile: 75, interferenceScore: 0.25 },
+    { wpm: 450, percentile: 88 },
+    { score: 890, percentile: 92, evaluation: "Eccellente" },
+    { score: 780, averageTime: 15.2, percentile: 82 },
+    { precision: 95, level: 8 }
+  ];
 
   return (
-    <div className="w-full h-96">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="score" stroke="#8884d8" activeDot={{ r: 8 }} />
-          <Line type="monotone" dataKey="accuracy" stroke="#82ca9d" />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <TestProgressChart data={testResults} />
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default DashboardPage;
