@@ -51,29 +51,29 @@ const MELODIES: Note[][] = [
   // Livello 3: Melodia con pause
   [
     { note: 440, duration: 300, gain: 0.3 },
-    { note: 0, duration: 200 }, // Pausa
+    { note: 0, duration: 200 },  // Pausa
     { note: 523.25, duration: 300, gain: 0.3 },
     { note: 659.25, duration: 400, gain: 0.3 },
-    { note: 0, duration: 200 }, // Pausa
+    { note: 0, duration: 200 },  // Pausa
     { note: 783.99, duration: 300, gain: 0.3 },
   ],
   // Livello 4: Melodia con note più lunghe e pause più brevi
   [
     { note: 440, duration: 600, gain: 0.3 },
-    { note: 0, duration: 100 }, // Pausa
+    { note: 0, duration: 100 },  // Pausa
     { note: 523.25, duration: 400, gain: 0.3 },
     { note: 659.25, duration: 500, gain: 0.3 },
-    { note: 0, duration: 100 }, // Pausa
+    { note: 0, duration: 100 },  // Pausa
     { note: 783.99, duration: 600, gain: 0.3 },
   ],
   // Livello 5: Melodia con ritmo più veloce e pause più frequenti
   [
     { note: 440, duration: 200, gain: 0.3 },
-    { note: 0, duration: 100 }, // Pausa
+    { note: 0, duration: 100 },  // Pausa
     { note: 523.25, duration: 300, gain: 0.3 },
-    { note: 0, duration: 100 }, // Pausa
+    { note: 0, duration: 100 },  // Pausa
     { note: 659.25, duration: 400, gain: 0.3 },
-    { note: 0, duration: 100 }, // Pausa
+    { note: 0, duration: 100 },  // Pausa
     { note: 783.99, duration: 500, gain: 0.3 },
   ],
   // Livello 6: Melodia con note più complesse e ritmo irregolare
@@ -118,15 +118,15 @@ const MELODIES: Note[][] = [
   // Livello 10: Melodia finale con ritmo molto complesso e pause brevi
   [
     { note: 440, duration: 200, gain: 0.3 },
-    { note: 0, duration: 50 },   // Pausa
+    { note: 0, duration: 50 },  // Pausa
     { note: 523.25, duration: 150, gain: 0.3 },
-    { note: 0, duration: 50 },   // Pausa
+    { note: 0, duration: 50 },  // Pausa
     { note: 659.25, duration: 300, gain: 0.3 },
-    { note: 0, duration: 50 },   // Pausa
+    { note: 0, duration: 50 },  // Pausa
     { note: 783.99, duration: 200, gain: 0.3 },
-    { note: 0, duration: 50 },   // Pausa
+    { note: 0, duration: 50 },  // Pausa
     { note: 659.25, duration: 150, gain: 0.3 },
-    { note: 0, duration: 50 },   // Pausa
+    { note: 0, duration: 50 },  // Pausa
     { note: 523.25, duration: 250, gain: 0.3 },
   ]
 ];
@@ -139,11 +139,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const [precision, setPrecision] = useState(100);
   const [pulseScale, setPulseScale] = useState(1);
   const [currentLevel, setCurrentLevel] = useState(0);
+  const [precisions, setPrecisions] = useState<number[]>([]);
 
-  // Utilizziamo un ref per memorizzare i punteggi ottenuti, così da calcolare la media
-  const precisionRef = useRef<number[]>([]);
-
-  // Refs per la gestione del timing
+  // Refs per gestione timing
   const startTimeRef = useRef<number | null>(null);
   const audioCleanupRef = useRef<(() => void) | null>(null);
 
@@ -152,7 +150,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
   const totalDuration = currentMelody.reduce((acc, { duration }) => acc + duration, 0);
   const isLastLevel = currentLevel === MELODIES.length - 1;
 
-  // Inizializzazione del contesto audio
+  // Inizializzazione contesto audio
   const initAudioContext = useCallback((): AudioResources => {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     const context = new AudioContextClass();
@@ -166,7 +164,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     };
   }, []);
 
-  // Pulizia delle risorse audio
+  // Pulizia risorse audio
   const cleanupAudio = useCallback(() => {
     if (audioResources) {
       audioResources.oscillators.forEach(osc => {
@@ -225,7 +223,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       osc.start(startTime);
       osc.stop(startTime + duration / 1000);
 
-      // Effetto visivo: aumento del "pulse" in corrispondenza della nota
+      // Effetto visivo: incremento del pulse in corrispondenza della nota riprodotta
       setTimeout(() => {
         setPulseScale(1.3);
         setTimeout(() => setPulseScale(1), 100);
@@ -241,7 +239,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     startTimeRef.current = performance.now();
 
     if (isDemo) {
-      // Per la modalità demo, dopo la melodia si passa alla fase "replay"
+      // Per la modalità demo, al termine della melodia si passa alla fase "replay"
       const stopTimeout = setTimeout(() => {
         setIsPlaying(false);
         setPhase('replay');
@@ -252,24 +250,29 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     }
   }, [audioResources, cleanupAudio, currentMelody, initAudioContext, totalDuration]);
 
-  // Gestione dell'evento "Stop" durante la riproduzione
+  // Gestori eventi
+  const startDemo = useCallback(() => {
+    setPhase('listen');
+    playMelody(true);
+  }, [playMelody]);
+
   const stopReplay = useCallback(() => {
     if (!startTimeRef.current || !audioResources) return;
 
-    const elapsed = performance.now() - startTimeRef.current;
-    const deviation = Math.abs(elapsed - totalDuration);
-    // Tolleranza ridotta al 5% della durata totale
-    const maxDeviation = totalDuration * 0.05;
-    // Penalizzazione con esponente 3
-    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 3)));
+    const duration = performance.now() - startTimeRef.current;
+    const deviation = Math.abs(duration - totalDuration);
+    // Tolleranza ulteriormente ridotta: massimo errore accettato pari al 10% della durata totale
+    const maxDeviation = totalDuration * 0.1;
+    
+    // Penalizzazione non lineare più marcata: usa esponente 2.5
+    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2.5)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
-    // Aggiungo il punteggio ottenuto al ref e ricalcolo la media
-    precisionRef.current.push(finalPrecision);
-    const avg =
-      precisionRef.current.reduce((sum, curr) => sum + curr, 0) /
-      precisionRef.current.length;
-    setPrecision(avg);
+    // Aggiungo il punteggio della riproduzione corrente ed aggiorno la media
+    setPrecisions(prev => [...prev, finalPrecision]);
+    const newPrecisions = [...precisions, finalPrecision];
+    const averagePrecision = newPrecisions.reduce((a, b) => a + b, 0) / newPrecisions.length;
+    setPrecision(averagePrecision);
 
     setIsPlaying(false);
     setPhase('results');
@@ -278,11 +281,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
       onComplete({
-        precision: avg, // precisione media attuale
-        level: currentLevel,
+        precision: averagePrecision,
+        level: currentLevel
       });
     }
-  }, [audioResources, cleanupAudio, currentLevel, isLastLevel, onComplete, totalDuration]);
+  }, [audioResources, cleanupAudio, currentLevel, isLastLevel, onComplete, precisions, totalDuration]);
 
   const nextLevel = useCallback(() => {
     if (!isLastLevel) {
@@ -290,12 +293,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       setCurrentLevel(prev => prev + 1);
       setPhase('start');
       setPrecision(100);
-      // Reset del ref per la precisione media
-      precisionRef.current = [];
+      setPrecisions([]);
     }
   }, [cleanupAudio, isLastLevel]);
 
-  // Cleanup al momento dello smontaggio
+  // Cleanup quando il componente viene smontato
   useEffect(() => {
     return () => {
       cleanupAudio();
@@ -330,15 +332,19 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           className={`absolute inset-0 border-4 rounded-full transition-all duration-100 ease-out ${
             isPlaying ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200'
           }`}
-          style={{ transform: `scale(${pulseScale})` }}
+          style={{
+            transform: `scale(${pulseScale})`,
+          }}
         />
       </div>
 
       <div className="flex justify-center gap-4">
         {phase === 'start' && (
           <button
-            onClick={() => playMelody(true)}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            onClick={startDemo}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium 
+                     hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 
+                     focus:ring-indigo-500 focus:ring-offset-2"
           >
             Inizia Test
           </button>
@@ -347,7 +353,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'replay' && !isPlaying && (
           <button
             onClick={() => playMelody(false)}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium 
+                     hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 
+                     focus:ring-green-500 focus:ring-offset-2"
           >
             Riproduci
           </button>
@@ -356,7 +364,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'replay' && isPlaying && (
           <button
             onClick={stopReplay}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium 
+                     hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 
+                     focus:ring-red-500 focus:ring-offset-2"
           >
             Stop
           </button>
@@ -365,7 +375,9 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'results' && !isLastLevel && (
           <button
             onClick={nextLevel}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium 
+                     hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 
+                     focus:ring-green-500 focus:ring-offset-2"
           >
             Livello Successivo
           </button>
@@ -376,10 +388,11 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'listen' && "Ascolta attentamente la melodia"}
         {phase === 'replay' && !isPlaying && "Riproduci la melodia quando sei pronto"}
         {phase === 'replay' && isPlaying && "Ferma quando pensi che la melodia dovrebbe finire"}
-        {phase === 'results' &&
-          (isLastLevel
+        {phase === 'results' && (
+          isLastLevel
             ? "Test completato! Hai superato tutti i livelli!"
-            : "Livello completato! Prosegui al successivo")}
+            : "Livello completato! Prosegui al successivo"
+        )}
       </div>
 
       <div className="mt-8 text-sm text-gray-600">
@@ -389,11 +402,10 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
           <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
           <li>
-            La precisione viene calcolata in base alla differenza temporale. La tolleranza è pari al 5% della
-            durata totale e viene applicata una penalizzazione con esponente 3, per cui anche piccole deviazioni
-            riducono notevolmente il punteggio.
+            La precisione è calcolata in base alla differenza temporale con una tolleranza pari al 10%
+            della durata totale e con una penalizzazione esponenziale (esponente 2.5)
           </li>
-          <li>Completa tutti i livelli per ottenere il punteggio finale</li>
+          <li>Completa tutti i livelli per migliorare il tuo punteggio finale</li>
         </ul>
       </div>
     </div>
