@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getTestResults, getAllUserTests } from '@/app/lib/firebase'; // Importa le funzioni per recuperare i risultati
+import { getAllUserTests } from '@/app/lib/firebase'; // Importa le funzioni per recuperare i risultati
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 interface TestResults {
