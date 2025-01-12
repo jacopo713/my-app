@@ -85,7 +85,7 @@ const GlobalRanking: React.FC = () => {
 
           testResults.forEach((test) => {
             const type = test.type as TestType;
-            const score = test.score || 0; // Usa il campo score normalizzato
+            const score = test.score || 0;
             testScores[type] = score;
             totalScore += score;
           });
