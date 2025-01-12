@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
-import { ComponentType } from 'react'; // Removed ReactElement since it's unused
+import { ComponentType } from 'react';
 
 interface TestResult {
   score?: number;
@@ -27,7 +27,7 @@ interface TestScoreBarProps {
   label: string;
   value: number;
   maxValue?: number;
-  icon: ComponentType<{ className?: string }>; // Correctly type the icon as a React component
+  icon: ComponentType<{ className?: string }>;
   color: {
     bg: string;
     icon: string;
@@ -42,7 +42,7 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
     <div className="mb-6">
       <div className="flex items-center gap-3 mb-2">
         <div className={`p-2 rounded-lg ${color.bg}`}>
-          <Icon className={`w-5 h-5 ${color.icon}`} /> {/* Icon is now correctly typed */}
+          <Icon className={`w-5 h-5 ${color.icon}`} />
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
@@ -62,8 +62,11 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
 };
 
 export default function TestProgressChart({ data }: TestProgressChartProps) {
+  // Define the type for the keys of normalizedData
+  type TestId = 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
+
   // Normalizza i dati su una scala da 0 a 1000
-  const normalizedData = {
+  const normalizedData: Record<TestId, number> = {
     raven: data.find((test) => test.score)?.score || 0,
     eyeHand: Math.round((data.find((test) => test.accuracy)?.accuracy || 0) / 100 * 1000),
     stroop: Math.round((data.find((test) => test.percentile)?.percentile || 0) / 100 * 1000),
@@ -75,7 +78,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
 
   const testConfigs = [
     {
-      id: 'raven',
+      id: 'raven' as TestId,
       label: 'Ragionamento Astratto',
       icon: Brain,
       color: {
@@ -85,7 +88,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'eyeHand',
+      id: 'eyeHand' as TestId,
       label: 'Coordinazione Visiva',
       icon: Eye,
       color: {
@@ -95,7 +98,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'stroop',
+      id: 'stroop' as TestId,
       label: 'Interferenza Cognitiva',
       icon: ActivitySquare,
       color: {
@@ -105,7 +108,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'speedReading',
+      id: 'speedReading' as TestId,
       label: 'Lettura Veloce',
       icon: BookOpen,
       color: {
@@ -115,7 +118,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'memory',
+      id: 'memory' as TestId,
       label: 'Memoria a Breve Termine',
       icon: Lightbulb,
       color: {
@@ -125,7 +128,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'schulte',
+      id: 'schulte' as TestId,
       label: 'Attenzione Visiva',
       icon: Eye,
       color: {
@@ -135,7 +138,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'rhythm',
+      id: 'rhythm' as TestId,
       label: 'Coordinazione Ritmica',
       icon: Music,
       color: {
