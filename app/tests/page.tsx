@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music } from 'lucide-react'; // Rimossa ChevronDown
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music } from 'lucide-react';
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -153,7 +153,8 @@ export default function TestPage() {
         case "intro":
           return (
             <div className="max-w-4xl mx-auto px-4">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-2xl shadow-lg">
+              {/* Header fisso */}
+              <div className="sticky top-0 z-30 bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-2xl shadow-lg">
                 <div className="p-6">
                   <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                     Test del Quoziente Intellettivo Completo
@@ -168,6 +169,7 @@ export default function TestPage() {
                 </div>
               </div>
 
+              {/* Contenuto della pagina */}
               <div className="bg-white shadow-xl rounded-b-2xl p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
@@ -255,6 +257,7 @@ export default function TestPage() {
                 </div>
               </div>
 
+              {/* Pulsante fisso in basso */}
               <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
                 <div className="max-w-4xl mx-auto">
                   <button
