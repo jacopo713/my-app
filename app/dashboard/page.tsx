@@ -8,7 +8,7 @@ import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
 const DailyTraining = () => {
-  const [loadingExerciseId, setLoadingExerciseId] = useState(null);
+  const [loadingExerciseId, setLoadingExerciseId] = useState<number | null>(null);
 
   const exercises = [
     {
@@ -37,7 +37,7 @@ const DailyTraining = () => {
     }
   ];
 
-  const startExercise = (exerciseId) => {
+  const startExercise = (exerciseId: number): void => {
     setLoadingExerciseId(exerciseId);
   };
 
