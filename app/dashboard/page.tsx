@@ -7,8 +7,29 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 
+interface StatsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  data: Array<{
+    type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+    score?: number;
+    accuracy?: number;
+    percentile?: number;
+    averageDeviation?: number;
+    interferenceScore?: number;
+    wpm?: number;
+    evaluation?: string;
+    averageTime?: number;
+    gridSizes?: number[];
+    completionTimes?: number[];
+    precision?: number;
+    level?: number;
+    timestamp?: string;
+  }>;
+}
+
 // Componente Modal per visualizzare i risultati
-const StatsModal = ({ isOpen, onClose, data }) => {
+const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
   return (
