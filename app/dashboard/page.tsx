@@ -230,10 +230,27 @@ const Leaderboard = () => {
   );
 };
 
+interface TestResult {
+  type: 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+}
+
 interface StatsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  testResults: any[]; // oppure usa il tipo specifico dei test results
+  testResults: TestResult[];
 }
 
 const StatsModal = ({ isOpen, onClose, testResults }: StatsModalProps) => {
