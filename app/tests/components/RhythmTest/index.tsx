@@ -172,7 +172,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           osc.stop();
           osc.disconnect();
         } catch (e) {
-          console.warn('Errore durante la pulizia dell\'oscillatore:', e);
+          console.warn("Errore durante la pulizia dell'oscillatore:", e);
         }
       });
       audioResources.gains.forEach(gain => gain.disconnect());
@@ -223,7 +223,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
       osc.start(startTime);
       osc.stop(startTime + duration / 1000);
 
-      // Effetto visivo: aumenta il pulsante (pulse) in corrispondenza di ciascuna nota
+      // Effetto visivo: incremento del pulse in corrispondenza della nota riprodotta
       setTimeout(() => {
         setPulseScale(1.3);
         setTimeout(() => setPulseScale(1), 100);
@@ -239,7 +239,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
     startTimeRef.current = performance.now();
 
     if (isDemo) {
-      // Per la modalità demo, quando finisce la melodia si passa alla fase "replay"
+      // Per la modalità demo, al termine della melodia si passa alla fase "replay"
       const stopTimeout = setTimeout(() => {
         setIsPlaying(false);
         setPhase('replay');
@@ -261,15 +261,14 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
     const duration = performance.now() - startTimeRef.current;
     const deviation = Math.abs(duration - totalDuration);
-    // Riduciamo la tolleranza: qui il massimo errore accettato è il 30% della durata totale
-    const maxDeviation = totalDuration * 0.3;
-
-    // Calcolo della precisione con penalizzazione QUADRATICA:
-    // Si penalizza maggiormente anche una piccola deviazione.
-    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2)));
+    // Tolleranza ulteriormente ridotta: massimo errore accettato pari al 10% della durata totale
+    const maxDeviation = totalDuration * 0.1;
+    
+    // Penalizzazione non lineare più marcata: usa esponente 2.5
+    const calculatedPrecision = Math.max(0, 100 * (1 - Math.pow(deviation / maxDeviation, 2.5)));
     const finalPrecision = Math.min(Math.max(Math.round(calculatedPrecision), 0), 100);
 
-    // Aggiungo il punteggio di questa riproduzione ed aggiorno la media
+    // Aggiungo il punteggio della riproduzione corrente ed aggiorno la media
     setPrecisions(prev => [...prev, finalPrecision]);
     const newPrecisions = [...precisions, finalPrecision];
     const averagePrecision = newPrecisions.reduce((a, b) => a + b, 0) / newPrecisions.length;
@@ -281,7 +280,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
 
     // Se siamo all'ultimo livello, comunico il risultato finale
     if (isLastLevel) {
-      onComplete({ 
+      onComplete({
         precision: averagePrecision,
         level: currentLevel
       });
@@ -350,7 +349,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
             Inizia Test
           </button>
         )}
-        
+
         {phase === 'replay' && !isPlaying && (
           <button
             onClick={() => playMelody(false)}
@@ -361,7 +360,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
             Riproduci
           </button>
         )}
-        
+
         {phase === 'replay' && isPlaying && (
           <button
             onClick={stopReplay}
@@ -372,7 +371,7 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
             Stop
           </button>
         )}
-        
+
         {phase === 'results' && !isLastLevel && (
           <button
             onClick={nextLevel}
@@ -390,8 +389,8 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
         {phase === 'replay' && !isPlaying && "Riproduci la melodia quando sei pronto"}
         {phase === 'replay' && isPlaying && "Ferma quando pensi che la melodia dovrebbe finire"}
         {phase === 'results' && (
-          isLastLevel 
-            ? "Test completato! Hai superato tutti i livelli!" 
+          isLastLevel
+            ? "Test completato! Hai superato tutti i livelli!"
             : "Livello completato! Prosegui al successivo"
         )}
       </div>
@@ -402,7 +401,10 @@ const RhythmTest: React.FC<RhythmTestProps> = ({ onComplete }) => {
           <li>Ascolta attentamente la melodia di esempio</li>
           <li>Quando sei pronto, premi "Riproduci" per iniziare la tua riproduzione</li>
           <li>Premi "Stop" quando pensi che la melodia dovrebbe terminare</li>
-          <li>La tua precisione sarà calcolata in base alla differenza temporale, con tolleranza ridotta al 30% e una penalizzazione non lineare</li>
+          <li>
+            La precisione è calcolata in base alla differenza temporale con una tolleranza pari al 10%
+            della durata totale e con una penalizzazione esponenziale (esponente 2.5)
+          </li>
           <li>Completa tutti i livelli per migliorare il tuo punteggio finale</li>
         </ul>
       </div>
