@@ -31,6 +31,7 @@ interface TestResults {
   precision?: number;
   level?: number;
   timestamp?: string;
+  [key: string]: any; // Firma di indice per supportare campi dinamici
 }
 
 /**
