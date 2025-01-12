@@ -88,7 +88,7 @@ const SpeedReadingTrainer: React.FC<SpeedReadingTrainerProps> = ({ onComplete })
   const handleAnswer = useCallback((selectedWord: string) => {
     const isCorrect = selectedWord === correctAnswer;
     // Aggiorna i WPM: aumentiamo di 50 se corretto, altrimenti diminuiamo di 50
-    const newWpm = isCorrect ? Math.min(1000, wpm + 50) : Math.max(50, wpm - 50);
+    const newWpm = isCorrect ? Math.min(1000, wpm + 100) : Math.max(50, wpm - 50);
     const newCycleCount = cycleCount + 1;
     
     setWpm(newWpm);
