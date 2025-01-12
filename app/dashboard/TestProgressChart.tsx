@@ -91,7 +91,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'eyeHand' as TestId,
+      id: 'eyehand' as TestId,
       label: 'Coordinazione Visiva',
       icon: Eye,
       color: {
@@ -111,7 +111,7 @@ export default function TestProgressChart({ data }: TestProgressChartProps) {
       }
     },
     {
-      id: 'speedReading' as TestId,
+      id: 'speedreading' as TestId,
       label: 'Lettura Veloce',
       icon: BookOpen,
       color: {
