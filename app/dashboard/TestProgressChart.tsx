@@ -66,14 +66,14 @@ const TestScoreBar = ({ label, value, maxValue = 1000, icon: Icon, color }: Test
 
 export default function TestProgressChart({ data }: TestProgressChartProps) {
   // Define the type for the keys of normalizedData
-  type TestId = 'raven' | 'eyehand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm';
+  type TestId = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
   // Normalizza i dati su una scala da 0 a 1000
   const normalizedData: Record<TestId, number> = {
     raven: data.find((test) => test.type === 'raven')?.score || 0,
-    eyeHand: Math.round((data.find((test) => test.type === 'eyeHand')?.accuracy || 0) / 100 * 1000),
+    eyehand: Math.round((data.find((test) => test.type === 'eyeHand')?.accuracy || 0) / 100 * 1000),
     stroop: Math.round((data.find((test) => test.type === 'stroop')?.percentile || 0) / 100 * 1000),
-    speedReading: Math.round((data.find((test) => test.type === 'speedReading')?.wpm || 0) / 100 * 1000),
+    speedreading: Math.round((data.find((test) => test.type === 'speedReading')?.wpm || 0) / 100 * 1000),
     memory: data.find((test) => test.type === 'memory')?.score || 0,
     schulte: Math.round((data.find((test) => test.type === 'schulte')?.percentile || 0) / 100 * 1000),
     rhythm: Math.round((data.find((test) => test.type === 'rhythm')?.precision || 0) / 100 * 1000),
