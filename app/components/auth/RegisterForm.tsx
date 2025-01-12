@@ -1,11 +1,12 @@
+// app/components/auth/RegisterForm.tsx
 'use client';
 
 import { useState } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  updateProfile, 
-  GoogleAuthProvider, 
-  signInWithPopup 
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
@@ -14,23 +15,21 @@ import { doc, setDoc } from 'firebase/firestore';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 /**
- * Funzione di utility per trasferire i dati dei test salvati nel localStorage
- * nel database Firestore per l'utente appena registrato.
+ * Questa funzione serve a trasferire i risultati dei test salvati nel localStorage
+ * nel database Firestore per l'utente registrato.
+ *
+ * Attualmente non viene utilizzata in questo file, ma potrà essere importata e utilizzata
+ * nella pagina di "checkout success" per completare il trasferimento dei dati.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const transferTestResults = async (uid: string) => {
   const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
-  // Se ci sono risultati salvati, per ogni test eseguo il trasferimento su Firestore
   for (const [testType, testResult] of Object.entries(guestResults)) {
     if (testResult) {
-      // La funzione saveTestResults la importi dal tuo file firebase.tsx
-      // Esempio:
-      // await saveTestResults(uid, `${testType}Test`, testResult);
-      // Nel nostro esempio, usiamo direttamente setDoc (oppure puoi importare saveTestResults se già implementata):
       const testRef = doc(db, 'users', uid, 'tests', `${testType}Test`);
       await setDoc(testRef, { ...testResult, type: testType }, { merge: true });
     }
   }
-  // Pulisce il localStorage per evitare duplicazioni in futuro
   localStorage.removeItem('guestTestResults');
 };
 
@@ -69,7 +68,6 @@ export default function RegisterForm() {
         });
       }
 
-      // Prepara i dati utente da salvare in Firestore
       const userData = {
         email: userCredential.user.email,
         displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
@@ -86,10 +84,8 @@ export default function RegisterForm() {
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-
       const idToken = await userCredential.user.getIdToken();
 
-      // Avvia la creazione della sessione di checkout per Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -113,7 +109,6 @@ export default function RegisterForm() {
         throw new Error('Stripe failed to initialize');
       }
       
-      // Esegui il redirect a Stripe Checkout
       const { error: stripeError } = await stripe.redirectToCheckout({
         sessionId: data.sessionId
       });
@@ -122,15 +117,10 @@ export default function RegisterForm() {
         throw stripeError;
       }
 
-      // NOTA: una volta che l'utente completa il pagamento su Stripe,
-      // Stripe reindirizzerà nuovamente al tuo sito (ad esempio, a una pagina di "checkout success")
-      // A quel punto, potrai chiamare la funzione transferTestResults.
-      // Se preferisci gestire il trasferimento subito qui, puoi utilizzare un meccanismo
-      // che intercetta il redirect di ritorno.
-      
-      // Esempio (qualora il flusso di checkout non usasse un redirect esterno):
-      // await transferTestResults(userCredential.user.uid);
-      // router.push('/tests/results');
+      // A questo punto l'utente viene reindirizzato a Stripe per completare il pagamento.
+      // Dopo il completamento del pagamento, nella pagina di checkout success,
+      // potrai chiamare la funzione transferTestResults(userCredential.user.uid)
+      // per trasferire i dati dei test salvati nel localStorage su Firestore.
 
     } catch (err) {
       console.error('Registration error:', err);
