@@ -45,7 +45,8 @@ interface TestResults {
 export const saveTestResults = async (userId: string, testId: string, results: TestResults) => {
   try {
     const testRef = doc(db, 'users', userId, 'tests', testId);
-    await setDoc(testRef, { ...results, type: testId }, { merge: true }); // Aggiungi il campo 'type'
+    const type = testId.replace('Test', '').toLowerCase(); // Estrai il tipo di test (es. 'raven' da 'ravenTest')
+    await setDoc(testRef, { ...results, type }, { merge: true }); // Salva il campo 'type' corretto
     console.log('Test results saved successfully!');
   } catch (error) {
     console.error('Error saving test results:', error);
