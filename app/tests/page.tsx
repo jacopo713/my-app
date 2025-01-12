@@ -23,6 +23,8 @@ const customChevronStyle = {
   strokeWidth: 5,
 };
 
+type TestType = 'raven' | 'eyeHand' | 'stroop' | 'speedReading' | 'memory' | 'schulte' | 'rhythm' | 'unknown';
+
 interface TestResults {
   raven: {
     score: number;
