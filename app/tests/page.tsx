@@ -253,7 +253,7 @@ export default function TestPage() {
                   </p>
                   <div className="text-xs text-blue-200 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    <span>Durata stimata: 45 minuti • 7 test specializzati</span>
+                    <span>Durata stimata: 20 minuti • 7 test specializzati</span>
                   </div>
                 </div>
               </div>
