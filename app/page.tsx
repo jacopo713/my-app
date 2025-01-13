@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Brain,
   Eye,
-  Star,
   User,
   Book,
   Music,
