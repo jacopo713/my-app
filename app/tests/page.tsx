@@ -390,7 +390,7 @@ export default function TestPage() {
     };
 
     return (
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto px-4 overflow-y-auto">
         {(!testStarted && phase !== "intro" && phase !== "results") && (
           <TestInstructionsComponent phase={phase} />
         )}
@@ -413,8 +413,8 @@ export default function TestPage() {
         </div>
       </div>
 
-      {/* Contenuto principale con margine superiore ridotto */}
-      <div className="mt-16">
+      {/* Contenuto principale con margine superiore e inferiore */}
+      <div className="mt-16 mb-20">
         {renderCurrentPhase()}
       </div>
 
