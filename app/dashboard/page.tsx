@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain, Activity, Repeat } from 'lucide-react';
+import { Brain, Activity, Repeat, BarChart2, Users } from 'lucide-react';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
@@ -129,9 +129,7 @@ const GlobalRanking: React.FC = () => {
     return (
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <BarChart2 className="w-6 h-6 text-yellow-500" />
           Classifica Globale
         </h2>
         <div className="text-lg text-gray-600">Caricamento classifica...</div>
@@ -142,9 +140,7 @@ const GlobalRanking: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <BarChart2 className="w-6 h-6 text-yellow-500" />
         Classifica Globale
       </h2>
       
@@ -196,12 +192,9 @@ const GlobalRanking: React.FC = () => {
   );
 };
 
-// 4. Componente principale della Dashboard
-const DashboardPage: React.FC = () => {
+// 4. Pagina Allenamenti Cognitivi
+const AllenamentiCognitiviPage: React.FC = () => {
   const { user } = useAuth();
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -213,96 +206,75 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const handleCognitiveTraining = () => {
-    router.push('/allenamenti-cognitivi');
+  const handleSelectTraining = (trainingType: string) => {
+    router.push(`/allenamenti-cognitivi/${trainingType}`);
   };
-
-  const handleRetakeTest = () => {
-    router.push('/ripeti-il-test');
-  };
-
-  useEffect(() => {
-    const fetchTestResults = async () => {
-      if (user) {
-        try {
-          const results = await getAllUserTests(user.uid);
-          const typedResults: TestResult[] = results.map(result => ({
-            ...result,
-            type: (result.type || result.id.replace('Test', '').toLowerCase()) as TestType
-          }));
-          setTestResults(typedResults);
-        } catch (error) {
-          console.error('Error fetching test results:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchTestResults();
-  }, [user]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">
-          <div className="text-lg text-gray-600">Caricamento risultati...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Ciao, {user?.displayName || 'User'}!
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Card superiore */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Activity className="w-8 h-8 text-purple-500" />
+              Allenamenti Cognitivi
             </h1>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setShowResults(true)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+            <p className="text-gray-700 mb-6">
+              Scegli l'allenamento che preferisci dalle opzioni sottostanti.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div 
+                onClick={() => handleSelectTraining('focus')}
+                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
-                <Brain className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Mostri i tuoi livelli cognitivi</span>
-              </button>
-              <button 
-                onClick={handleCognitiveTraining}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-6 h-6 text-blue-500" />
+                  <h3 className="font-semibold">Focus</h3>
+                </div>
+                <p className="text-sm text-gray-600">Migliora la concentrazione.</p>
+              </div>
+              <div 
+                onClick={() => handleSelectTraining('memoria')}
+                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
-                <Activity className="w-5 h-5 text-purple-500" />
-                <span className="font-medium">Allenamenti Cognitivi</span>
-              </button>
-              <button 
-                onClick={handleRetakeTest}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+                <div className="flex items-center gap-2 mb-2">
+                  <Repeat className="w-6 h-6 text-green-500" />
+                  <h3 className="font-semibold">Memoria</h3>
+                </div>
+                <p className="text-sm text-gray-600">Allena la tua capacità mnemonica.</p>
+              </div>
+              <div 
+                onClick={() => handleSelectTraining('velocita')}
+                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
-                <Repeat className="w-5 h-5 text-green-500" />
-                <span className="font-medium">Ripeti il test</span>
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
-              >
-                <span className="font-medium">Logout</span>
-              </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-6 h-6 text-orange-500" />
+                  <h3 className="font-semibold">Velocità</h3>
+                </div>
+                <p className="text-sm text-gray-600">Sfida la rapidità di reazione.</p>
+              </div>
             </div>
           </div>
 
-          <GlobalRanking />
+          {/* Spazio per spostare le classifiche verso il basso */}
+          <div className="mt-16">
+            <GlobalRanking />
+          </div>
 
-          <StatsModal 
-            isOpen={showResults}
-            onClose={() => setShowResults(false)}
-            data={testResults}
-          />
+          <div className="mt-8 flex justify-end">
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
+            >
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     </ProtectedRoute>
   );
 };
 
-export default DashboardPage;
+export default AllenamentiCognitiviPage;
 
