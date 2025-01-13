@@ -54,12 +54,22 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-4xl relative">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
         <TestProgressChart data={data} />
@@ -70,7 +80,7 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
 
 // 3. Componente Classifica
 const GlobalRanking: React.FC = () => {
-  const { user } = useAuth();
+  const { user: currentUser } = useAuth();
   const [rankingData, setRankingData] = useState<RankingData[]>([]);
   const [userRanking, setUserRanking] = useState<RankingData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,15 +111,14 @@ const GlobalRanking: React.FC = () => {
             testScores,
           };
         });
-
         const ranking = await Promise.all(rankingPromises);
         ranking.sort((a, b) => b.totalScore - a.totalScore);
         ranking.forEach((user, index) => {
           user.rank = index + 1;
         });
 
-        if (user) {
-          const currentUserRanking = ranking.find((u) => u.userId === user.uid);
+        if (currentUser) {
+          const currentUserRanking = ranking.find((u) => u.userId === currentUser.uid);
           if (currentUserRanking) {
             setUserRanking(currentUserRanking);
           }
@@ -123,7 +132,7 @@ const GlobalRanking: React.FC = () => {
     };
 
     fetchRankingData();
-  }, [user]);
+  }, [currentUser]);
 
   if (loading) {
     return (
@@ -143,16 +152,25 @@ const GlobalRanking: React.FC = () => {
         <BarChart2 className="w-6 h-6 text-yellow-500" />
         Classifica Globale
       </h2>
-      
+
       <div className="space-y-4">
         {rankingData.map((user) => (
-          <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div
+            key={user.userId}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
             <div className="flex items-center gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg
-                ${user.rank === 1 ? 'bg-yellow-100 text-yellow-600' : 
-                  user.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                  user.rank === 3 ? 'bg-orange-100 text-orange-600' :
-                  'bg-blue-100 text-blue-600'}`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${
+                  user.rank === 1
+                    ? 'bg-yellow-100 text-yellow-600'
+                    : user.rank === 2
+                    ? 'bg-gray-100 text-gray-600'
+                    : user.rank === 3
+                    ? 'bg-orange-100 text-orange-600'
+                    : 'bg-blue-100 text-blue-600'
+                }`}
+              >
                 {user.rank}
               </div>
               <div>
@@ -221,10 +239,10 @@ const AllenamentiCognitiviPage: React.FC = () => {
               Allenamenti Cognitivi
             </h1>
             <p className="text-gray-700 mb-6">
-              Scegli l'allenamento che preferisci dalle opzioni sottostanti.
+              Scegli l&apos;allenamento che preferisci dalle opzioni sottostanti.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div 
+              <div
                 onClick={() => handleSelectTraining('focus')}
                 className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
@@ -234,7 +252,7 @@ const AllenamentiCognitiviPage: React.FC = () => {
                 </div>
                 <p className="text-sm text-gray-600">Migliora la concentrazione.</p>
               </div>
-              <div 
+              <div
                 onClick={() => handleSelectTraining('memoria')}
                 className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
@@ -242,9 +260,11 @@ const AllenamentiCognitiviPage: React.FC = () => {
                   <Repeat className="w-6 h-6 text-green-500" />
                   <h3 className="font-semibold">Memoria</h3>
                 </div>
-                <p className="text-sm text-gray-600">Allena la tua capacità mnemonica.</p>
+                <p className="text-sm text-gray-600">
+                  Allena la tua capacità mnemonica.
+                </p>
               </div>
-              <div 
+              <div
                 onClick={() => handleSelectTraining('velocita')}
                 className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
               >
@@ -252,7 +272,9 @@ const AllenamentiCognitiviPage: React.FC = () => {
                   <Users className="w-6 h-6 text-orange-500" />
                   <h3 className="font-semibold">Velocità</h3>
                 </div>
-                <p className="text-sm text-gray-600">Sfida la rapidità di reazione.</p>
+                <p className="text-sm text-gray-600">
+                  Sfida la rapidità di reazione.
+                </p>
               </div>
             </div>
           </div>
@@ -263,7 +285,7 @@ const AllenamentiCognitiviPage: React.FC = () => {
           </div>
 
           <div className="mt-8 flex justify-end">
-            <button 
+            <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
             >
