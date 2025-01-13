@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown } from 'lucide-react';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown, ArrowRight } from 'lucide-react';
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -341,43 +341,43 @@ export default function TestPage() {
           );
         case "raven":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <RavenTest onComplete={handleRavenComplete} />
           );
         case "eyehand":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <EyeHandTest onComplete={handleEyeHandComplete} />
           );
         case "stroop":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <StroopTest onComplete={handleStroopComplete} />
           );
         case "speedreading":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <SpeedReadingTrainer onComplete={handleSpeedReadingComplete} />
           );
         case "memory":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <ShortTermMemoryTest onComplete={handleMemoryComplete} />
           );
         case "schulte":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <SchulteTable onComplete={handleSchulteComplete} />
           );
         case "rhythm":
           return !testStarted ? (
-            <TestInstructionsComponent phase={phase} onStart={() => setTestStarted(true)} />
+            <TestInstructionsComponent phase={phase} />
           ) : (
             <RhythmTest onComplete={handleRhythmComplete} />
           );
@@ -488,10 +488,7 @@ export default function TestPage() {
     return (
       <div className="max-w-4xl mx-auto px-4">
         {(!testStarted && phase !== "intro" && phase !== "results") && (
-          <TestInstructionsComponent
-            phase={phase}
-            onStart={() => setTestStarted(true)}
-          />
+          <TestInstructionsComponent phase={phase} />
         )}
         {(testStarted || phase === "intro" || phase === "results") && renderTest()}
       </div>
@@ -517,29 +514,31 @@ export default function TestPage() {
         {renderCurrentPhase()}
       </div>
 
-      {/* Pulsante fisso in basso per avviare il test o passare alla fase successiva */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => {
-              if (phase === "intro") {
-                // Se siamo nella fase di introduzione, passa alla fase successiva (raven)
-                setPhase("raven");
-                setProgress(15); // Imposta il progresso al 15%
-              } else if (!testStarted) {
-                // Se il test non è ancora iniziato, avvia il test corrente
-                setTestStarted(true);
-              }
-            }}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
-              font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
-          >
-            <span className="text-lg">
-              {phase === "intro" ? "Inizia il Test" : "Avvia il Test"}
-            </span>
-          </button>
+      {/* Pulsante fisso in basso per avviare il test */}
+      {!testStarted && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={() => {
+                if (phase === "intro") {
+                  // Se siamo nella fase di introduzione, passa alla fase successiva (raven)
+                  setPhase("raven");
+                  setProgress(15); // Imposta il progresso al 15%
+                } else if (!testStarted) {
+                  // Se il test non è ancora iniziato, avvia il test corrente
+                  setTestStarted(true);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
+                font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px
+                flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">Inizia il Test</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Messaggio di iscrizione (se necessario) */}
       {showSubscriptionPrompt && (
