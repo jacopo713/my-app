@@ -13,7 +13,7 @@ import {
   Award,
   BarChart,
 } from 'lucide-react';
-import GlobalRanking from '@/components/GlobalRanking'; // Importa il componente GlobalRanking
+import GlobalRanking from '@/app/components/GlobalRanking'; // Importa il componente GlobalRanking
 
 const HomePage: React.FC = () => {
   const router = useRouter();
