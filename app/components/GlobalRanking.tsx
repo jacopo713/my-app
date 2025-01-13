@@ -1,4 +1,3 @@
-// components/GlobalRanking.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,12 +10,23 @@ interface RankingData {
   userId: string;
   username: string;
   totalScore: number;
+  percentile: number;
   rank: number;
   level: number;
   testScores: {
     [key in TestType]?: number;
   };
 }
+
+// Funzione per convertire il punteggio in QI
+const scoreToIQ = (score: number): number => {
+  const maxScore = 999; // Punteggio massimo
+  const minIQ = 65;     // QI minimo
+  const maxIQ = 145;    // QI massimo
+
+  // Formula di conversione lineare
+  return Math.round((score / maxScore) * (maxIQ - minIQ) + minIQ);
+};
 
 const GlobalRanking: React.FC = () => {
   const { user } = useAuth();
@@ -49,16 +59,27 @@ const GlobalRanking: React.FC = () => {
             userId: user.uid,
             username: user.displayName || 'Anonymous',
             totalScore: Math.round(averageScore),
+            percentile: 0, // Inizializza il percentile a 0
             rank: 0,
             level: 1,
             testScores,
           };
         });
 
-        const ranking = await Promise.all(rankingPromises);
+        let ranking = await Promise.all(rankingPromises);
+
+        // Ordina la classifica in base al punteggio totale
         ranking.sort((a, b) => b.totalScore - a.totalScore);
-        ranking.forEach((user, index) => {
-          user.rank = index + 1;
+
+        // Calcola il percentile per ogni utente
+        const totalUsers = ranking.length;
+        ranking = ranking.map((user, index) => {
+          const percentile = ((totalUsers - index) / totalUsers) * 100;
+          return {
+            ...user,
+            percentile: Math.round(percentile), // Arrotonda il percentile
+            rank: index + 1,
+          };
         });
 
         if (user) {
@@ -68,7 +89,7 @@ const GlobalRanking: React.FC = () => {
           }
         }
 
-        setRankingData(ranking.slice(0, 3));
+        setRankingData(ranking.slice(0, 3)); // Mostra solo i primi 3 utenti
       } catch (error) {
         console.error('Error fetching ranking data:', error);
       } finally {
@@ -119,8 +140,8 @@ const GlobalRanking: React.FC = () => {
               </div>
             </div>
             <div className="text-right">
-              <div className="font-bold text-gray-900">{user.totalScore}</div>
-              <div className="text-sm text-gray-500">punti medi</div>
+              <div className="font-bold text-gray-900">{scoreToIQ(user.totalScore)}</div> {/* Mostra il QI */}
+              <div className="text-sm text-gray-500">QI</div>
             </div>
           </div>
         ))}
@@ -139,8 +160,8 @@ const GlobalRanking: React.FC = () => {
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-gray-900">{userRanking.totalScore}</div>
-                <div className="text-sm text-gray-500">punti medi</div>
+                <div className="font-bold text-gray-900">{scoreToIQ(userRanking.totalScore)}</div> {/* Mostra il QI */}
+                <div className="text-sm text-gray-500">QI</div>
               </div>
             </div>
           </>
