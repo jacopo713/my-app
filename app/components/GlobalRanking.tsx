@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 
-type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+
 
 interface UserData {
   userId: string;
