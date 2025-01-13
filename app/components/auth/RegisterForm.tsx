@@ -213,6 +213,44 @@ export default function RegisterForm() {
           </div>
         </div>
 
+        {/* Aggiunta delle caselle di controllo e dettagli del periodo di prova */}
+        <div className="text-sm">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              required
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              id="terms"
+              disabled={loading}
+            />
+            <label htmlFor="terms" className="ml-2 text-gray-600">
+              Accetto i <a href="/termini-e-condizioni" className="text-blue-600 hover:text-blue-500">Termini e Condizioni</a> e la <a href="/privacy-policy" className="text-blue-600 hover:text-blue-500">Privacy Policy</a>.
+            </label>
+          </div>
+          <div className="mt-2 flex items-center">
+            <input
+              type="checkbox"
+              required
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              id="trial"
+              disabled={loading}
+            />
+            <label htmlFor="trial" className="ml-2 text-gray-600">
+              Inizia il tuo periodo di prova gratuito di 7 giorni.
+            </label>
+          </div>
+          <div className="mt-2 text-gray-600">
+            <p>Con la prova gratuita ottieni:</p>
+            <ul className="list-disc list-inside">
+              <li>Accesso completo a tutti i test cognitivi</li>
+              <li>Programmi personalizzati di allenamento mentale</li>
+              <li>Esercizi quotidiani per potenziamento cognitivo</li>
+              <li>Classifiche competitive e sfide in tempo reale</li>
+            </ul>
+            <p className="mt-2">Dopo i 7 giorni, la sottoscrizione continuerà al prezzo di <strong>19,90€/mese</strong>. Puoi cancellarti in qualsiasi momento.</p>
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={loading}
