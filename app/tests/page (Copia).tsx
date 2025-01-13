@@ -154,20 +154,26 @@ export default function TestPage() {
       [normalizedType]: updatedResults
     }));
 
-    if (!user) {
-      // Se l'utente è guest, reindirizza alla pagina di registrazione
-      router.push('/register');
-      return; // Esci dalla funzione per evitare di procedere con il test
+    // Salva sempre i risultati nel localStorage
+    const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
+    guestResults[normalizedType] = updatedResults; // Usa il type normalizzato
+    localStorage.setItem('guestTestResults', JSON.stringify(guestResults));
+
+    if (user) {
+      // Se l'utente è registrato, salva i risultati anche nel database Firestore
+      await saveTestResults(user.uid, `${normalizedType}Test`, updatedResults); // Usa il type normalizzato
+    } else {
+      // Per un utente guest, non effettuo un redirect immediato, salvo solo nel localStorage
+      setIsGuest(true);
     }
 
-    // Se l'utente è registrato, salva i risultati nel database Firestore
-    await saveTestResults(user.uid, `${normalizedType}Test`, updatedResults);
-
     // Se l'utente è registrato, verifico lo stato dell'abbonamento
-    const isSubscribed = await checkSubscriptionStatus();
-    if (!isSubscribed) {
-      router.push('/payment');
-      return;
+    if (user) {
+      const isSubscribed = await checkSubscriptionStatus();
+      if (!isSubscribed) {
+        router.push('/payment');
+        return;
+      }
     }
 
     // Passa alla fase successiva (o alla fase "results", se si è concluso il flusso)
@@ -181,6 +187,14 @@ export default function TestPage() {
       setProgress(100); // Imposta il progresso al 100%
     }
   };
+
+  // Gestione del reindirizzamento post-registrazione se l'utente era guest
+  useEffect(() => {
+    if (user && isGuest) {
+      router.push('/tests/results');
+      setIsGuest(false);
+    }
+  }, [user, isGuest, router]);
 
   // Funzione per passare velocemente alla fase successiva
   const handleFastForward = () => {
@@ -426,10 +440,7 @@ export default function TestPage() {
           <div className="max-w-4xl mx-auto">
             <button
               onClick={() => {
-                if (!user) {
-                  // Se l'utente è guest, reindirizza alla pagina di registrazione
-                  router.push('/register');
-                } else if (phase === "intro") {
+                if (phase === "intro") {
                   // Se siamo nella fase di introduzione, passa alla fase successiva (raven)
                   setPhase("raven");
                   setProgress(15); // Imposta il progresso al 15%
