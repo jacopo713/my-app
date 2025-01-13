@@ -18,14 +18,13 @@ const HomePage: React.FC = () => {
   const router = useRouter();
 
   const handleStartTest = () => {
-    // Reindirizza direttamente alla pagina del test senza controllare l'autenticazione
     router.push('/tests');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800">
+    <div className="min-h-screen bg-slate-50 text-gray-900">
       {/* NAVBAR */}
-      <nav className="bg-white shadow-md fixed w-full z-50">
+      <nav className="bg-white shadow-sm fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
@@ -68,89 +67,89 @@ const HomePage: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 rounded-xl shadow-2xl p-8 text-white mb-12">
             <div className="flex flex-col lg:flex-row items-center">
               <div className="lg:w-1/2 text-center lg:text-left mb-6 lg:mb-0">
-                <h1 className="text-4xl font-bold mb-4">Test del QI</h1>
-                <p className="text-lg mb-4 font-light">
-                  Scopri il tuo potenziale intellettivo
+                <h1 className="text-5xl font-bold mb-6">Test del QI</h1>
+                <p className="text-xl mb-6 font-light">
+                  Scopri il tuo potenziale intellettivo con il nostro test scientifico.
                 </p>
                 <button
                   onClick={handleStartTest}
-                  className="inline-block bg-white text-blue-600 font-bold text-lg px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
+                  className="inline-block bg-white text-blue-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
                 >
                   Inizia il Test
                 </button>
 
-                <div className="mt-4 border-t border-white/20 pt-4">
-                  <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 text-sm">
+                <div className="mt-8 border-t border-white/20 pt-6">
+                  <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6 text-sm">
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-5 h-5 mr-2" />
                       <span>Durata: 20 minuti</span>
                     </div>
                     <div className="flex items-center">
-                      <Target className="w-4 h-4 mr-2" />
+                      <Target className="w-5 h-5 mr-2" />
                       <span>7 Test Completi</span>
                     </div>
                     <div className="flex items-center">
-                      <Award className="w-4 h-4 mr-2" />
+                      <Award className="w-5 h-5 mr-2" />
                       <span>Risultati Immediati</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="lg:w-1/2 grid grid-cols-2 gap-3 sm:gap-4 mt-6 lg:mt-0">
-                <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/30 backdrop-blur-sm p-4 rounded-lg hover:from-blue-600/30 hover:to-blue-800/40 transition-all">
-                  <Brain className="w-8 h-8 mb-2 text-blue-400" />
-                  <h3 className="font-semibold text-sm">Ragionamento Astratto</h3>
-                  <p className="text-xs text-white/90">Test delle matrici progressive</p>
+              <div className="lg:w-1/2 grid grid-cols-2 gap-4 sm:gap-6 mt-6 lg:mt-0">
+                <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/30 backdrop-blur-sm p-6 rounded-xl hover:from-blue-600/30 hover:to-blue-800/40 transition-all">
+                  <Brain className="w-10 h-10 mb-4 text-blue-400" />
+                  <h3 className="font-semibold text-lg">Ragionamento Astratto</h3>
+                  <p className="text-sm text-white/90">Test delle matrici progressive</p>
                 </div>
                 
-                <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/30 backdrop-blur-sm p-4 rounded-lg hover:from-purple-600/30 hover:to-purple-800/40 transition-all">
-                  <Eye className="w-8 h-8 mb-2 text-purple-400" />
-                  <h3 className="font-semibold text-sm">Coordinazione</h3>
-                  <p className="text-xs text-white/90">Test occhio-mano</p>
+                <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/30 backdrop-blur-sm p-6 rounded-xl hover:from-purple-600/30 hover:to-purple-800/40 transition-all">
+                  <Eye className="w-10 h-10 mb-4 text-purple-400" />
+                  <h3 className="font-semibold text-lg">Coordinazione</h3>
+                  <p className="text-sm text-white/90">Test occhio-mano</p>
                 </div>
                 
-                <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/30 backdrop-blur-sm p-4 rounded-lg hover:from-emerald-600/30 hover:to-emerald-800/40 transition-all">
-                  <Book className="w-8 h-8 mb-2 text-emerald-400" />
-                  <h3 className="font-semibold text-sm">Lettura Veloce</h3>
-                  <p className="text-xs text-white/90">Test di comprensione</p>
+                <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/30 backdrop-blur-sm p-6 rounded-xl hover:from-emerald-600/30 hover:to-emerald-800/40 transition-all">
+                  <Book className="w-10 h-10 mb-4 text-emerald-400" />
+                  <h3 className="font-semibold text-lg">Lettura Veloce</h3>
+                  <p className="text-sm text-white/90">Test di comprensione</p>
                 </div>
                 
-                <div className="bg-gradient-to-br from-amber-600/20 to-amber-800/30 backdrop-blur-sm p-4 rounded-lg hover:from-amber-600/30 hover:to-amber-800/40 transition-all">
-                  <Music className="w-8 h-8 mb-2 text-amber-400" />
-                  <h3 className="font-semibold text-sm">Senso del Ritmo</h3>
-                  <p className="text-xs text-white/90">Test di sincronizzazione</p>
+                <div className="bg-gradient-to-br from-amber-600/20 to-amber-800/30 backdrop-blur-sm p-6 rounded-xl hover:from-amber-600/30 hover:to-amber-800/40 transition-all">
+                  <Music className="w-10 h-10 mb-4 text-amber-400" />
+                  <h3 className="font-semibold text-lg">Senso del Ritmo</h3>
+                  <p className="text-sm text-white/90">Test di sincronizzazione</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* TEST CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
-              <div className="flex items-center mb-3">
-                <Brain className="w-10 h-10 text-blue-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Ragionamento</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Brain className="w-12 h-12 text-blue-500" />
+                <h2 className="text-2xl font-bold ml-4">Test di Ragionamento</h2>
               </div>
               <p className="text-gray-600 text-base">
                 Valuta la tua capacità di risolvere problemi complessi
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
-              <div className="flex items-center mb-3">
-                <Eye className="w-10 h-10 text-green-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Percezione</h2>
+            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Eye className="w-12 h-12 text-green-500" />
+                <h2 className="text-2xl font-bold ml-4">Test di Percezione</h2>
               </div>
               <p className="text-gray-600 text-base">
                 Misura la tua velocità di elaborazione visiva
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
-              <div className="flex items-center mb-3">
-                <Star className="w-10 h-10 text-purple-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Memoria</h2>
+            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-2">
+              <div className="flex items-center mb-4">
+                <Star className="w-12 h-12 text-purple-500" />
+                <h2 className="text-2xl font-bold ml-4">Test di Memoria</h2>
               </div>
               <p className="text-gray-600 text-base">
                 Verifica le tue capacità di memoria e concentrazione
@@ -160,19 +159,19 @@ const HomePage: React.FC = () => {
 
           {/* BENEFITS SECTION */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
-            <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
+            <h2 className="text-3xl font-bold text-blue-600 mb-8 text-center">
               Perché Scegliere il Nostro Test?
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+              <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500">
                 <h3 className="text-xl font-semibold mb-3">Professionale</h3>
                 <p className="text-gray-600">Sviluppato da esperti del settore</p>
               </div>
-              <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+              <div className="bg-green-50 p-6 rounded-xl border-l-4 border-green-500">
                 <h3 className="text-xl font-semibold mb-3">Accurato</h3>
                 <p className="text-gray-600">Risultati dettagliati e precisi</p>
               </div>
-              <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
+              <div className="bg-purple-50 p-6 rounded-xl border-l-4 border-purple-500">
                 <h3 className="text-xl font-semibold mb-3">Completo</h3>
                 <p className="text-gray-600">Valutazione di molteplici capacità</p>
               </div>
@@ -183,12 +182,12 @@ const HomePage: React.FC = () => {
 
       {/* FOOTER WITH LEGAL LINKS */}
       <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-gray-600 text-sm">
               &copy; {new Date().getFullYear()} Turing™. Tutti i diritti riservati.
             </div>
-            <div className="flex space-x-4">
+            <div className="flex space-x-6">
               <a href="/terms" className="text-gray-600 hover:text-blue-600 text-sm">
                 Termini e Condizioni
               </a>
