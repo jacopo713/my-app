@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 
 import React from 'react';
-import { Brain, Clock, Target, AlertCircle, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
+import { Brain, Clock, Target, AlertCircle, ArrowRight, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
 
 export interface TestInstructions {
   title: string;
@@ -260,8 +260,24 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
           </ul>
         </div>
 
-        {/* Il bottone "Inizia il Test" con la freccetta è stato rimosso */}
+        {/* Timer e Avvio */}
+        <div className="space-y-4">
+          <button
+            onClick={onStart}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl 
+              font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px
+              flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">Inizia il Test</span>
+            <ArrowRight className="w-5 h-5" />
+          </button>
+          <p className="text-center text-sm text-gray-500">
+            Timer partirà automaticamente all'avvio del test
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
+

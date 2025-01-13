@@ -6,6 +6,7 @@ interface TestInstructionsProps {
   onStart: () => void;
 }
 
+
 export default function TestInstructions({ phase, onStart }: TestInstructionsProps) {
   const instructions = testInstructions[phase];
 
@@ -30,7 +31,12 @@ export default function TestInstructions({ phase, onStart }: TestInstructionsPro
             ))}
           </ul>
         </div>
-        {/* Il bottone "Inizia il Test" è stato rimosso */}
+        <button
+          onClick={onStart}
+          className="mt-6 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          Inizia il Test
+        </button>
       </div>
     </div>
   );
