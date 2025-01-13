@@ -165,7 +165,7 @@ export default function TestPage() {
     // Se l'utente è registrato, verifico lo stato dell'abbonamento
     const isSubscribed = await checkSubscriptionStatus();
     if (!isSubscribed) {
-      router.push('/payment');
+      router.push('/pending-payment'); // Reindirizza alla pagina di pagamento
       return;
     }
 
@@ -190,6 +190,31 @@ export default function TestPage() {
     } else {
       setPhase("results");
       setProgress(100);
+    }
+  };
+
+  // Verifica lo stato dell'abbonamento prima di iniziare il test
+  const handleStartTest = async () => {
+    if (!user) {
+      // Se l'utente è guest, reindirizza alla pagina di registrazione
+      router.push('/register');
+      return;
+    }
+
+    // Verifica lo stato dell'abbonamento
+    const isSubscribed = await checkSubscriptionStatus();
+    if (!isSubscribed) {
+      // Se l'utente non ha un abbonamento attivo, reindirizza alla pagina di pagamento
+      router.push('/pending-payment');
+      return;
+    }
+
+    // Se l'utente è registrato e ha un abbonamento attivo, inizia il test
+    if (phase === "intro") {
+      setPhase("raven");
+      setProgress(15); // Imposta il progresso al 15%
+    } else if (!testStarted) {
+      setTestStarted(true);
     }
   };
 
@@ -424,19 +449,7 @@ export default function TestPage() {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
           <div className="max-w-4xl mx-auto">
             <button
-              onClick={() => {
-                if (!user) {
-                  // Se l'utente è guest, reindirizza alla pagina di registrazione
-                  router.push('/register');
-                } else if (phase === "intro") {
-                  // Se siamo nella fase di introduzione, passa alla fase successiva (raven)
-                  setPhase("raven");
-                  setProgress(15); // Imposta il progresso al 15%
-                } else if (!testStarted) {
-                  // Se il test non è ancora iniziato, avvia il test corrente
-                  setTestStarted(true);
-                }
-              }}
+              onClick={handleStartTest}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
                 font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px
                 flex items-center justify-center gap-2"
