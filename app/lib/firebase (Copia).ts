@@ -52,9 +52,27 @@ interface UserData {
  */
 export const saveTestResults = async (userId: string, testId: string, results: TestResults) => {
   try {
+    const type = testId.replace('Test', '').toLowerCase(); // Estrai il tipo di test
+    let score = results.score;
+
+    // Calcola lo score per il Speed Reading Test
+    if (type === 'speedreading' && results.wpm) {
+      score = results.wpm / 2; // Normalizza i wpm in uno score
+    }
+
+    // Calcola lo score per l'Eye-Hand Coordination Test
+    if (type === 'eyehand' && results.accuracy) {
+      score = results.accuracy * 10; // Normalizza l'accuracy su una scala da 0 a 1000
+    }
+
+    // Calcola lo score per il Rhythm Test
+    if (type === 'rhythm' && results.precision) {
+      score = results.precision * 10; // Normalizza la precision su una scala da 0 a 1000
+    }
+
+    // Salva i risultati su Firestore
     const testRef = doc(db, 'users', userId, 'tests', testId);
-    const type = testId.replace('Test', '').toLowerCase(); // Estrai il tipo di test (es. 'raven' da 'ravenTest')
-    await setDoc(testRef, { ...results, type }, { merge: true }); // Salva il campo 'type' corretto
+    await setDoc(testRef, { ...results, score, type }, { merge: true });
     console.log('Test results saved successfully!');
   } catch (error) {
     console.error('Error saving test results:', error);
@@ -111,9 +129,23 @@ export const getAllUserTests = async (userId: string): Promise<TestResults[]> =>
     const testsRef = collection(db, 'users', userId, 'tests');
     const querySnapshot = await getDocs(testsRef);
     const tests: TestResults[] = [];
+
     querySnapshot.forEach((doc) => {
-      tests.push({ id: doc.id, ...doc.data() } as TestResults);
+      const testData = doc.data() as TestResults;
+      const type = testData.type || doc.id.replace('Test', '').toLowerCase();
+
+      // Normalizza lo score per i test che non lo hanno direttamente
+      if (type === 'speedreading' && testData.wpm) {
+        testData.score = testData.wpm / 2;
+      } else if (type === 'eyehand' && testData.accuracy) {
+        testData.score = testData.accuracy * 10;
+      } else if (type === 'rhythm' && testData.precision) {
+        testData.score = testData.precision * 10;
+      }
+
+      tests.push({ id: doc.id, ...testData });
     });
+
     return tests;
   } catch (error) {
     console.error('Error fetching user tests:', error);

@@ -30,7 +30,7 @@ interface TestResults {
   completionTimes?: number[];
   precision?: number;
   level?: number;
-  timestamp?: string;
+  timestamp?: string; // Aggiungi il campo 'timestamp'
   type?: string; // Aggiungi il campo 'type'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Firma di indice per supportare campi dinamici
@@ -70,9 +70,12 @@ export const saveTestResults = async (userId: string, testId: string, results: T
       score = results.precision * 10; // Normalizza la precision su una scala da 0 a 1000
     }
 
+    // Aggiungi il timestamp corrente
+    const timestamp = new Date().toISOString(); // Ottieni la data e l'ora correnti in formato ISO
+
     // Salva i risultati su Firestore
     const testRef = doc(db, 'users', userId, 'tests', testId);
-    await setDoc(testRef, { ...results, score, type }, { merge: true });
+    await setDoc(testRef, { ...results, score, type, timestamp }, { merge: true }); // Aggiungi il timestamp
     console.log('Test results saved successfully!');
   } catch (error) {
     console.error('Error saving test results:', error);
@@ -150,6 +153,44 @@ export const getAllUserTests = async (userId: string): Promise<TestResults[]> =>
   } catch (error) {
     console.error('Error fetching user tests:', error);
     throw new Error('Failed to fetch user tests.');
+  }
+};
+
+/**
+ * Recupera i test effettuati da un utente nell'ultima ora.
+ * @param userId - ID dell'utente.
+ * @returns Array di oggetti contenenti i risultati dei test recenti.
+ */
+export const getRecentUserTests = async (userId: string): Promise<TestResults[]> => {
+  try {
+    const testsRef = collection(db, 'users', userId, 'tests');
+    const querySnapshot = await getDocs(testsRef);
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 1 ora fa
+
+    const recentTests: TestResults[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const testData = doc.data() as TestResults;
+      const testTimestamp = testData.timestamp ? new Date(testData.timestamp) : null;
+
+      // Filtra i test effettuati nell'ultima ora
+      if (testTimestamp && testTimestamp >= oneHourAgo) {
+        recentTests.push({ id: doc.id, ...testData });
+      }
+    });
+
+    // Ordina i test per timestamp (dal più recente al meno recente)
+    recentTests.sort((a, b) => {
+      const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return timestampB - timestampA; // Ordine decrescente
+    });
+
+    return recentTests;
+  } catch (error) {
+    console.error('Error fetching recent user tests:', error);
+    throw new Error('Failed to fetch recent user tests.');
   }
 };
 
