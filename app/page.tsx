@@ -14,12 +14,20 @@ import {
   BarChart,
 } from 'lucide-react';
 import GlobalRanking from '@/app/components/GlobalRanking'; // Importa il componente GlobalRanking
+import { useAuth } from '@/app/contexts/AuthContext'; // Importa il contesto di autenticazione
 
 const HomePage: React.FC = () => {
   const router = useRouter();
+  const { user } = useAuth(); // Ottieni lo stato dell'utente
 
   const handleStartTest = () => {
-    router.push('/tests');
+    if (!user) {
+      // Se l'utente non è loggato, reindirizza alla pagina di registrazione
+      router.push('/register');
+    } else {
+      // Se l'utente è loggato, reindirizza alla pagina dei test
+      router.push('/tests');
+    }
   };
 
   return (
