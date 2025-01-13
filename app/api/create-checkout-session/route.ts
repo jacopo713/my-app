@@ -90,9 +90,6 @@ export async function POST(req: Request) {
      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pending-payment`,
      allow_promotion_codes: true,
      billing_address_collection: 'required',
-     payment_intent_data: {
-       setup_future_usage: 'off_session',
-     },
      customer_update: {
        address: 'auto',
        name: 'auto',
