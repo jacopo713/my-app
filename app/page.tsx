@@ -71,7 +71,7 @@ const HomePage: React.FC = () => {
                 <p className="text-lg mb-4 font-light">
                   Scopri il tuo potenziale intellettivo
                 </p>
-                <p className="text-lg mb-4 italic text-white/90">
+                <p className="text-lg mb-4 italic font-semibold text-white/90">
                   &quot;Offriamo servizi di allenamento cognitivo avanzati per spingere il vostro successo personale.&quot;
                 </p>
                 <button
