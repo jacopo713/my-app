@@ -13,7 +13,7 @@ const PrivacyPolicyPage: React.FC = () => {
         <h2 className="text-2xl font-semibold mt-6">1. Raccolta dei Dati</h2>
         <p>
           Raccogliamo informazioni come nome, indirizzo email e dati di pagamento per fornire il servizio.
-          Questi dati sono necessari per l'elaborazione degli abbonamenti e dei pagamenti.
+          Questi dati sono necessari per l&apos;elaborazione degli abbonamenti e dei pagamenti.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6">2. Utilizzo dei Dati</h2>
@@ -28,7 +28,7 @@ const PrivacyPolicyPage: React.FC = () => {
           e seguiamo le migliori pratiche per garantire la sicurezza delle informazioni.
         </p>
 
-        <h2 className="text-2xl font-semibold mt-6">4. Diritti dell'Utente</h2>
+        <h2 className="text-2xl font-semibold mt-6">4. Diritti dell&apos;Utente</h2>
         <p>
           Hai il diritto di accedere, correggere o eliminare i tuoi dati personali in qualsiasi momento.
           Puoi contattarci per esercitare questi diritti.

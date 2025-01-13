@@ -20,13 +20,13 @@ const TerminiECondizioniPage: React.FC = () => {
         <h2 className="text-2xl font-semibold mt-6">2. Pagamenti e Rinnovi</h2>
         <p>
           Il servizio è offerto con un periodo di prova gratuito di 7 giorni. Dopo il periodo di prova, verrà addebitato
-          un costo di <strong>19,90€/mese</strong>. Puoi cancellare l'abbonamento in qualsiasi momento.
+          un costo di <strong>19,90€/mese</strong>. Puoi cancellare l&apos;abbonamento in qualsiasi momento.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6">3. Responsabilità</h2>
         <p>
-          Non siamo responsabili per eventuali danni diretti o indiretti derivanti dall'uso del servizio.
-          L'utente è responsabile del proprio utilizzo della piattaforma.
+          Non siamo responsabili per eventuali danni diretti o indiretti derivanti dall&apos;uso del servizio.
+          L&apos;utente è responsabile del proprio utilizzo della piattaforma.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6">4. Modifiche ai Termini</h2>
