@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Brain, ArrowLeft, Play, Home } from 'lucide-react';
+import { Brain, ArrowLeft, Play, Home, ChevronDown, ChevronUp } from 'lucide-react';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -37,6 +37,7 @@ const MemoryForgePage = () => {
   });
 
   const [showSequence, setShowSequence] = useState<number | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true); // Stato per mostrare/nascondere le istruzioni
 
   // Caricamento dati utente
   useEffect(() => {
@@ -203,7 +204,7 @@ const MemoryForgePage = () => {
 
   return (
     <ProtectedRoute>
-      <div className="w-screen h-screen bg-gray-50 flex flex-col">
+      <div className="w-screen h-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="flex justify-between items-center p-4 bg-white shadow">
           <div className="flex items-center gap-2">
@@ -224,113 +225,122 @@ const MemoryForgePage = () => {
 
         {/* Corpo principale */}
         <main className="flex-grow p-4 flex flex-col justify-between overflow-auto">
-          <div>
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-xs text-gray-600">Livello</div>
-                <div className="text-2xl font-bold text-blue-600">{gameState.level}</div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-xs text-gray-600">Punteggio</div>
-                <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-xs text-gray-600">Record</div>
-                <div className="text-2xl font-bold text-purple-600">{gameState.highScore}</div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-xs text-gray-600">Livello Max</div>
-                <div className="text-2xl font-bold text-orange-600">{gameState.maxLevel}</div>
-              </div>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Livello</div>
+              <div className="text-2xl font-bold text-blue-600">{gameState.level}</div>
             </div>
-
-            {/* Griglia di gioco centrata */}
-            <div className="w-full max-w-3xl mx-auto mb-6">
-              <div 
-                className="grid gap-2"
-                style={{ 
-                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
-                }}
-              >
-                {Array.from({ length: gridSize * gridSize }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleCellClick(index)}
-                    disabled={gameState.phase !== 'reproduction'}
-                    className={`
-                      aspect-square rounded-lg transition-all duration-200
-                      ${showSequence === index 
-                        ? 'bg-blue-500' 
-                        : gameState.userSequence.includes(index)
-                          ? 'bg-green-200'
-                          : 'bg-gray-100 hover:bg-gray-200'}
-                      ${gameState.phase === 'reproduction' 
-                        ? 'cursor-pointer' 
-                        : 'cursor-not-allowed'}
-                    `}
-                  />
-                ))}
-              </div>
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Punteggio</div>
+              <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
             </div>
-
-            {/* Controlli e feedback */}
-            <div className="text-center space-y-4 mb-4">
-              {!gameState.isPlaying && (
-                <button
-                  onClick={startNewRound}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-                >
-                  {gameState.phase === 'feedback' ? (
-                    <>
-                      <ArrowLeft className="w-5 h-5" />
-                      Prossima Sequenza
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-5 h-5" />
-                      Inizia
-                    </>
-                  )}
-                </button>
-              )}
-
-              {gameState.phase === 'observation' && (
-                <div className="text-lg text-gray-600">
-                  Memorizza la sequenza...
-                </div>
-              )}
-
-              {gameState.phase === 'reproduction' && (
-                <div className="text-lg text-gray-600">
-                  Riproduci la sequenza!
-                </div>
-              )}
-
-              {gameState.phase === 'feedback' && (
-                <div className={`text-lg font-semibold
-                  ${gameState.mistakes === 0 
-                    ? 'text-green-600' 
-                    : 'text-red-600'}`}
-                >
-                  {gameState.mistakes === 0 
-                    ? '✨ Ottimo lavoro! Continua così!' 
-                    : '❌ Sequenza errata. Riprova!'}
-                </div>
-              )}
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Record</div>
+              <div className="text-2xl font-bold text-purple-600">{gameState.highScore}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Livello Max</div>
+              <div className="text-2xl font-bold text-orange-600">{gameState.maxLevel}</div>
             </div>
           </div>
 
-          {/* Istruzioni posizionate in basso a sinistra */}
-          <div className="text-sm text-gray-600">
-            <h3 className="font-semibold mb-2">Come giocare:</h3>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Osserva attentamente la sequenza di celle illuminate</li>
-              <li>Riproduci la sequenza nello stesso ordine</li>
-              <li>Guadagna 1000 punti per avanzare di livello</li>
-              <li>La difficoltà aumenta con il livello</li>
-              <li>Due errori consecutivi ti faranno perdere un livello</li>
-            </ul>
+          {/* Griglia di gioco centrata */}
+          <div className="w-full max-w-3xl mx-auto mb-6">
+            <div 
+              className="grid gap-2"
+              style={{ 
+                gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
+              }}
+            >
+              {Array.from({ length: gridSize * gridSize }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleCellClick(index)}
+                  disabled={gameState.phase !== 'reproduction'}
+                  className={`
+                    aspect-square rounded-lg transition-all duration-200
+                    ${showSequence === index 
+                      ? 'bg-blue-500' 
+                      : gameState.userSequence.includes(index)
+                        ? 'bg-green-200'
+                        : 'bg-gray-100 hover:bg-gray-200'}
+                    ${gameState.phase === 'reproduction' 
+                      ? 'cursor-pointer' 
+                      : 'cursor-not-allowed'}
+                  `}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Controlli e feedback */}
+          <div className="text-center space-y-4 mb-4">
+            {!gameState.isPlaying && (
+              <button
+                onClick={startNewRound}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
+                {gameState.phase === 'feedback' ? (
+                  <>
+                    <ArrowLeft className="w-5 h-5" />
+                    Prossima Sequenza
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    Inizia
+                  </>
+                )}
+              </button>
+            )}
+
+            {gameState.phase === 'observation' && (
+              <div className="text-lg text-gray-600">
+                Memorizza la sequenza...
+              </div>
+            )}
+
+            {gameState.phase === 'reproduction' && (
+              <div className="text-lg text-gray-600">
+                Riproduci la sequenza!
+              </div>
+            )}
+
+            {gameState.phase === 'feedback' && (
+              <div className={`text-lg font-semibold
+                ${gameState.mistakes === 0 
+                  ? 'text-green-600' 
+                  : 'text-red-600'}`}
+              >
+                {gameState.mistakes === 0 
+                  ? '✨ Ottimo lavoro! Continua così!' 
+                  : '❌ Sequenza errata. Riprova!'}
+              </div>
+            )}
+          </div>
+
+          {/* Istruzioni espandibili/collassabili */}
+          <div className="mt-auto">
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mb-2"
+            >
+              {showInstructions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showInstructions ? 'Nascondi istruzioni' : 'Mostra istruzioni'}
+            </button>
+            {showInstructions && (
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Come giocare:</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Osserva attentamente la sequenza di celle illuminate</li>
+                  <li>Riproduci la sequenza nello stesso ordine</li>
+                  <li>Guadagna 1000 punti per avanzare di livello</li>
+                  <li>La difficoltà aumenta con il livello</li>
+                  <li>Due errori consecutivi ti faranno perdere un livello</li>
+                </ul>
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -339,4 +349,3 @@ const MemoryForgePage = () => {
 };
 
 export default MemoryForgePage;
-
