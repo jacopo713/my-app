@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain } from 'lucide-react';
+import { Brain, Activity, Star } from 'lucide-react'; // Importa anche una nuova icona per il bottone Allenamenti
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
@@ -47,7 +47,7 @@ interface StatsModalProps {
   data: TestResult[];
 }
 
-// 2. Componenti di supporto
+// 2. Componente di supporto: Modal per i dettagli dei test
 const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
@@ -214,7 +214,25 @@ const GlobalRanking: React.FC = () => {
   );
 };
 
-// 4. Componente principale
+// 4. Componente per la sezione "Valutazione"
+// Questa sezione può essere personalizzata in base alle esigenze del tuo progetto.
+// Per ora viene fornito un esempio con un contenuto placeholder.
+const EvaluationSection: React.FC = () => {
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <Star className="w-6 h-6 text-green-500" />
+        Valutazione
+      </h2>
+      <p className="text-gray-700">
+        Qui puoi visualizzare la tua valutazione complessiva in base ai test effettuati e agli allenamenti eseguiti. 
+        In futuro, potresti integrare un sistema di feedback personalizzato o suggerimenti per migliorare le performance cognitive.
+      </p>
+    </div>
+  );
+};
+
+// 5. Componente principale della Dashboard
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
@@ -230,6 +248,12 @@ const DashboardPage: React.FC = () => {
     } catch (error) {
       console.error('Errore durante il logout:', error);
     }
+  };
+
+  // Funzione per gestire l'accesso alla pagina degli allenamenti cognitivi
+  const handleCognitiveTraining = () => {
+    // Per esempio, reindirizza alla pagina degli allenamenti oppure mostra un modal specifico
+    router.push('/allenamenti-cognitivi');
   };
 
   useEffect(() => {
@@ -280,6 +304,13 @@ const DashboardPage: React.FC = () => {
                 <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
               </button>
               <button 
+                onClick={handleCognitiveTraining}
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
+              >
+                <Activity className="w-5 h-5 text-purple-500" />
+                <span className="font-medium">Allenamenti Cognitivi</span>
+              </button>
+              <button 
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
               >
@@ -289,6 +320,9 @@ const DashboardPage: React.FC = () => {
           </div>
 
           <GlobalRanking />
+
+          {/* Sezione di valutazione */}
+          <EvaluationSection />
 
           <StatsModal 
             isOpen={showResults}
@@ -302,3 +336,4 @@ const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+
