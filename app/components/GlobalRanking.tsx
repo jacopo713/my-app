@@ -20,6 +20,7 @@ interface TestResults {
   timestamp?: string;
   type?: string;
   id?: string;
+  username?: string; // Aggiungi il campo username
 }
 
 const RecentTests: React.FC = () => {
@@ -29,15 +30,13 @@ const RecentTests: React.FC = () => {
 
   useEffect(() => {
     const fetchRecentTests = async () => {
-      if (user) {
-        try {
-          const tests = await getRecentUserTests(user.uid); // Usa la funzione per i test recenti
-          setRecentTests(tests);
-        } catch (error) {
-          console.error('Error fetching recent tests:', error);
-        } finally {
-          setLoading(false);
-        }
+      try {
+        const tests = await getRecentUserTests(); // Usa la funzione aggiornata
+        setRecentTests(tests);
+      } catch (error) {
+        console.error('Error fetching recent tests:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -76,7 +75,7 @@ const RecentTests: React.FC = () => {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{test.type}</div>
+                  <div className="font-semibold text-gray-900">{test.username || 'Anonymous'}</div> {/* Mostra il nome dell'utente */}
                   <div className="text-sm text-gray-500">
                     {test.timestamp ? new Date(test.timestamp).toLocaleTimeString() : 'N/A'}
                   </div>
