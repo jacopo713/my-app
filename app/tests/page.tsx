@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown, ArrowRight } from 'lucide-react';
+import { Brain, Eye, ActivitySquare, BookOpen, Clock, Lightbulb, Music, ChevronDown, ArrowRight, FastForward } from 'lucide-react';
 import { 
   RavenTest, 
   EyeHandTest, 
@@ -181,6 +181,10 @@ export default function TestPage() {
     if (currentIndex < phases.length - 1) {
       setPhase(phases[currentIndex + 1]);
       setProgress(Math.min((currentIndex + 1) * 15, 100));
+    } else {
+      // Se il test corrente è l'ultimo, passa direttamente alla fase "results"
+      setPhase("results");
+      setProgress(100); // Imposta il progresso al 100%
     }
   };
 
@@ -191,6 +195,18 @@ export default function TestPage() {
       setIsGuest(false);
     }
   }, [user, isGuest, router]);
+
+  // Funzione per passare velocemente alla fase successiva
+  const handleFastForward = () => {
+    const currentIndex = phases.indexOf(phase);
+    if (currentIndex < phases.length - 1) {
+      setPhase(phases[currentIndex + 1]);
+      setProgress(Math.min((currentIndex + 1) * 15, 100));
+    } else {
+      setPhase("results");
+      setProgress(100);
+    }
+  };
 
   const handleRavenComplete = async (ravenResults: { score: number; accuracy: number }) => {
     await handleTestCompletion(ravenResults, 'raven');
@@ -443,6 +459,14 @@ export default function TestPage() {
           </div>
         </div>
       )}
+
+      {/* Pulsante per passare velocemente alla fase successiva */}
+      <button
+        onClick={handleFastForward}
+        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-30"
+      >
+        <FastForward className="w-6 h-6" />
+      </button>
 
       {/* Messaggio di iscrizione (se necessario) */}
       {showSubscriptionPrompt && (
