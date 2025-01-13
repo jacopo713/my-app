@@ -61,29 +61,22 @@ export async function POST(req: Request) {
        lastCustomerUpdate: new Date().toISOString(),
        stripeMetadata: customer.metadata
      }, { merge: true });
-     
-     const verifyDoc = await db.collection('users').doc(userId).get();
-     console.log('Verified user document:', verifyDoc.data());
    }
 
-   console.log('Creating checkout session with data:', {
-     customerId,
-     userId,
-     email,
-     priceId: process.env.STRIPE_PRICE_ID
-   });
+   console.log('Creating checkout session with trial period...');
 
    const session = await stripe.checkout.sessions.create({
      customer: customerId,
      payment_method_types: ['card'],
      line_items: [
        {
-         price: process.env.STRIPE_PRICE_ID,
+         price: process.env.STRIPE_PRICE_ID_NEW,
          quantity: 1,
        },
      ],
      mode: 'subscription',
-     subscription_data: {  // Aggiunto metadata alla subscription
+     subscription_data: {
+       trial_period_days: 7,
        metadata: {
          userId,
          customerId,
@@ -93,9 +86,17 @@ export async function POST(req: Request) {
        userId,
        customerId,
      },
-     success_url: `${process.env.NEXT_PUBLIC_URL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
+     success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pending-payment`,
-     allow_promotion_codes: true
+     allow_promotion_codes: true,
+     billing_address_collection: 'required',
+     payment_intent_data: {
+       setup_future_usage: 'off_session',
+     },
+     customer_update: {
+       address: 'auto',
+       name: 'auto',
+     },
    });
 
    console.log('Checkout session created:', {
@@ -105,11 +106,16 @@ export async function POST(req: Request) {
      url: session.url
    });
 
-   // Aggiorna il documento con i dati della sessione
+   // Aggiorna il documento con i dati della sessione e del trial
    await db.collection('users').doc(userId).set({
      lastCheckoutSession: session.id,
      lastCheckoutCreated: new Date().toISOString(),
-     checkoutMetadata: session.metadata
+     checkoutMetadata: session.metadata,
+     trialStart: new Date().toISOString(),
+     trialEnd: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString(),
+     subscriptionPrice: 19.90,
+     currency: 'eur',
+     subscriptionStatus: 'trialing'
    }, { merge: true });
 
    return NextResponse.json({ sessionId: session.id });
@@ -121,3 +127,11 @@ export async function POST(req: Request) {
    );
  }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+  },
+};
