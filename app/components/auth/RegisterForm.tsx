@@ -46,10 +46,10 @@ export default function RegisterForm() {
   ) => {
     setLoading(true);
     try {
-      const userCredential;
-      
       if (!credentials) throw new Error('Credentials required for email signup');
-      userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+      
+      // Usiamo "let" perché la variabile viene assegnata in un secondo momento
+      let userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
       await updateProfile(userCredential.user, {
         displayName: credentials.name
       });
