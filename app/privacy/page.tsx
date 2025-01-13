@@ -7,13 +7,13 @@ const PrivacyPolicy = () => {
 
       <p>Data di entrata in vigore: [Inserisci la data]</p>
 
-      <p>La tua privacy è importante per noi. Questa Informativa sulla Privacy spiega come raccogliamo, utilizziamo, proteggiamo e divulghiamo le informazioni personali che ci fornisci quando utilizzi il nostro sito web, in conformità con il <strong>Regolamento Generale sulla Protezione dei Dati (GDPR)</strong> dell'Unione Europea.</p>
+      <p>La tua privacy è importante per noi. Questa Informativa sulla Privacy spiega come raccogliamo, utilizziamo, proteggiamo e divulghiamo le informazioni personali che ci fornisci quando utilizzi il nostro sito web, in conformità con il <strong>Regolamento Generale sulla Protezione dei Dati (GDPR)</strong> dell&apos;Unione Europea.</p>
 
       <h2>1. Titolare del Trattamento dei Dati</h2>
       <p>Il titolare del trattamento dei dati è:</p>
       <ul>
         <li><strong>Nome Azienda</strong>: [Inserisci il nome della tua azienda]</li>
-        <li><strong>Indirizzo</strong>: [Inserisci l'indirizzo della tua azienda]</li>
+        <li><strong>Indirizzo</strong>: [Inserisci l&apos;indirizzo della tua azienda]</li>
         <li><strong>Email</strong>: <a href="mailto:info@tuaazienda.com">info@tuaazienda.com</a></li>
         <li><strong>Telefono</strong>: [Inserisci il numero di telefono]</li>
       </ul>
@@ -29,8 +29,8 @@ const PrivacyPolicy = () => {
       <h2>3. Base Giuridica per il Trattamento dei Dati</h2>
       <p>Trattiamo i tuoi dati personali sulla base delle seguenti giustificazioni legali:</p>
       <ul>
-        <li><strong>Consenso</strong>: Quando ci fornisci il consenso esplicito (es. per l'invio di newsletter).</li>
-        <li><strong>Contratto</strong>: Quando i dati sono necessari per l'esecuzione di un contratto (es. elaborazione di pagamenti).</li>
+        <li><strong>Consenso</strong>: Quando ci fornisci il consenso esplicito (es. per l&apos;invio di newsletter).</li>
+        <li><strong>Contratto</strong>: Quando i dati sono necessari per l&apos;esecuzione di un contratto (es. elaborazione di pagamenti).</li>
         <li><strong>Legittimo interesse</strong>: Quando il trattamento è necessario per i nostri legittimi interessi (es. miglioramento dei servizi).</li>
         <li><strong>Obbligo legale</strong>: Quando il trattamento è richiesto per adempiere a obblighi legali.</li>
       </ul>
@@ -48,7 +48,7 @@ const PrivacyPolicy = () => {
       <p>Non vendiamo, affittiamo o condividiamo le tue informazioni personali con terze parti, tranne nei seguenti casi:</p>
       <ul>
         <li><strong>Fornitori di servizi</strong>: Utilizziamo servizi di terze parti (es. Stripe per i pagamenti) che possono avere accesso alle tue informazioni per svolgere funzioni specifiche. Questi fornitori sono vincolati da accordi di riservatezza e non possono utilizzare i tuoi dati per altri scopi.</li>
-        <li><strong>Trasferimenti internazionali</strong>: Se i tuoi dati vengono trasferiti al di fuori dell'UE, assicuriamo che siano protetti da garanzie adeguate, come le clausole contrattuali standard approvate dalla Commissione Europea.</li>
+        <li><strong>Trasferimenti internazionali</strong>: Se i tuoi dati vengono trasferiti al di fuori dell&apos;UE, assicuriamo che siano protetti da garanzie adeguate, come le clausole contrattuali standard approvate dalla Commissione Europea.</li>
         <li><strong>Obblighi legali</strong>: Possiamo divulgare le tue informazioni se richiesto dalla legge o per proteggere i nostri diritti legali.</li>
       </ul>
 
@@ -69,16 +69,16 @@ const PrivacyPolicy = () => {
         <li><strong>Opposizione</strong>: Opporti al trattamento dei tuoi dati per motivi legittimi.</li>
         <li><strong>Revoca del consenso</strong>: Revocare il consenso in qualsiasi momento, se il trattamento è basato sul consenso.</li>
       </ul>
-      <p>Per esercitare questi diritti, contattaci all'indirizzo email: <a href="mailto:info@tuaazienda.com">info@tuaazienda.com</a>.</p>
+      <p>Per esercitare questi diritti, contattaci all&apos;indirizzo email: <a href="mailto:info@tuaazienda.com">info@tuaazienda.com</a>.</p>
 
       <h2>9. Cookie e Tecnologie Simili</h2>
-      <p>Utilizziamo cookie e tecnologie simili per migliorare l'esperienza dell'utente e analizzare l'utilizzo del sito. Puoi gestire le preferenze sui cookie tramite le impostazioni del tuo browser. Per ulteriori informazioni, consulta la nostra <a href="/cookie-policy">Cookie Policy</a>.</p>
+      <p>Utilizziamo cookie e tecnologie simili per migliorare l&apos;esperienza dell&apos;utente e analizzare l&apos;utilizzo del sito. Puoi gestire le preferenze sui cookie tramite le impostazioni del tuo browser. Per ulteriori informazioni, consulta la nostra <a href="/cookie-policy">Cookie Policy</a>.</p>
 
       <h2>10. Modifiche alla Privacy Policy</h2>
       <p>Ci riserviamo il diritto di aggiornare questa Privacy Policy in qualsiasi momento. Le modifiche saranno efficaci immediatamente dopo la pubblicazione sul sito. Ti invitiamo a rivedere periodicamente questa pagina per rimanere informato.</p>
 
       <h2>11. Contatti</h2>
-      <p>Per qualsiasi domanda o chiarimento riguardo a questa Privacy Policy, puoi contattarci all'indirizzo email: <a href="mailto:info@tuaazienda.com">info@tuaazienda.com</a> o al numero di telefono: [inserisci numero].</p>
+      <p>Per qualsiasi domanda o chiarimento riguardo a questa Privacy Policy, puoi contattarci all&apos;indirizzo email: <a href="mailto:info@tuaazienda.com">info@tuaazienda.com</a> o al numero di telefono: [inserisci numero].</p>
     </div>
   );
 };
