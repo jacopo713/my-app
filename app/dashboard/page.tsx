@@ -200,6 +200,8 @@ const GlobalRanking: React.FC = () => {
 };
 
 const CognitiveTrainingTask: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const router = useRouter(); // Usa il router per il reindirizzamento
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -216,10 +218,28 @@ const CognitiveTrainingTask: React.FC<{ onClose: () => void }> = ({ onClose }) =
           </svg>
         </button>
       </div>
-      <p className="text-gray-700">
+      <p className="text-gray-700 mb-6">
         Qui puoi trovare una serie di esercizi per migliorare le tue capacità cognitive.
       </p>
-      {/* Aggiungi qui il contenuto degli allenamenti cognitivi */}
+
+      {/* Sezione Memory Forge */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Memory Forge</h3>
+        <p className="text-gray-600 mb-4">
+          Memory Forge è un esercizio progettato per migliorare la tua memoria a breve termine e la tua capacità di ricordare sequenze complesse.
+        </p>
+        <button 
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          onClick={() => {
+            // Reindirizza l'utente alla pagina Memory Forge
+            router.push('/esercizi/memoryforge');
+          }}
+        >
+          Avvia Memory Forge
+        </button>
+      </div>
+
+      {/* Aggiungi qui altre sezioni per altri allenamenti cognitivi */}
     </div>
   );
 };
