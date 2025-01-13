@@ -83,7 +83,7 @@ const HomePage: React.FC = () => {
                   <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 text-sm">
                     <div className="flex items-center">
                       <Clock className="w-4 h-4 mr-2" />
-                      <span>Durata: 45 minuti</span>
+                      <span>Durata: 20 minuti</span>
                     </div>
                     <div className="flex items-center">
                       <Target className="w-4 h-4 mr-2" />
