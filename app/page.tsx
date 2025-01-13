@@ -89,7 +89,7 @@ const HomePage: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <Target className="w-4 h-4 mr-2" />
-                      <span>7 Test Completi</span>
+                      <span>9 Test Completi</span>
                     </div>
                     <div className="flex items-center">
                       <Award className="w-4 h-4 mr-2" />
@@ -129,34 +129,52 @@ const HomePage: React.FC = () => {
 
           {/* TEST CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {/* Card 1 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Brain className="w-10 h-10 text-blue-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Ragionamento</h2>
+                <h2 className="text-2xl font-bold ml-3">Ragionamento e Logica</h2>
               </div>
-              <p className="text-gray-600 text-base">
-                Valuta la tua capacità di risolvere problemi complessi
+              <p className="text-gray-600 text-base mb-4">
+                Valuta la tua capacità di risolvere problemi complessi e pensare in modo logico.
               </p>
+              <ul className="text-sm text-gray-500 space-y-2">
+                <li>• Matrici progressive</li>
+                <li>• Serie numeriche</li>
+                <li>• Problemi logici</li>
+              </ul>
             </div>
 
+            {/* Card 2 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Eye className="w-10 h-10 text-green-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Percezione</h2>
+                <h2 className="text-2xl font-bold ml-3">Percezione e Velocità</h2>
               </div>
-              <p className="text-gray-600 text-base">
-                Misura la tua velocità di elaborazione visiva
+              <p className="text-gray-600 text-base mb-4">
+                Misura la tua velocità di elaborazione visiva e la tua capacità di percezione.
               </p>
+              <ul className="text-sm text-gray-500 space-y-2">
+                <li>• Test occhio-mano</li>
+                <li>• Ricognizione visiva</li>
+                <li>• Tempi di reazione</li>
+              </ul>
             </div>
 
+            {/* Card 3 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Star className="w-10 h-10 text-purple-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Memoria</h2>
+                <h2 className="text-2xl font-bold ml-3">Memoria e Concentrazione</h2>
               </div>
-              <p className="text-gray-600 text-base">
-                Verifica le tue capacità di memoria e concentrazione
+              <p className="text-gray-600 text-base mb-4">
+                Verifica le tue capacità di memoria a breve termine e concentrazione.
               </p>
+              <ul className="text-sm text-gray-500 space-y-2">
+                <li>• Memoria visiva</li>
+                <li>• Memoria verbale</li>
+                <li>• Focalizzazione</li>
+              </ul>
             </div>
           </div>
 
