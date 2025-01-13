@@ -13,6 +13,7 @@ import {
   Award,
   BarChart,
 } from 'lucide-react';
+import CognitiveDashboard from './CognitiveDashboard';
 
 const HomePage: React.FC = () => {
   const router = useRouter();
@@ -165,6 +166,11 @@ const HomePage: React.FC = () => {
                 Test che coprono diverse aree cognitive
               </p>
             </div>
+          </div>
+
+          {/* DASHBOARD ANALISI COGNITIVE */}
+          <div className="mb-12">
+            <CognitiveDashboard />
           </div>
 
           {/* FOOTER WITH LEGAL LINKS */}
