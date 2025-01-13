@@ -46,7 +46,7 @@ export default function RegisterForm() {
   ) => {
     setLoading(true);
     try {
-      let userCredential;
+      const userCredential;
       
       if (!credentials) throw new Error('Credentials required for email signup');
       userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
