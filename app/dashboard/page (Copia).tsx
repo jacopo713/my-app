@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain, Target, Activity, BarChart, Crown } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
@@ -289,9 +289,6 @@ const DashboardPage: React.FC = () => {
           </div>
 
           <GlobalRanking />
-
-          {/* Aggiungi la nuova sezione cognitiva qui */}
-          <CognitiveSection />
 
           <StatsModal 
             isOpen={showResults}
