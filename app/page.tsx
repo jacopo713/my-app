@@ -12,6 +12,7 @@ import {
   Clock,
   Target,
   Award,
+  BarChart,
 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
@@ -89,7 +90,7 @@ const HomePage: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <Target className="w-4 h-4 mr-2" />
-                      <span>9 Test Completi</span>
+                      <span>7 Test Completi</span>
                     </div>
                     <div className="flex items-center">
                       <Award className="w-4 h-4 mr-2" />
@@ -129,75 +130,39 @@ const HomePage: React.FC = () => {
 
           {/* TEST CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {/* Card 1 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Brain className="w-10 h-10 text-blue-500" />
-                <h2 className="text-2xl font-bold ml-3">Ragionamento e Logica</h2>
+                <h2 className="text-2xl font-bold ml-3">Test di Ragionamento</h2>
               </div>
-              <p className="text-gray-600 text-base mb-4">
-                Valuta la tua capacità di risolvere problemi complessi e pensare in modo logico.
+              <p className="text-gray-600 text-base">
+                Valuta la tua capacità di risolvere problemi complessi
               </p>
-              <ul className="text-sm text-gray-500 space-y-2">
-                <li>• Matrici progressive</li>
-                <li>• Serie numeriche</li>
-                <li>• Problemi logici</li>
-              </ul>
             </div>
 
-            {/* Card 2 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Eye className="w-10 h-10 text-green-500" />
-                <h2 className="text-2xl font-bold ml-3">Percezione e Velocità</h2>
+                <h2 className="text-2xl font-bold ml-3">Test di Percezione</h2>
               </div>
-              <p className="text-gray-600 text-base mb-4">
-                Misura la tua velocità di elaborazione visiva e la tua capacità di percezione.
+              <p className="text-gray-600 text-base">
+                Misura la tua velocità di elaborazione visiva
               </p>
-              <ul className="text-sm text-gray-500 space-y-2">
-                <li>• Test occhio-mano</li>
-                <li>• Ricognizione visiva</li>
-                <li>• Tempi di reazione</li>
-              </ul>
             </div>
 
-            {/* Card 3 */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Star className="w-10 h-10 text-purple-500" />
-                <h2 className="text-2xl font-bold ml-3">Memoria e Concentrazione</h2>
+                <h2 className="text-2xl font-bold ml-3">Test di Memoria</h2>
               </div>
-              <p className="text-gray-600 text-base mb-4">
-                Verifica le tue capacità di memoria a breve termine e concentrazione.
+              <p className="text-gray-600 text-base">
+                Verifica le tue capacità di memoria e concentrazione
               </p>
-              <ul className="text-sm text-gray-500 space-y-2">
-                <li>• Memoria visiva</li>
-                <li>• Memoria verbale</li>
-                <li>• Focalizzazione</li>
-              </ul>
             </div>
           </div>
 
           {/* BENEFITS SECTION */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
-            <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
-              Perché Scegliere il Nostro Test?
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
-                <h3 className="text-xl font-semibold mb-3">Professionale</h3>
-                <p className="text-gray-600">Sviluppato da esperti del settore</p>
-              </div>
-              <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
-                <h3 className="text-xl font-semibold mb-3">Accurato</h3>
-                <p className="text-gray-600">Risultati dettagliati e precisi</p>
-              </div>
-              <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
-                <h3 className="text-xl font-semibold mb-3">Completo</h3>
-                <p className="text-gray-600">Valutazione di molteplici capacità</p>
-              </div>
-            </div>
-          </div>
+          <BenefitsSection />
         </div>
       </main>
 
@@ -225,6 +190,57 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </footer>
+    </div>
+  );
+};
+
+const SquareBenefitCard = ({ icon: Icon, title, description, bgColor, iconColor }) => (
+  <div className="aspect-square">
+    <div className={`${bgColor} w-full h-full p-6 rounded-lg border border-gray-100 hover:opacity-90 transition-all duration-300 flex flex-col justify-between`}>
+      <div>
+        <Icon className={`w-10 h-10 ${iconColor} mb-4`} />
+        <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
+      </div>
+      <p className="text-white/90 text-sm">{description}</p>
+    </div>
+  </div>
+);
+
+const BenefitsSection = () => {
+  const benefits = [
+    {
+      icon: Brain,
+      title: "Standard Avanzati",
+      description: "Test sviluppati con tecnologie moderne e intelligenza artificiale",
+      bgColor: "bg-gradient-to-br from-blue-600 to-blue-800",
+      iconColor: "text-blue-300"
+    },
+    {
+      icon: BarChart,
+      title: "Analisi Dettagliata",
+      description: "Report completo dei risultati con suggerimenti personalizzati",
+      bgColor: "bg-gradient-to-br from-emerald-600 to-emerald-800",
+      iconColor: "text-emerald-300"
+    },
+    {
+      icon: Target,
+      title: "Valutazione Completa",
+      description: "Test che coprono diverse aree cognitive",
+      bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
+      iconColor: "text-purple-300"
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+      <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
+        Perché Scegliere il Nostro Test?
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {benefits.map((benefit, index) => (
+          <SquareBenefitCard key={index} {...benefit} />
+        ))}
+      </div>
     </div>
   );
 };
