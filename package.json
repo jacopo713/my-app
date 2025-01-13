@@ -14,6 +14,7 @@
     "firebase-admin": "^13.0.2",
     "lucide-react": "^0.344.0",
     "next": "15.1.4",
+    "nodemailer": "^6.9.16",
     "pdfkit": "^0.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
