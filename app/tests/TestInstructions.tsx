@@ -23,7 +23,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
     description: "Una serie di test per valutare diverse capacità cognitive",
     steps: ["Leggi attentamente le istruzioni di ogni test", "Prenditi il tempo necessario", "Rispondi con attenzione"],
     tips: ["Assicurati di essere in un ambiente tranquillo", "Fai una pausa se necessario"],
-    duration: "45-60 minuti totali",
+    duration: "2 minuti",
     icon: Brain,
     gradient: "from-blue-600 to-blue-700",
     iconColor: "text-blue-600"
@@ -35,14 +35,14 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Ti verranno mostrate delle matrici con un elemento mancante",
       "Analizza attentamente il pattern presente nella matrice",
       "Seleziona tra le opzioni disponibili quella che completa correttamente il pattern",
-      "Lavora con precisione ma cerca di mantenere un buon ritmo"
+      "Lavora con precisione"
     ],
     tips: [
       "Osserva sia le righe che le colonne per individuare i pattern",
       "Verifica che la tua risposta sia coerente in tutte le direzioni",
       "Non soffermarti troppo a lungo su una singola matrice"
     ],
-    duration: "15-20 minuti",
+    duration: "5 minuti",
     difficulty: "medio",
     icon: Brain,
     gradient: "from-blue-600 to-blue-700",
@@ -62,7 +62,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Mantieni il polso in una posizione comoda",
       "Respira normalmente durante l'esecuzione"
     ],
-    duration: "5-7 minuti",
+    duration: "1 minuto",
     difficulty: "facile",
     icon: Eye,
     gradient: "from-green-600 to-green-700",
@@ -82,7 +82,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Mantieni un ritmo costante",
       "Non esitare troppo su ogni risposta"
     ],
-    duration: "5 minuti",
+    duration: "1 minuto",
     difficulty: "medio",
     icon: ActivitySquare,
     gradient: "from-purple-600 to-purple-700",
@@ -102,7 +102,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Evita di rileggere le frasi",
       "Mantieni la concentrazione sul flusso del testo"
     ],
-    duration: "10 minuti",
+    duration: "5 minuti",
     difficulty: "medio",
     icon: BookOpen,
     gradient: "from-orange-600 to-orange-700",
@@ -122,7 +122,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Raggruppa gli elementi quando possibile",
       "Mantieni la concentrazione durante la fase di memorizzazione"
     ],
-    duration: "7-10 minuti",
+    duration: "5 minuti",
     difficulty: "difficile",
     icon: Lightbulb,
     gradient: "from-red-600 to-red-700",
@@ -142,7 +142,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Non seguire un pattern predefinito",
       "Respira normalmente e mantieni la calma"
     ],
-    duration: "3-5 minuti",
+    duration: "3 minuti",
     difficulty: "medio",
     icon: Eye,
     gradient: "from-indigo-600 to-indigo-700",
@@ -162,7 +162,7 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
       "Concentrati sulla regolarità del ritmo",
       "Non anticipare i battiti"
     ],
-    duration: "5 minuti",
+    duration: "3 minuti",
     difficulty: "medio",
     icon: Music,
     gradient: "from-pink-600 to-pink-700",
