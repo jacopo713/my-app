@@ -128,24 +128,10 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* PERCHÉ SCEGLIERE IL NOSTRO TEST? */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+          <div className="mb-12">
             <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
               Perché Scegliere il Nostro Test?
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
-                <h3 className="text-xl font-semibold mb-3">Professionale</h3>
-                <p className="text-gray-600">Sviluppato da esperti del settore</p>
-              </div>
-              <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
-                <h3 className="text-xl font-semibold mb-3">Accurato</h3>
-                <p className="text-gray-600">Risultati dettagliati e precisi</p>
-              </div>
-              <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
-                <h3 className="text-xl font-semibold mb-3">Completo</h3>
-                <p className="text-gray-600">Valutazione di molteplici capacità</p>
-              </div>
-            </div>
           </div>
 
           {/* TEST CARDS ESISTENTI */}
