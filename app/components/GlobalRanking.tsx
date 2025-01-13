@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 
-
-
 interface UserData {
   userId: string;
   username: string;
   totalScore: number;
+  qiScore: number; // Nuovo campo per memorizzare il QI calcolato
   timestamp?: string;
 }
 
@@ -17,6 +16,11 @@ const GlobalRanking: React.FC = () => {
   const { user } = useAuth();
   const [recentTests, setRecentTests] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Funzione per convertire il punteggio in QI
+  const convertToIQ = (score: number) => {
+    return (score / 750) * 110; // 750 punti = QI 110
+  };
 
   useEffect(() => {
     const fetchRecentTests = async () => {
@@ -48,10 +52,14 @@ const GlobalRanking: React.FC = () => {
 
             const averageScore = testCount > 0 ? totalScore / testCount : 0;
 
+            // Converti il punteggio medio in QI
+            const qiScore = convertToIQ(averageScore);
+
             recentTests.push({
               userId: user.uid,
               username: user.displayName || 'Anonymous',
               totalScore: Math.round(averageScore),
+              qiScore: Math.round(qiScore), // Aggiungi il QI calcolato
               timestamp: recentUserTests[0].timestamp, // Usa il timestamp del test più recente
             });
           }
@@ -107,12 +115,12 @@ const GlobalRanking: React.FC = () => {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{test.username}</div> {/* Solo il nome dell'utente */}
+                  <div className="font-semibold text-gray-900">{test.username}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-gray-900">{test.totalScore}</div>
-                <div className="text-sm text-gray-500">punti medi</div>
+                <div className="font-bold text-gray-900">{test.qiScore}</div> {/* Mostra il QI invece del punteggio */}
+                <div className="text-sm text-gray-500">QI</div>
               </div>
             </div>
           ))
