@@ -1,4 +1,3 @@
-Hai detto:
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Eye, ActivitySquare, BookOpen, Lightbulb, Music } from 'lucide-react';
@@ -54,7 +53,7 @@ export default function TestResults({ results }: TestResultsProps) {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Risultati del Test</h2>
 
         {/* Contenuto dei risultati con sfocatura per utenti non registrati */}
-        <div className={space-y-6 ${!user ? 'filter blur-sm' : ''}}>
+        <div className={`space-y-6 ${!user ? 'filter blur-sm' : ''}`}>
           {/* Risultato del test Raven */}
           {results.raven && (
             <div className="p-4 bg-blue-50 rounded-lg">
@@ -162,4 +161,5 @@ export default function TestResults({ results }: TestResultsProps) {
       </div>
     </div>
   );
-} 
+}
+
