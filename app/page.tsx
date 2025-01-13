@@ -133,122 +133,60 @@ const HomePage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
                 <Brain className="w-10 h-10 text-blue-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Ragionamento</h2>
+                <h2 className="text-2xl font-bold ml-3">Standard Avanzati</h2>
               </div>
               <p className="text-gray-600 text-base">
-                Valuta la tua capacità di risolvere problemi complessi
+                Test sviluppati con tecnologie moderne e intelligenza artificiale
               </p>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
-                <Eye className="w-10 h-10 text-green-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Percezione</h2>
+                <BarChart className="w-10 h-10 text-green-500" />
+                <h2 className="text-2xl font-bold ml-3">Analisi Dettagliata</h2>
               </div>
               <p className="text-gray-600 text-base">
-                Misura la tua velocità di elaborazione visiva
+                Report completo dei risultati con suggerimenti personalizzati
               </p>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
               <div className="flex items-center mb-3">
-                <Star className="w-10 h-10 text-purple-500" />
-                <h2 className="text-2xl font-bold ml-3">Test di Memoria</h2>
+                <Target className="w-10 h-10 text-purple-500" />
+                <h2 className="text-2xl font-bold ml-3">Valutazione Completa</h2>
               </div>
               <p className="text-gray-600 text-base">
-                Verifica le tue capacità di memoria e concentrazione
+                Test che coprono diverse aree cognitive
               </p>
             </div>
           </div>
 
-          {/* BENEFITS SECTION */}
-          <BenefitsSection />
+          {/* FOOTER WITH LEGAL LINKS */}
+          <footer className="bg-white border-t border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div className="text-gray-600 text-sm">
+                  &copy; {new Date().getFullYear()} Turing™. Tutti i diritti riservati.
+                </div>
+                <div className="flex space-x-4">
+                  <a href="/terms" className="text-gray-600 hover:text-blue-600 text-sm">
+                    Termini e Condizioni
+                  </a>
+                  <a href="/privacy" className="text-gray-600 hover:text-blue-600 text-sm">
+                    Privacy Policy
+                  </a>
+                  <a href="/cookies" className="text-gray-600 hover:text-blue-600 text-sm">
+                    Cookie Policy
+                  </a>
+                  <a href="/refunds" className="text-gray-600 hover:text-blue-600 text-sm">
+                    Politica di Rimborso
+                  </a>
+                </div>
+              </div>
+            </div>
+          </footer>
         </div>
       </main>
-
-      {/* FOOTER WITH LEGAL LINKS */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-gray-600 text-sm">
-              &copy; {new Date().getFullYear()} Turing™. Tutti i diritti riservati.
-            </div>
-            <div className="flex space-x-4">
-              <a href="/terms" className="text-gray-600 hover:text-blue-600 text-sm">
-                Termini e Condizioni
-              </a>
-              <a href="/privacy" className="text-gray-600 hover:text-blue-600 text-sm">
-                Privacy Policy
-              </a>
-              <a href="/cookies" className="text-gray-600 hover:text-blue-600 text-sm">
-                Cookie Policy
-              </a>
-              <a href="/refunds" className="text-gray-600 hover:text-blue-600 text-sm">
-                Politica di Rimborso
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-interface SquareBenefitCardProps {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  bgColor: string;
-  iconColor: string;
-}
-
-const SquareBenefitCard: React.FC<SquareBenefitCardProps> = ({ icon: Icon, title, description, bgColor, iconColor }) => (
-  <div className="aspect-square">
-    <div className={`${bgColor} w-full h-full p-6 rounded-lg border border-gray-100 hover:opacity-90 transition-all duration-300 flex flex-col justify-between`}>
-      <div>
-        <Icon className={`w-10 h-10 ${iconColor} mb-4`} />
-        <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
-      </div>
-      <p className="text-white/90 text-sm">{description}</p>
-    </div>
-  </div>
-);
-
-const BenefitsSection = () => {
-  const benefits = [
-    {
-      icon: Brain,
-      title: "Standard Avanzati",
-      description: "Test sviluppati con tecnologie moderne e intelligenza artificiale",
-      bgColor: "bg-gradient-to-br from-blue-600 to-blue-800",
-      iconColor: "text-blue-300"
-    },
-    {
-      icon: BarChart,
-      title: "Analisi Dettagliata",
-      description: "Report completo dei risultati con suggerimenti personalizzati",
-      bgColor: "bg-gradient-to-br from-emerald-600 to-emerald-800",
-      iconColor: "text-emerald-300"
-    },
-    {
-      icon: Target,
-      title: "Valutazione Completa",
-      description: "Test che coprono diverse aree cognitive",
-      bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
-      iconColor: "text-purple-300"
-    }
-  ];
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
-      <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
-        Perché Scegliere il Nostro Test?
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {benefits.map((benefit, index) => (
-          <SquareBenefitCard key={index} {...benefit} />
-        ))}
-      </div>
     </div>
   );
 };
