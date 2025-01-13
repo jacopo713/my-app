@@ -1,8 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Brain,
   Eye,
@@ -65,7 +63,7 @@ interface TestResultsProps {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 /**
- * Trasferisce i risultati dei test da localStorage a Firestore per l'utente registrato
+ * Trasferisce i risultati dei test da localStorage a Firestore per l'utente registrato.
  */
 const transferTestResults = async (uid: string) => {
   const guestResults = JSON.parse(localStorage.getItem('guestTestResults') || '{}');
@@ -79,7 +77,6 @@ const transferTestResults = async (uid: string) => {
 };
 
 export default function TestResults({ results }: TestResultsProps) {
-  const router = useRouter();
   const { user } = useAuth();
 
   // Stati per la registrazione inline se l'utente non è autenticato
@@ -218,8 +215,7 @@ export default function TestResults({ results }: TestResultsProps) {
                 </div>
                 <p>Punteggio: {Math.round(results.eyeHand.score)}</p>
                 <p>
-                  Percentile: {Math.round(results.eyeHand.accuracy)}
-                  °
+                  Percentile: {Math.round(results.eyeHand.accuracy)}°
                 </p>
               </div>
             )}
@@ -232,9 +228,7 @@ export default function TestResults({ results }: TestResultsProps) {
                 </div>
                 <p>Punteggio: {results.stroop.score}</p>
                 <p>Percentile: {results.stroop.percentile}°</p>
-                <p>
-                  Punteggio di Interferenza: {results.stroop.interferenceScore}
-                </p>
+                <p>Punteggio di Interferenza: {results.stroop.interferenceScore}</p>
               </div>
             )}
 
@@ -253,9 +247,7 @@ export default function TestResults({ results }: TestResultsProps) {
               <div className="p-4 bg-red-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Lightbulb className="w-6 h-6 text-red-500" />
-                  <h3 className="font-bold">
-                    Memoria a Breve Termine
-                  </h3>
+                  <h3 className="font-bold">Memoria a Breve Termine</h3>
                 </div>
                 <p>Punteggio: {results.memory.score}</p>
                 <p>Percentile: {results.memory.percentile}°</p>
