@@ -2,102 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
+import { getRecentUserTests } from '@/app/lib/firebase'; // Importa la funzione per i test recenti
 
 type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
-interface RankingData {
-  userId: string;
-  username: string;
-  totalScore: number;
-  percentile: number;
-  rank: number;
-  level: number;
-  testScores: {
-    [key in TestType]?: number;
-  };
+interface TestResults {
+  score?: number;
+  accuracy?: number;
+  percentile?: number;
+  averageDeviation?: number;
+  interferenceScore?: number;
+  wpm?: number;
+  evaluation?: string;
+  averageTime?: number;
+  gridSizes?: number[];
+  completionTimes?: number[];
+  precision?: number;
+  level?: number;
+  timestamp?: string;
+  type?: string;
+  id?: string;
 }
 
-// Funzione per convertire il punteggio in QI
-const scoreToIQ = (score: number): number => {
-  const maxScore = 999; // Punteggio massimo
-  const minIQ = 65;     // QI minimo
-  const maxIQ = 145;    // QI massimo
-
-  // Formula di conversione lineare
-  return Math.round((score / maxScore) * (maxIQ - minIQ) + minIQ);
-};
-
-const GlobalRanking: React.FC = () => {
+const RecentTests: React.FC = () => {
   const { user } = useAuth();
-  const [rankingData, setRankingData] = useState<RankingData[]>([]);
-  const [userRanking, setUserRanking] = useState<RankingData | null>(null);
+  const [recentTests, setRecentTests] = useState<TestResults[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRankingData = async () => {
-      try {
-        const users = await getAllUsers();
-        const rankingPromises = users.map(async (user) => {
-          const testResults = await getAllUserTests(user.uid);
-          const testScores: { [key in TestType]?: number } = {};
-
-          let totalScore = 0;
-          let testCount = 0;
-
-          testResults.forEach((test) => {
-            const type = test.type as TestType;
-            const score = test.score || 0;
-            testScores[type] = score;
-            totalScore += score;
-            testCount += 1;
-          });
-
-          const averageScore = testCount > 0 ? totalScore / testCount : 0;
-
-          return {
-            userId: user.uid,
-            username: user.displayName || 'Anonymous',
-            totalScore: Math.round(averageScore),
-            percentile: 0, // Inizializza il percentile a 0
-            rank: 0,
-            level: 1,
-            testScores,
-          };
-        });
-
-        let ranking = await Promise.all(rankingPromises);
-
-        // Ordina la classifica in base al punteggio totale
-        ranking.sort((a, b) => b.totalScore - a.totalScore);
-
-        // Calcola il percentile per ogni utente
-        const totalUsers = ranking.length;
-        ranking = ranking.map((user, index) => {
-          const percentile = ((totalUsers - index) / totalUsers) * 100;
-          return {
-            ...user,
-            percentile: Math.round(percentile), // Arrotonda il percentile
-            rank: index + 1,
-          };
-        });
-
-        if (user) {
-          const currentUserRanking = ranking.find((u) => u.userId === user.uid);
-          if (currentUserRanking) {
-            setUserRanking(currentUserRanking);
-          }
+    const fetchRecentTests = async () => {
+      if (user) {
+        try {
+          const tests = await getRecentUserTests(user.uid); // Usa la funzione per i test recenti
+          setRecentTests(tests);
+        } catch (error) {
+          console.error('Error fetching recent tests:', error);
+        } finally {
+          setLoading(false);
         }
-
-        setRankingData(ranking.slice(0, 3)); // Mostra solo i primi 3 utenti
-      } catch (error) {
-        console.error('Error fetching ranking data:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchRankingData();
+    fetchRecentTests();
   }, [user]);
 
   if (loading) {
@@ -107,9 +53,9 @@ const GlobalRanking: React.FC = () => {
           <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Classifica Globale
+          Test Recenti
         </h2>
-        <div className="text-lg text-gray-600">Caricamento classifica...</div>
+        <div className="text-lg text-gray-600">Caricamento test recenti...</div>
       </div>
     );
   }
@@ -120,55 +66,36 @@ const GlobalRanking: React.FC = () => {
         <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Classifica Globale
+        Test Recenti (Ultima Ora)
       </h2>
       
       <div className="space-y-4">
-        {rankingData.map((user) => (
-          <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg
-                ${user.rank === 1 ? 'bg-yellow-100 text-yellow-600' : 
-                  user.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                  user.rank === 3 ? 'bg-orange-100 text-orange-600' :
-                  'bg-blue-100 text-blue-600'}`}>
-                {user.rank}
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">{user.username}</div>
-                <div className="text-sm text-gray-500">Livello {user.level}</div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="font-bold text-gray-900">{scoreToIQ(user.totalScore)}</div> {/* Mostra il QI */}
-              <div className="text-sm text-gray-500">QI</div>
-            </div>
-          </div>
-        ))}
-
-        {userRanking && userRanking.rank > 3 && (
-          <>
-            <div className="text-center text-gray-500 my-4">...</div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+        {recentTests.length > 0 ? (
+          recentTests.map((test, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
               <div className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg bg-blue-100 text-blue-600">
-                  {userRanking.rank}
+                  {index + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{userRanking.username}</div>
-                  <div className="text-sm text-gray-500">Livello {userRanking.level}</div>
+                  <div className="font-semibold text-gray-900">{test.type}</div>
+                  <div className="text-sm text-gray-500">
+                    {test.timestamp ? new Date(test.timestamp).toLocaleTimeString() : 'N/A'}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-gray-900">{scoreToIQ(userRanking.totalScore)}</div> {/* Mostra il QI */}
-                <div className="text-sm text-gray-500">QI</div>
+                <div className="font-bold text-gray-900">{test.score || 'N/A'}</div>
+                <div className="text-sm text-gray-500">Punteggio</div>
               </div>
             </div>
-          </>
+          ))
+        ) : (
+          <div className="text-center text-gray-500">Nessun test effettuato nell'ultima ora.</div>
         )}
       </div>
     </div>
   );
 };
 
-export default GlobalRanking;
+export default RecentTests;
