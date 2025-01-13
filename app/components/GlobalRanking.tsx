@@ -31,7 +31,7 @@ const RecentTests: React.FC = () => {
   useEffect(() => {
     const fetchRecentTests = async () => {
       try {
-        const tests = await getRecentUserTests(); // Usa la funzione aggiornata
+        const tests = await getRecentUserTests(); // Chiamata senza argomenti
         setRecentTests(tests);
       } catch (error) {
         console.error('Error fetching recent tests:', error);
