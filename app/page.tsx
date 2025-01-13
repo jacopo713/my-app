@@ -180,6 +180,31 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* FOOTER WITH LEGAL LINKS */}
+      <footer className="bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="text-gray-600 text-sm">
+              &copy; {new Date().getFullYear()} Turing™. Tutti i diritti riservati.
+            </div>
+            <div className="flex space-x-4">
+              <a href="/terms" className="text-gray-600 hover:text-blue-600 text-sm">
+                Termini e Condizioni
+              </a>
+              <a href="/privacy" className="text-gray-600 hover:text-blue-600 text-sm">
+                Privacy Policy
+              </a>
+              <a href="/cookies" className="text-gray-600 hover:text-blue-600 text-sm">
+                Cookie Policy
+              </a>
+              <a href="/refunds" className="text-gray-600 hover:text-blue-600 text-sm">
+                Politica di Rimborso
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
