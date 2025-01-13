@@ -71,6 +71,9 @@ const HomePage: React.FC = () => {
                 <p className="text-xl mb-6 font-light">
                   Scopri il tuo potenziale intellettivo con il nostro test scientifico.
                 </p>
+                <p className="text-lg mb-6 italic text-white/90">
+                  Offriamo servizi di booster cognitivi avanzati per spingere il vostro successo personale.
+                </p>
                 <button
                   onClick={handleStartTest}
                   className="inline-block bg-white text-blue-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg hover:shadow-xl"
