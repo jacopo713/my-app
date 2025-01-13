@@ -94,7 +94,6 @@ export default function TestPage() {
   const [progress, setProgress] = useState(0);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
-  const [isGuest, setIsGuest] = useState(false); // Stato per gestire gli utenti guest
   const router = useRouter();
   const { user } = useAuth();
 
