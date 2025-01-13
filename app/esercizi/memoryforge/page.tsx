@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Brain, Award, Timer, ArrowLeft, Play, Home } from 'lucide-react';
+import { Brain, ArrowLeft, Play, Home } from 'lucide-react';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -127,7 +127,6 @@ const MemoryForgePage = () => {
       
       const newMistakes = success ? 0 : prev.mistakes + 1;
 
-      // Salva i dati se c'è un nuovo record
       if (newScore > prev.highScore || newLevel > prev.maxLevel) {
         saveUserData(newScore, newLevel);
       }
