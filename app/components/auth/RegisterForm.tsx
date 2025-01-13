@@ -11,6 +11,7 @@ import {
 import { auth, db } from '@/app/lib/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 import { doc, setDoc } from 'firebase/firestore';
+import Link from 'next/link';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -224,7 +225,14 @@ export default function RegisterForm() {
               disabled={loading}
             />
             <label htmlFor="terms" className="ml-2 text-gray-600">
-              Accetto i <a href="/termini-e-condizioni" className="text-blue-600 hover:text-blue-500">Termini e Condizioni</a> e la <a href="/privacy-policy" className="text-blue-600 hover:text-blue-500">Privacy Policy</a>.
+              Accetto i{' '}
+              <Link href="/termini-e-condizioni" className="text-blue-600 hover:text-blue-500">
+                Termini e Condizioni
+              </Link>{' '}
+              e la{' '}
+              <Link href="/privacy-policy" className="text-blue-600 hover:text-blue-500">
+                Privacy Policy
+              </Link>.
             </label>
           </div>
           <div className="mt-2 flex items-center">
