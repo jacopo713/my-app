@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getRecentUserTests } from '@/app/lib/firebase'; // Importa la funzione per i test recenti
-
-type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+import { getRecentUserTests } from '@/app/lib/firebase';
 
 interface TestResults {
   score?: number;
@@ -91,7 +89,7 @@ const RecentTests: React.FC = () => {
             </div>
           ))
         ) : (
-          <div className="text-center text-gray-500">Nessun test effettuato nell'ultima ora.</div>
+          <div className="text-center text-gray-500">Nessun test effettuato nell&apos;ultima ora.</div>
         )}
       </div>
     </div>
