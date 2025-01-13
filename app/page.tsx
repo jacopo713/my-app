@@ -72,8 +72,7 @@ const HomePage: React.FC = () => {
                   Scopri il tuo potenziale intellettivo
                 </p>
                 <p className="text-lg mb-4 italic text-white/90">
-                  Offriamo servizi di allenamento cognitivo avanzati per spingere il vostro successo personale.
-                  <span className="block text-sm italic text-white/70 mt-1">Jacopo Palumbo</span>
+                  "Offriamo servizi di allenamento cognitivo avanzati per spingere il vostro successo personale."
                 </p>
                 <button
                   onClick={handleStartTest}
