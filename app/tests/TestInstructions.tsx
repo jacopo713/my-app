@@ -190,10 +190,9 @@ export const testInstructions: Record<TestPhase, TestInstructions> = {
 
 interface TestInstructionsProps {
   phase: TestPhase;
-  onStart: () => void;
 }
 
-export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ phase, onStart }) => {
+export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ phase }) => {
   const currentTest = testInstructions[phase];
 
   return (
@@ -259,8 +258,6 @@ export const TestInstructionsComponent: React.FC<TestInstructionsProps> = ({ pha
             ))}
           </ul>
         </div>
-
-        {/* Il bottone "Inizia il Test" con la freccetta è stato rimosso */}
       </div>
     </div>
   );

@@ -3,10 +3,9 @@ import { testInstructions } from '../TestInstructions';
 
 interface TestInstructionsProps {
   phase: TestPhase;
-  onStart: () => void;
 }
 
-export default function TestInstructions({ phase, onStart }: TestInstructionsProps) {
+export default function TestInstructions({ phase }: TestInstructionsProps) {
   const instructions = testInstructions[phase];
 
   return (
@@ -30,7 +29,6 @@ export default function TestInstructions({ phase, onStart }: TestInstructionsPro
             ))}
           </ul>
         </div>
-        {/* Il bottone "Inizia il Test" è stato rimosso */}
       </div>
     </div>
   );
