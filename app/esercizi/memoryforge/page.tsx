@@ -1,344 +1,351 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Brain, Activity } from 'lucide-react';
-import TestProgressChart from '@/app/dashboard/TestProgressChart';
-import { useAuth } from '@/app/contexts/AuthContext';
-import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Brain, ArrowLeft, Play, Home, ChevronDown, ChevronUp } from 'lucide-react';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/app/lib/firebase';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/app/lib/firebase';
 
-type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
-
-interface TestResult {
-  type: TestType;
-  score?: number;
-  accuracy?: number;
-  percentile?: number;
-  averageDeviation?: number;
-  interferenceScore?: number;
-  wpm?: number;
-  evaluation?: string;
-  averageTime?: number;
-  gridSizes?: number[];
-  completionTimes?: number[];
-  precision?: number;
-  level?: number;
-  timestamp?: string;
-}
-
-interface RankingData {
-  userId: string;
-  username: string;
-  totalScore: number;
-  rank: number;
+interface GameState {
   level: number;
-  testScores: {
-    [key in TestType]?: number;
-  };
+  score: number;
+  sequence: number[];
+  userSequence: number[];
+  phase: 'observation' | 'reproduction' | 'feedback';
+  isPlaying: boolean;
+  mistakes: number;
+  highScore: number;
+  maxLevel: number;
 }
 
-interface StatsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  data: TestResult[];
-}
-
-const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-4xl relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        
-        <TestProgressChart data={data} />
-      </div>
-    </div>
-  );
-};
-
-const GlobalRanking: React.FC = () => {
-  const { user } = useAuth();
-  const [rankingData, setRankingData] = useState<RankingData[]>([]);
-  const [userRanking, setUserRanking] = useState<RankingData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRankingData = async () => {
-      try {
-        const users = await getAllUsers();
-        const rankingPromises = users.map(async (user) => {
-          const testResults = await getAllUserTests(user.uid);
-          const testScores: { [key in TestType]?: number } = {};
-
-          let totalScore = 0;
-          let testCount = 0;
-
-          testResults.forEach((test) => {
-            const type = test.type as TestType;
-            const score = test.score || 0;
-            testScores[type] = score;
-            totalScore += score;
-            testCount += 1;
-          });
-
-          const averageScore = testCount > 0 ? totalScore / testCount : 0;
-
-          return {
-            userId: user.uid,
-            username: user.displayName || 'Anonymous',
-            totalScore: Math.round(averageScore),
-            rank: 0,
-            level: 1,
-            testScores,
-          };
-        });
-
-        const ranking = await Promise.all(rankingPromises);
-        ranking.sort((a, b) => b.totalScore - a.totalScore);
-        ranking.forEach((user, index) => {
-          user.rank = index + 1;
-        });
-
-        if (user) {
-          const currentUserRanking = ranking.find((u) => u.userId === user.uid);
-          if (currentUserRanking) {
-            setUserRanking(currentUserRanking);
-          }
-        }
-
-        setRankingData(ranking.slice(0, 3));
-      } catch (error) {
-        console.error('Error fetching ranking data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRankingData();
-  }, [user]);
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Classifica Globale
-        </h2>
-        <div className="text-lg text-gray-600">Caricamento classifica...</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Classifica Globale
-      </h2>
-      
-      <div className="space-y-4">
-        {rankingData.map((user) => (
-          <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg
-                ${user.rank === 1 ? 'bg-yellow-100 text-yellow-600' : 
-                  user.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                  user.rank === 3 ? 'bg-orange-100 text-orange-600' :
-                  'bg-blue-100 text-blue-600'}`}>
-                {user.rank}
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">{user.username}</div>
-                <div className="text-sm text-gray-500">Livello {user.level}</div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="font-bold text-gray-900">{user.totalScore}</div>
-              <div className="text-sm text-gray-500">punti medi</div>
-            </div>
-          </div>
-        ))}
-
-        {userRanking && userRanking.rank > 3 && (
-          <>
-            <div className="text-center text-gray-500 my-4">...</div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg bg-blue-100 text-blue-600">
-                  {userRanking.rank}
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{userRanking.username}</div>
-                  <div className="text-sm text-gray-500">Livello {userRanking.level}</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-gray-900">{userRanking.totalScore}</div>
-                <div className="text-sm text-gray-500">punti medi</div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const CognitiveTrainingTask: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const router = useRouter(); // Usa il router per il reindirizzamento
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Activity className="w-6 h-6 text-purple-500" />
-          Allenamenti Cognitivi
-        </h2>
-        <button 
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <p className="text-gray-700 mb-6">
-        Qui puoi trovare una serie di esercizi per migliorare le tue capacità cognitive.
-      </p>
-
-      {/* Sezione Memory Forge */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Memory Forge</h3>
-        <p className="text-gray-600 mb-4">
-          Memory Forge è un esercizio progettato per migliorare la tua memoria a breve termine e la tua capacità di ricordare sequenze complesse.
-        </p>
-        <button 
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          onClick={() => {
-            // Reindirizza l'utente alla pagina Memory Forge
-            router.push('/esercizi/memoryforge');
-          }}
-        >
-          Avvia Memory Forge
-        </button>
-      </div>
-
-      {/* Aggiungi qui altre sezioni per altri allenamenti cognitivi */}
-    </div>
-  );
-};
-
-const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [showCognitiveLevels, setShowCognitiveLevels] = useState(false);
-  const [showCognitiveTraining, setShowCognitiveTraining] = useState(false);
-  const [loading, setLoading] = useState(true);
+const MemoryForgePage = () => {
   const router = useRouter();
+  const { user } = useAuth();
+  
+  const [gameState, setGameState] = useState<GameState>({
+    level: 1,
+    score: 0,
+    sequence: [],
+    userSequence: [],
+    phase: 'observation',
+    isPlaying: false,
+    mistakes: 0,
+    highScore: 0,
+    maxLevel: 1
+  });
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/login');
-    } catch (error) {
-      console.error('Errore durante il logout:', error);
-    }
-  };
+  const [showSequence, setShowSequence] = useState<number | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true); // Stato per mostrare/nascondere le istruzioni
 
+  // Caricamento dati utente
   useEffect(() => {
-    const fetchTestResults = async () => {
-      if (user) {
-        try {
-          const results = await getAllUserTests(user.uid);
-          const typedResults: TestResult[] = results.map(result => ({
-            ...result,
-            type: (result.type || result.id.replace('Test', '').toLowerCase()) as TestType
+    const loadUserData = async () => {
+      if (!user) return;
+
+      try {
+        const docRef = doc(db, 'memoryForgeStats', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setGameState(prev => ({
+            ...prev,
+            highScore: data.highScore || 0,
+            maxLevel: data.maxLevel || 1
           }));
-          setTestResults(typedResults);
-        } catch (error) {
-          console.error('Error fetching test results:', error);
-        } finally {
-          setLoading(false);
         }
+      } catch (error) {
+        console.error('Errore nel caricamento dei dati:', error);
       }
     };
 
-    fetchTestResults();
+    loadUserData();
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">
-          <div className="text-lg text-gray-600">Caricamento risultati...</div>
-        </div>
-      </div>
-    );
-  }
+  // Salvataggio dati
+  const saveUserData = useCallback(async (score: number, level: number) => {
+    if (!user) return;
+
+    try {
+      const docRef = doc(db, 'memoryForgeStats', user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const currentData = docSnap.data();
+        await updateDoc(docRef, {
+          highScore: Math.max(currentData.highScore || 0, score),
+          maxLevel: Math.max(currentData.maxLevel || 1, level),
+          lastPlayed: new Date().toISOString()
+        });
+      } else {
+        await setDoc(docRef, {
+          highScore: score,
+          maxLevel: level,
+          lastPlayed: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('Errore nel salvataggio dei dati:', error);
+    }
+  }, [user]);
+
+  // Parametri di difficoltà
+  const getDifficultyParams = useCallback((level: number) => {
+    return {
+      sequenceLength: Math.min(3 + Math.floor(level / 2), 12),
+      observationTime: Math.max(1000 - (level * 50), 400),
+      gridSize: Math.min(4 + Math.floor(level / 3), 6)
+    };
+  }, []);
+
+  // Generazione sequenza
+  const generateSequence = useCallback((level: number) => {
+    const { sequenceLength, gridSize } = getDifficultyParams(level);
+    const maxNumber = gridSize * gridSize;
+    const sequence: number[] = [];
+    const used = new Set<number>();
+
+    while (sequence.length < sequenceLength) {
+      const num = Math.floor(Math.random() * maxNumber);
+      if (!used.has(num)) {
+        sequence.push(num);
+        used.add(num);
+      }
+    }
+
+    return sequence;
+  }, [getDifficultyParams]);
+
+  // Gestione progressione livelli
+  const handleLevelProgression = useCallback(async (success: boolean) => {
+    setGameState(prev => {
+      const newScore = success ? prev.score + (prev.level * 100) : prev.score;
+      const newLevel = success 
+        ? (newScore >= (prev.level * 1000) ? prev.level + 1 : prev.level)
+        : (prev.mistakes >= 2 ? Math.max(1, prev.level - 1) : prev.level);
+      
+      const newMistakes = success ? 0 : prev.mistakes + 1;
+
+      if (newScore > prev.highScore || newLevel > prev.maxLevel) {
+        saveUserData(newScore, newLevel);
+      }
+
+      return {
+        ...prev,
+        score: newScore,
+        level: newLevel,
+        mistakes: newMistakes,
+        phase: 'feedback',
+        highScore: Math.max(prev.highScore, newScore),
+        maxLevel: Math.max(prev.maxLevel, newLevel)
+      };
+    });
+  }, [saveUserData]);
+
+  // Gestione click cella
+  const handleCellClick = useCallback((index: number) => {
+    if (gameState.phase !== 'reproduction') return;
+
+    setGameState(prev => {
+      const newUserSequence = [...prev.userSequence, index];
+      
+      if (newUserSequence.length === prev.sequence.length) {
+        const isCorrect = newUserSequence.every(
+          (num, i) => num === prev.sequence[i]
+        );
+        handleLevelProgression(isCorrect);
+        return {
+          ...prev,
+          userSequence: newUserSequence,
+          isPlaying: false
+        };
+      }
+
+      return {
+        ...prev,
+        userSequence: newUserSequence
+      };
+    });
+  }, [gameState.phase, handleLevelProgression]);
+
+  // Avvio nuovo round
+  const startNewRound = useCallback(() => {
+    const newSequence = generateSequence(gameState.level);
+    setGameState(prev => ({
+      ...prev,
+      sequence: newSequence,
+      userSequence: [],
+      phase: 'observation',
+      isPlaying: true
+    }));
+
+    let currentIndex = 0;
+    const { observationTime } = getDifficultyParams(gameState.level);
+
+    const showNextNumber = () => {
+      if (currentIndex < newSequence.length) {
+        setShowSequence(newSequence[currentIndex]);
+        setTimeout(() => {
+          setShowSequence(null);
+          currentIndex++;
+          setTimeout(showNextNumber, 200);
+        }, observationTime);
+      } else {
+        setGameState(prev => ({ ...prev, phase: 'reproduction' }));
+      }
+    };
+
+    showNextNumber();
+  }, [gameState.level, generateSequence, getDifficultyParams]);
+
+  const { gridSize } = getDifficultyParams(gameState.level);
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">
-              Ciao, {user?.displayName || 'User'}!
-            </h1>
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <button 
-                onClick={() => setShowCognitiveLevels(true)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
-              >
-                <Brain className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
-              </button>
-              <button 
-                onClick={() => setShowCognitiveTraining(true)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
-              >
-                <Activity className="w-5 h-5 text-purple-500" />
-                <span className="font-medium">Allenamenti Cognitivi</span>
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 shadow-sm transition-colors"
-              >
-                <span className="font-medium">Logout</span>
-              </button>
+      <div className="w-screen h-screen bg-gray-50 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="flex justify-between items-center p-4 bg-white shadow">
+          <div className="flex items-center gap-2">
+            <Brain className="w-8 h-8 text-blue-600" />
+            <div>
+              <h1 className="text-xl font-bold">Memory Forge</h1>
+              <p className="text-xs text-gray-600">Potenzia la tua memoria</p>
+            </div>
+          </div>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2"
+          >
+            <Home className="w-5 h-5" />
+            Dashboard
+          </button>
+        </header>
+
+        {/* Corpo principale */}
+        <main className="flex-grow p-4 flex flex-col overflow-auto">
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Livello</div>
+              <div className="text-2xl font-bold text-blue-600">{gameState.level}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Punteggio</div>
+              <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Record</div>
+              <div className="text-2xl font-bold text-purple-600">{gameState.highScore}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <div className="text-xs text-gray-600">Livello Max</div>
+              <div className="text-2xl font-bold text-orange-600">{gameState.maxLevel}</div>
             </div>
           </div>
 
-          {showCognitiveTraining && (
-            <CognitiveTrainingTask onClose={() => setShowCognitiveTraining(false)} />
-          )}
+          {/* Griglia di gioco centrata */}
+          <div className="w-full max-w-3xl mx-auto mb-6">
+            <div 
+              className="grid gap-2"
+              style={{ 
+                gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
+              }}
+            >
+              {Array.from({ length: gridSize * gridSize }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleCellClick(index)}
+                  disabled={gameState.phase !== 'reproduction'}
+                  className={`
+                    aspect-square rounded-lg transition-all duration-200
+                    ${showSequence === index 
+                      ? 'bg-blue-500' 
+                      : gameState.userSequence.includes(index)
+                        ? 'bg-green-200'
+                        : 'bg-gray-100 hover:bg-gray-200'}
+                    ${gameState.phase === 'reproduction' 
+                      ? 'cursor-pointer' 
+                      : 'cursor-not-allowed'}
+                  `}
+                />
+              ))}
+            </div>
+          </div>
 
-          <GlobalRanking />
+          {/* Controlli e feedback */}
+          <div className="text-center space-y-4 mb-4">
+            {!gameState.isPlaying && (
+              <button
+                onClick={startNewRound}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
+                {gameState.phase === 'feedback' ? (
+                  <>
+                    <ArrowLeft className="w-5 h-5" />
+                    Prossima Sequenza
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    Inizia
+                  </>
+                )}
+              </button>
+            )}
 
-          <StatsModal 
-            isOpen={showCognitiveLevels}
-            onClose={() => setShowCognitiveLevels(false)}
-            data={testResults}
-          />
-        </div>
+            {gameState.phase === 'observation' && (
+              <div className="text-lg text-gray-600">
+                Memorizza la sequenza...
+              </div>
+            )}
+
+            {gameState.phase === 'reproduction' && (
+              <div className="text-lg text-gray-600">
+                Riproduci la sequenza!
+              </div>
+            )}
+
+            {gameState.phase === 'feedback' && (
+              <div className={`text-lg font-semibold
+                ${gameState.mistakes === 0 
+                  ? 'text-green-600' 
+                  : 'text-red-600'}`}
+              >
+                {gameState.mistakes === 0 
+                  ? '✨ Ottimo lavoro! Continua così!' 
+                  : '❌ Sequenza errata. Riprova!'}
+              </div>
+            )}
+          </div>
+
+          {/* Istruzioni espandibili/collassabili */}
+          <div className="mt-auto mb-4">
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mb-2"
+            >
+              {showInstructions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showInstructions ? 'Nascondi istruzioni' : 'Mostra istruzioni'}
+            </button>
+            {showInstructions && (
+              <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Come giocare:</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Osserva attentamente la sequenza di celle illuminate</li>
+                  <li>Riproduci la sequenza nello stesso ordine</li>
+                  <li>Guadagna 1000 punti per avanzare di livello</li>
+                  <li>La difficoltà aumenta con il livello</li>
+                  <li>Due errori consecutivi ti faranno perdere un livello</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </ProtectedRoute>
   );
 };
 
-export default DashboardPage;
+export default MemoryForgePage;
