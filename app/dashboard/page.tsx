@@ -41,44 +41,7 @@ interface RankingData {
   };
 }
 
-interface StatsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  data: TestResult[];
-}
-
-// 2. Componente di supporto: Modal per i dettagli dei test
-const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, data }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-4xl relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-        <TestProgressChart data={data} />
-      </div>
-    </div>
-  );
-};
-
-// 3. Componente Classifica
+// 2. Componente Classifica
 const GlobalRanking: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [rankingData, setRankingData] = useState<RankingData[]>([]);
@@ -210,9 +173,10 @@ const GlobalRanking: React.FC = () => {
   );
 };
 
-// 4. Pagina Allenamenti Cognitivi
+// 3. Pagina Allenamenti Cognitivi
 const AllenamentiCognitiviPage: React.FC = () => {
-  const { user } = useAuth();
+  // La variabile "user" non è utilizzata in questa pagina,
+  // quindi la rimuoviamo per risolvere l'errore ESLint.
   const router = useRouter();
 
   const handleLogout = async () => {
