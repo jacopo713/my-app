@@ -194,7 +194,15 @@ const HomePage: React.FC = () => {
   );
 };
 
-const SquareBenefitCard = ({ icon: Icon, title, description, bgColor, iconColor }) => (
+interface SquareBenefitCardProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  bgColor: string;
+  iconColor: string;
+}
+
+const SquareBenefitCard: React.FC<SquareBenefitCardProps> = ({ icon: Icon, title, description, bgColor, iconColor }) => (
   <div className="aspect-square">
     <div className={`${bgColor} w-full h-full p-6 rounded-lg border border-gray-100 hover:opacity-90 transition-all duration-300 flex flex-col justify-between`}>
       <div>
