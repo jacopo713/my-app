@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getRecentUserTests } from '@/app/lib/firebase';
+import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 
-interface TestResults {
+type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
+
+interface TestResult {
+  type: TestType;
   score?: number;
   accuracy?: number;
   percentile?: number;
@@ -18,21 +21,69 @@ interface TestResults {
   precision?: number;
   level?: number;
   timestamp?: string;
-  type?: string;
-  id?: string;
-  username?: string; // Aggiungi il campo username
 }
 
-const RecentTests: React.FC = () => {
+interface UserData {
+  userId: string;
+  username: string;
+  totalScore: number;
+  level: number;
+  timestamp?: string;
+}
+
+const GlobalRanking: React.FC = () => {
   const { user } = useAuth();
-  const [recentTests, setRecentTests] = useState<TestResults[]>([]);
+  const [recentTests, setRecentTests] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecentTests = async () => {
       try {
-        const tests = await getRecentUserTests(); // Chiamata senza argomenti
-        setRecentTests(tests);
+        const users = await getAllUsers();
+        const now = new Date();
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000); // 1 ora fa
+
+        const recentTests: UserData[] = [];
+
+        for (const user of users) {
+          const testResults = await getAllUserTests(user.uid);
+
+          // Filtra i test effettuati nell'ultima ora
+          const recentUserTests = testResults.filter((test) => {
+            const testTimestamp = test.timestamp ? new Date(test.timestamp) : null;
+            return testTimestamp && testTimestamp >= oneHourAgo;
+          });
+
+          if (recentUserTests.length > 0) {
+            // Calcola il punteggio totale e il livello medio
+            let totalScore = 0;
+            let testCount = 0;
+
+            recentUserTests.forEach((test) => {
+              totalScore += test.score || 0;
+              testCount += 1;
+            });
+
+            const averageScore = testCount > 0 ? totalScore / testCount : 0;
+
+            recentTests.push({
+              userId: user.uid,
+              username: user.displayName || 'Anonymous',
+              totalScore: Math.round(averageScore),
+              level: 1, // Puoi calcolare il livello in base ai test se necessario
+              timestamp: recentUserTests[0].timestamp, // Usa il timestamp del test più recente
+            });
+          }
+        }
+
+        // Ordina i test per timestamp (dal più recente al meno recente)
+        recentTests.sort((a, b) => {
+          const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+          const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+          return timestampB - timestampA; // Ordine decrescente
+        });
+
+        setRecentTests(recentTests);
       } catch (error) {
         console.error('Error fetching recent tests:', error);
       } finally {
@@ -75,15 +126,13 @@ const RecentTests: React.FC = () => {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{test.username || 'Anonymous'}</div> {/* Mostra il nome dell'utente */}
-                  <div className="text-sm text-gray-500">
-                    {test.timestamp ? new Date(test.timestamp).toLocaleTimeString() : 'N/A'}
-                  </div>
+                  <div className="font-semibold text-gray-900">{test.username}</div>
+                  <div className="text-sm text-gray-500">Livello {test.level}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-gray-900">{test.score || 'N/A'}</div>
-                <div className="text-sm text-gray-500">Punteggio</div>
+                <div className="font-bold text-gray-900">{test.totalScore}</div>
+                <div className="text-sm text-gray-500">punti medi</div>
               </div>
             </div>
           ))
@@ -95,4 +144,4 @@ const RecentTests: React.FC = () => {
   );
 };
 
-export default RecentTests;
+export default GlobalRanking;
