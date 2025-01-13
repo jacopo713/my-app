@@ -1,34 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain, Activity, Repeat, BarChart2, Users } from 'lucide-react';
-import TestProgressChart from '@/app/dashboard/TestProgressChart';
+import { BarChart2 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 import ProtectedRoute from '@/app/components/auth/ProtectedRoute';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/app/lib/firebase';
 import { useRouter } from 'next/navigation';
 
-// 1. Definizione dei tipi
+// 1. Definizione dei tipi utili per questa pagina
 type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
-
-interface TestResult {
-  type: TestType;
-  score?: number;
-  accuracy?: number;
-  percentile?: number;
-  averageDeviation?: number;
-  interferenceScore?: number;
-  wpm?: number;
-  evaluation?: string;
-  averageTime?: number;
-  gridSizes?: number[];
-  completionTimes?: number[];
-  precision?: number;
-  level?: number;
-  timestamp?: string;
-}
 
 interface RankingData {
   userId: string;
@@ -115,7 +95,6 @@ const GlobalRanking: React.FC = () => {
         <BarChart2 className="w-6 h-6 text-yellow-500" />
         Classifica Globale
       </h2>
-
       <div className="space-y-4">
         {rankingData.map((user) => (
           <div
@@ -173,81 +152,27 @@ const GlobalRanking: React.FC = () => {
   );
 };
 
-// 3. Pagina Allenamenti Cognitivi
-const AllenamentiCognitiviPage: React.FC = () => {
-  // La variabile "user" non è utilizzata in questa pagina,
-  // quindi la rimuoviamo per risolvere l'errore ESLint.
+// 3. Pagina Dashboard (se necessaria)
+const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      router.push('/login');
+      await router.push('/login');
     } catch (error) {
       console.error('Errore durante il logout:', error);
     }
-  };
-
-  const handleSelectTraining = (trainingType: string) => {
-    router.push(`/allenamenti-cognitivi/${trainingType}`);
   };
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          {/* Card superiore */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Activity className="w-8 h-8 text-purple-500" />
-              Allenamenti Cognitivi
-            </h1>
-            <p className="text-gray-700 mb-6">
-              Scegli l&apos;allenamento che preferisci dalle opzioni sottostanti.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div
-                onClick={() => handleSelectTraining('focus')}
-                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="w-6 h-6 text-blue-500" />
-                  <h3 className="font-semibold">Focus</h3>
-                </div>
-                <p className="text-sm text-gray-600">Migliora la concentrazione.</p>
-              </div>
-              <div
-                onClick={() => handleSelectTraining('memoria')}
-                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Repeat className="w-6 h-6 text-green-500" />
-                  <h3 className="font-semibold">Memoria</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Allena la tua capacità mnemonica.
-                </p>
-              </div>
-              <div
-                onClick={() => handleSelectTraining('velocita')}
-                className="flex-1 bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="w-6 h-6 text-orange-500" />
-                  <h3 className="font-semibold">Velocità</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Sfida la rapidità di reazione.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Spazio per spostare le classifiche verso il basso */}
-          <div className="mt-16">
-            <GlobalRanking />
-          </div>
-
+          <h1 className="text-3xl font-bold text-gray-900">
+            Ciao, {user?.displayName || 'User'}!
+          </h1>
+          <GlobalRanking />
           <div className="mt-8 flex justify-end">
             <button
               onClick={handleLogout}
@@ -262,5 +187,5 @@ const AllenamentiCognitiviPage: React.FC = () => {
   );
 };
 
-export default AllenamentiCognitiviPage;
+export default DashboardPage;
 
