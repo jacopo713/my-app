@@ -337,6 +337,19 @@ export default function TestPage() {
                   <ChevronDown className="w-8 h-8 text-blue-600" style={customChevronStyle} />
                 </div>
               )}
+
+              {/* Pulsante fisso in basso */}
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
+                <div className="max-w-4xl mx-auto">
+                  <button
+                    onClick={() => setPhase("raven")}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
+                      font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
+                  >
+                    <span className="text-lg">Inizia il Test</span>
+                  </button>
+                </div>
+              </div>
             </div>
           );
         case "raven":
@@ -517,19 +530,22 @@ export default function TestPage() {
         {renderCurrentPhase()}
       </div>
 
-      {/* Pulsante fisso in basso per avviare il test */}
+      {/* Pulsante fisso in basso per la navigazione manuale */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-lg z-20">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => {
-              if (!testStarted) {
-                setTestStarted(true); // Avvia il test corrente
+              const currentIndex = phases.indexOf(phase);
+              if (currentIndex < phases.length - 1) {
+                const nextPhase = phases[currentIndex + 1];
+                setPhase(nextPhase);
+                setProgress(Math.min((currentIndex + 1) * 15, 100));
               }
             }}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl 
               font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-px"
           >
-            <span className="text-lg">Inizia il Test</span>
+            <span className="text-lg">Salta alla Fase Successiva →</span>
           </button>
         </div>
       </div>
