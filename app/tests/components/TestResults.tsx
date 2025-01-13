@@ -60,7 +60,7 @@ interface TestResultsProps {
   };
 }
 
-// Inizializza Stripe usando la stessa variabile usata in RegisterForm.tsx
+// Inizializza Stripe utilizzando la stessa variabile ambiente di RegisterForm
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 /**
@@ -81,7 +81,7 @@ const transferTestResults = async (uid: string) => {
 export default function TestResults({ results }: TestResultsProps) {
   const { user } = useAuth();
 
-  // Stati per la registrazione inline (identici a quelli usati in RegisterForm.tsx)
+  // Stati per registrazione inline, identici a quelli usati in RegisterForm.tsx
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -99,7 +99,7 @@ export default function TestResults({ results }: TestResultsProps) {
     await handleRegistration('google');
   };
 
-  // Funzione comune di registrazione: replica fedelmente quella usata in RegisterForm.tsx
+  // Funzione comune di registrazione: replicazione fedele di quanto fatto in RegisterForm.tsx
   const handleRegistration = async (
     provider: 'email' | 'google',
     credentials?: { email: string; password: string; name: string }
@@ -112,14 +112,14 @@ export default function TestResults({ results }: TestResultsProps) {
         const googleProvider = new GoogleAuthProvider();
         userCredential = await signInWithPopup(auth, googleProvider);
       } else {
-        if (!credentials) throw new Error('Credentials required for email signup');
+        if (!credentials) throw new Error('Dati mancanti per il signup via email.');
         userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
         await updateProfile(userCredential.user, {
           displayName: credentials.name,
         });
       }
 
-      // Creazione del documento utente su Firestore (stessa struttura dei RegisterForm e LoginForm)
+      // Creazione del documento utente su Firestore
       const userData = {
         email: userCredential.user.email,
         displayName: provider === 'google' ? userCredential.user.displayName : credentials?.name,
@@ -137,13 +137,13 @@ export default function TestResults({ results }: TestResultsProps) {
 
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
 
-      // Trasferimento dei risultati dei test salvati
+      // Trasferimento dei risultati dei test salvati (esattamente come in RegisterForm.tsx)
       await transferTestResults(userCredential.user.uid);
 
-      // Otteniamo l'id token dell'utente per autorizzare la richiesta
+      // Otteniamo l'ID token per autorizzare la richiesta all'endpoint
       const idToken = await userCredential.user.getIdToken();
 
-      // Chiamata all'endpoint per creare la sessione Stripe
+      // Chiamata all'endpoint API per la creazione della sessione Stripe
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -173,13 +173,13 @@ export default function TestResults({ results }: TestResultsProps) {
         throw stripeError;
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+      console.error('Errore durante la registrazione:', err);
+      setError(err instanceof Error ? err.message : 'Errore durante la registrazione. Riprova.');
       setLoading(false);
     }
   };
 
-  // Se l'utente è già loggato, mostra i risultati dei test
+  // Se l'utente è loggato, mostra i risultati dei test
   if (user) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
