@@ -6,23 +6,6 @@ import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 
 type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
-interface TestResult {
-  type: TestType;
-  score?: number;
-  accuracy?: number;
-  percentile?: number;
-  averageDeviation?: number;
-  interferenceScore?: number;
-  wpm?: number;
-  evaluation?: string;
-  averageTime?: number;
-  gridSizes?: number[];
-  completionTimes?: number[];
-  precision?: number;
-  level?: number;
-  timestamp?: string;
-}
-
 interface UserData {
   userId: string;
   username: string;
