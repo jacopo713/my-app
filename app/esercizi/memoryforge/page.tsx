@@ -223,104 +223,106 @@ const MemoryForgePage = () => {
         </header>
 
         {/* Corpo principale */}
-        <main className="flex-grow p-4 overflow-auto">
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Livello</div>
-              <div className="text-2xl font-bold text-blue-600">{gameState.level}</div>
+        <main className="flex-grow p-4 flex flex-col justify-between overflow-auto">
+          <div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-xs text-gray-600">Livello</div>
+                <div className="text-2xl font-bold text-blue-600">{gameState.level}</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-xs text-gray-600">Punteggio</div>
+                <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-xs text-gray-600">Record</div>
+                <div className="text-2xl font-bold text-purple-600">{gameState.highScore}</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-xs text-gray-600">Livello Max</div>
+                <div className="text-2xl font-bold text-orange-600">{gameState.maxLevel}</div>
+              </div>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Punteggio</div>
-              <div className="text-2xl font-bold text-green-600">{gameState.score}</div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Record</div>
-              <div className="text-2xl font-bold text-purple-600">{gameState.highScore}</div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-xs text-gray-600">Livello Max</div>
-              <div className="text-2xl font-bold text-orange-600">{gameState.maxLevel}</div>
-            </div>
-          </div>
 
-          {/* Griglia di gioco */}
-          <div className="w-full max-w-3xl mx-auto mb-6">
-            <div 
-              className="grid gap-2"
-              style={{ 
-                gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
-              }}
-            >
-              {Array.from({ length: gridSize * gridSize }).map((_, index) => (
+            {/* Griglia di gioco centrata */}
+            <div className="w-full max-w-3xl mx-auto mb-6">
+              <div 
+                className="grid gap-2"
+                style={{ 
+                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
+                }}
+              >
+                {Array.from({ length: gridSize * gridSize }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleCellClick(index)}
+                    disabled={gameState.phase !== 'reproduction'}
+                    className={`
+                      aspect-square rounded-lg transition-all duration-200
+                      ${showSequence === index 
+                        ? 'bg-blue-500' 
+                        : gameState.userSequence.includes(index)
+                          ? 'bg-green-200'
+                          : 'bg-gray-100 hover:bg-gray-200'}
+                      ${gameState.phase === 'reproduction' 
+                        ? 'cursor-pointer' 
+                        : 'cursor-not-allowed'}
+                    `}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Controlli e feedback */}
+            <div className="text-center space-y-4 mb-4">
+              {!gameState.isPlaying && (
                 <button
-                  key={index}
-                  onClick={() => handleCellClick(index)}
-                  disabled={gameState.phase !== 'reproduction'}
-                  className={`
-                    aspect-square rounded-lg transition-all duration-200
-                    ${showSequence === index 
-                      ? 'bg-blue-500' 
-                      : gameState.userSequence.includes(index)
-                        ? 'bg-green-200'
-                        : 'bg-gray-100 hover:bg-gray-200'}
-                    ${gameState.phase === 'reproduction' 
-                      ? 'cursor-pointer' 
-                      : 'cursor-not-allowed'}
-                  `}
-                />
-              ))}
+                  onClick={startNewRound}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                >
+                  {gameState.phase === 'feedback' ? (
+                    <>
+                      <ArrowLeft className="w-5 h-5" />
+                      Prossima Sequenza
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      Inizia
+                    </>
+                  )}
+                </button>
+              )}
+
+              {gameState.phase === 'observation' && (
+                <div className="text-lg text-gray-600">
+                  Memorizza la sequenza...
+                </div>
+              )}
+
+              {gameState.phase === 'reproduction' && (
+                <div className="text-lg text-gray-600">
+                  Riproduci la sequenza!
+                </div>
+              )}
+
+              {gameState.phase === 'feedback' && (
+                <div className={`text-lg font-semibold
+                  ${gameState.mistakes === 0 
+                    ? 'text-green-600' 
+                    : 'text-red-600'}`}
+                >
+                  {gameState.mistakes === 0 
+                    ? '✨ Ottimo lavoro! Continua così!' 
+                    : '❌ Sequenza errata. Riprova!'}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Controlli e feedback */}
-          <div className="text-center space-y-4">
-            {!gameState.isPlaying && (
-              <button
-                onClick={startNewRound}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-              >
-                {gameState.phase === 'feedback' ? (
-                  <>
-                    <ArrowLeft className="w-5 h-5" />
-                    Prossima Sequenza
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5" />
-                    Inizia
-                  </>
-                )}
-              </button>
-            )}
-
-            {gameState.phase === 'observation' && (
-              <div className="text-lg text-gray-600">
-                Memorizza la sequenza...
-              </div>
-            )}
-
-            {gameState.phase === 'reproduction' && (
-              <div className="text-lg text-gray-600">
-                Riproduci la sequenza!
-              </div>
-            )}
-
-            {gameState.phase === 'feedback' && (
-              <div className={`text-lg font-semibold
-                ${gameState.mistakes === 0 
-                  ? 'text-green-600' 
-                  : 'text-red-600'}`}
-              >
-                {gameState.mistakes === 0 
-                  ? '✨ Ottimo lavoro! Continua così!' 
-                  : '❌ Sequenza errata. Riprova!'}
-              </div>
-            )}
-          </div>
-
-          {/* Istruzioni */}
-          <div className="mt-8 text-sm text-gray-600">
+          {/* Istruzioni posizionate in basso a sinistra */}
+          <div className="text-sm text-gray-600">
             <h3 className="font-semibold mb-2">Come giocare:</h3>
             <ul className="list-disc list-inside space-y-1">
               <li>Osserva attentamente la sequenza di celle illuminate</li>
