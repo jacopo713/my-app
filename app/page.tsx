@@ -158,6 +158,37 @@ const HomePage: React.FC = () => {
                 Verifica le tue capacità di memoria e concentrazione
               </p>
             </div>
+
+            {/* Nuove card aggiunte */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
+              <div className="flex items-center mb-3">
+                <Book className="w-10 h-10 text-orange-500" />
+                <h2 className="text-2xl font-bold ml-3">Lettura Veloce</h2>
+              </div>
+              <p className="text-gray-600 text-base">
+                Misura la tua velocità di lettura e comprensione
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
+              <div className="flex items-center mb-3">
+                <ActivitySquare className="w-10 h-10 text-red-500" />
+                <h2 className="text-2xl font-bold ml-3">Interferenza Cognitiva</h2>
+              </div>
+              <p className="text-gray-600 text-base">
+                Analizza la tua capacità di gestire informazioni conflittuali
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-2xl transition-all transform hover:-translate-y-1">
+              <div className="flex items-center mb-3">
+                <Music className="w-10 h-10 text-pink-500" />
+                <h2 className="text-2xl font-bold ml-3">Senso del Ritmo</h2>
+              </div>
+              <p className="text-gray-600 text-base">
+                Misura la tua precisione nella percezione ritmica
+              </p>
+            </div>
           </div>
 
           {/* BENEFITS SECTION */}
