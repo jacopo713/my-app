@@ -199,25 +199,27 @@ const GlobalRanking: React.FC = () => {
   );
 };
 
-const RepeatTestSection: React.FC = () => {
-  const router = useRouter();
-
-  const handleRepeatTest = () => {
-    router.push('/test');
-  };
-
+const CognitiveTrainingTask: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <Star className="w-6 h-6 text-green-500" />
-        Ripeti il Test
-      </h2>
-      <button 
-        onClick={handleRepeatTest}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
-      >
-        <span className="font-medium">Ripeti il Test</span>
-      </button>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Activity className="w-6 h-6 text-purple-500" />
+          Allenamenti Cognitivi
+        </h2>
+        <button 
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <p className="text-gray-700">
+        Qui puoi trovare una serie di esercizi per migliorare le tue capacità cognitive.
+      </p>
+      {/* Aggiungi qui il contenuto degli allenamenti cognitivi */}
     </div>
   );
 };
@@ -225,7 +227,8 @@ const RepeatTestSection: React.FC = () => {
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
+  const [showCognitiveLevels, setShowCognitiveLevels] = useState(false);
+  const [showCognitiveTraining, setShowCognitiveTraining] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -236,10 +239,6 @@ const DashboardPage: React.FC = () => {
     } catch (error) {
       console.error('Errore durante il logout:', error);
     }
-  };
-
-  const handleCognitiveTraining = () => {
-    router.push('/allenamenti-cognitivi');
   };
 
   useEffect(() => {
@@ -283,14 +282,14 @@ const DashboardPage: React.FC = () => {
             </h1>
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => setShowResults(true)}
+                onClick={() => setShowCognitiveLevels(true)}
                 className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
               >
                 <Brain className="w-5 h-5 text-blue-500" />
                 <span className="font-medium">Vedi i tuoi livelli cognitivi</span>
               </button>
               <button 
-                onClick={handleCognitiveTraining}
+                onClick={() => setShowCognitiveTraining(true)}
                 className="px-4 py-2 bg-white border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 shadow-sm transition-colors"
               >
                 <Activity className="w-5 h-5 text-purple-500" />
@@ -305,13 +304,15 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
+          {showCognitiveTraining && (
+            <CognitiveTrainingTask onClose={() => setShowCognitiveTraining(false)} />
+          )}
+
           <GlobalRanking />
 
-          <RepeatTestSection />
-
           <StatsModal 
-            isOpen={showResults}
-            onClose={() => setShowResults(false)}
+            isOpen={showCognitiveLevels}
+            onClose={() => setShowCognitiveLevels(false)}
             data={testResults}
           />
         </div>
