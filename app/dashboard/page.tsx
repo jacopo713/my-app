@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain, Activity, Star } from 'lucide-react';
+import { Brain, Activity } from 'lucide-react';
 import TestProgressChart from '@/app/dashboard/TestProgressChart';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
