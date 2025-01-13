@@ -13,7 +13,24 @@ import {
   Award,
   BarChart,
 } from 'lucide-react';
-import CognitiveDashboard from './CognitiveDashboard';
+import {
+  BarChart as RechartsBarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Cell,
+} from 'recharts';
 
 const HomePage: React.FC = () => {
   const router = useRouter();
@@ -21,6 +38,34 @@ const HomePage: React.FC = () => {
   const handleStartTest = () => {
     router.push('/tests');
   };
+
+  // Dati per i grafici
+  const dataRadar = [
+    { subject: 'Ragionamento', A: 85, fullMark: 100 },
+    { subject: 'Coordinazione', A: 78, fullMark: 100 },
+    { subject: 'Attenzione', A: 82, fullMark: 100 },
+    { subject: 'Lettura', A: 75, fullMark: 100 },
+    { subject: 'Ritmo', A: 70, fullMark: 100 },
+    { subject: 'Memoria', A: 80, fullMark: 100 },
+    { subject: 'Inibizione', A: 76, fullMark: 100 },
+  ];
+
+  const performanceData = [
+    { name: 'Gen', score: 75 },
+    { name: 'Feb', score: 78 },
+    { name: 'Mar', score: 82 },
+    { name: 'Apr', score: 85 },
+    { name: 'Mag', score: 88 },
+    { name: 'Giu', score: 92 },
+  ];
+
+  const barData = [
+    { name: 'Rag.', value: 85, color: '#3B82F6' },
+    { name: 'Coord.', value: 78, color: '#10B981' },
+    { name: 'Att.', value: 82, color: '#6366F1' },
+    { name: 'Lett.', value: 75, color: '#EC4899' },
+    { name: 'Ritmo', value: 70, color: '#F59E0B' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-800">
@@ -169,8 +214,105 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* DASHBOARD ANALISI COGNITIVE */}
-          <div className="mb-12">
-            <CognitiveDashboard />
+          <div className="w-full bg-white p-6 rounded-xl shadow-lg mb-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Dashboard Analisi Cognitive</h2>
+              <p className="text-gray-600">Andamento mensile delle performance cognitive</p>
+              <span className="text-sm text-gray-500">Dati simulati a scopo illustrativo</span>
+            </div>
+
+            <div className="grid grid-cols-12 gap-6">
+              <div className="col-span-12 grid grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <p className="text-gray-600 text-sm">Media Mensile</p>
+                  <p className="text-2xl font-bold text-blue-600">85%</p>
+                  <p className="text-green-600 text-sm">↑ 5.2%</p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                  <p className="text-gray-600 text-sm">Precisione</p>
+                  <p className="text-2xl font-bold text-purple-600">92%</p>
+                  <p className="text-green-600 text-sm">↑ 3.1%</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <p className="text-gray-600 text-sm">Velocità</p>
+                  <p className="text-2xl font-bold text-green-600">78%</p>
+                  <p className="text-red-600 text-sm">↓ 1.3%</p>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                  <p className="text-gray-600 text-sm">Progresso</p>
+                  <p className="text-2xl font-bold text-amber-600">+17%</p>
+                  <p className="text-green-600 text-sm">6 mesi</p>
+                </div>
+              </div>
+
+              {/* Radar Chart */}
+              <div className="col-span-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Profilo Cognitivo</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={dataRadar}>
+                      <PolarGrid stroke="#E5E7EB" />
+                      <PolarAngleAxis dataKey="subject" stroke="#6B7280" />
+                      <PolarRadiusAxis stroke="#9CA3AF" />
+                      <Radar
+                        name="Abilità"
+                        dataKey="A"
+                        stroke="#3B82F6"
+                        fill="#3B82F6"
+                        fillOpacity={0.4}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Line Chart */}
+              <div className="col-span-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Trend Mensile</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="name" stroke="#6B7280" />
+                      <YAxis stroke="#6B7280" />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'white', border: '1px solid #E5E7EB' }}
+                        itemStyle={{ color: '#374151' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#10B981"
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Bar Chart */}
+              <div className="col-span-12 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Performance per Area</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart data={barData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="name" stroke="#6B7280" />
+                      <YAxis stroke="#6B7280" />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'white', border: '1px solid #E5E7EB' }}
+                        itemStyle={{ color: '#374151' }}
+                      />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {barData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* FOOTER WITH LEGAL LINKS */}
