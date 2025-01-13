@@ -4,13 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAllUserTests, getAllUsers } from '@/app/lib/firebase';
 
-
+type TestType = 'raven' | 'eyehand' | 'stroop' | 'speedreading' | 'memory' | 'schulte' | 'rhythm';
 
 interface UserData {
   userId: string;
   username: string;
   totalScore: number;
-  level: number;
   timestamp?: string;
 }
 
@@ -38,7 +37,7 @@ const GlobalRanking: React.FC = () => {
           });
 
           if (recentUserTests.length > 0) {
-            // Calcola il punteggio totale e il livello medio
+            // Calcola il punteggio totale
             let totalScore = 0;
             let testCount = 0;
 
@@ -53,7 +52,6 @@ const GlobalRanking: React.FC = () => {
               userId: user.uid,
               username: user.displayName || 'Anonymous',
               totalScore: Math.round(averageScore),
-              level: 1, // Puoi calcolare il livello in base ai test se necessario
               timestamp: recentUserTests[0].timestamp, // Usa il timestamp del test più recente
             });
           }
@@ -109,8 +107,7 @@ const GlobalRanking: React.FC = () => {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{test.username}</div>
-                  <div className="text-sm text-gray-500">Livello {test.level}</div>
+                  <div className="font-semibold text-gray-900">{test.username}</div> {/* Solo il nome dell'utente */}
                 </div>
               </div>
               <div className="text-right">
